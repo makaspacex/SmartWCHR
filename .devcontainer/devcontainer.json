@@ -1,5 +1,5 @@
 {
-  "name": "ROS2-humble",
+  "name": "Humble",
   "remoteUser": "rosdev",
   "build": {
       "dockerfile": "Dockerfile",
@@ -13,7 +13,16 @@
       "vscode": {
           "extensions": [
               "ms-python.python",
+              "ms-python.debugpy",
               "charliermarsh.ruff",
+              "twxs.cmake",
+              "ms-toolsai.jupyter-keymap",
+              "ms-vscode.cmake-tools",
+              "ms-azuretools.vscode-docker",
+              "donjayamanne.githistory",
+              "ms-toolsai.jupyter",
+              "ms-python.vscode-pylance",
+              "yzhang.markdown-all-in-one",
               "ms-vscode.cpptools-extension-pack",
               "ms-iot.vscode-ros",
               "smilerobotics.urdf",
@@ -33,7 +42,7 @@
       }
   },
   "workspaceFolder": "/home/rosdev/ros2_ws",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/rosdev/ros2_ws/src,type=bind",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/rosdev/ros2_ws,type=bind",
   "mounts": [],
   "runArgs": [
       "--net=host"
