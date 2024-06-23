@@ -1,7 +1,7 @@
 {
   "name": "humble",
   "remoteUser": "rosdev",
-  "image":"smartwchr:dev-latest",
+  "image":"makaspacex/smartwchr:dev",
   "customizations": {
       "vscode": {
           "extensions": [
