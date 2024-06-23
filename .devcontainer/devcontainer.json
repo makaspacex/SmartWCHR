@@ -4,26 +4,6 @@
   "image":"makaspacex/smartwchr:dev",
   "customizations": {
       "vscode": {
-          "extensions": [
-              "ms-python.python",
-              "ms-python.debugpy",
-              "charliermarsh.ruff",
-              "twxs.cmake",
-              "ms-toolsai.jupyter-keymap",
-              "ms-vscode.cmake-tools",
-              "ms-azuretools.vscode-docker",
-              "donjayamanne.githistory",
-              "ms-toolsai.jupyter",
-              "ms-python.vscode-pylance",
-              "yzhang.markdown-all-in-one",
-              "ms-vscode.cpptools-extension-pack",
-              "ms-iot.vscode-ros",
-              "smilerobotics.urdf",
-              "redhat.vscode-xml",
-              "tamasfe.even-better-toml",
-              "timonwong.shellcheck",
-              "yzhang.markdown-all-in-one"
-          ],
           "settings": {
               "files.associations": {
                   "*.rviz": "yaml",
@@ -37,7 +17,9 @@
   "workspaceFolder": "/home/rosdev/ros2_ws",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/rosdev/ros2_ws,type=bind",
   "mounts": [
-    // "source=/dev/bus/usb,target=/dev/bus/usb,type=bind"
+    // "source=${localWorkspaceFolder}/.vscode/extensions.json,target=/home/rosdev/ros2_ws/.vscode/extensions.json,type=bind",
+    // "source=${localWorkspaceFolder}/.devcontainer,target=/home/rosdev/ros2_ws/.devcontainer,type=bind",
+    // "source=${localWorkspaceFolder}/.devcontainer,target=/home/rosdev/ros2_ws/.devcontainer,type=bind",
   ],
   "runArgs": [
       "--net=host",
