@@ -1,6 +1,9 @@
 log/
 install/
 runtime/
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+
 devel/
 logs/
 build/

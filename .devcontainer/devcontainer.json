@@ -1,14 +1,7 @@
 {
-  "name": "Humble",
+  "name": "humble",
   "remoteUser": "rosdev",
-  "build": {
-      "dockerfile": "Dockerfile",
-      "args": {
-          "USERNAME": "rosdev",
-          "GID": "1000",
-          "UID": "1000"
-      }
-  },
+  "image":"smartwchr:dev-latest",
   "customizations": {
       "vscode": {
           "extensions": [
@@ -29,7 +22,7 @@
               "redhat.vscode-xml",
               "tamasfe.even-better-toml",
               "timonwong.shellcheck",
-              "yzhang.markdown-all-in-one",
+              "yzhang.markdown-all-in-one"
           ],
           "settings": {
               "files.associations": {
@@ -43,8 +36,13 @@
   },
   "workspaceFolder": "/home/rosdev/ros2_ws",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/rosdev/ros2_ws,type=bind",
-  "mounts": [],
+  "mounts": [
+    // "source=/dev/bus/usb,target=/dev/bus/usb,type=bind"
+  ],
   "runArgs": [
-      "--net=host"
+      "--net=host",
+      "--privileged",
+      "--ipc=host",
+      "--device=/dev/bus/usb:/dev/bus/usb"
   ]
 }

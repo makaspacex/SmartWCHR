@@ -4,18 +4,21 @@ ARG USERNAME=rosdev
 ARG UID=1000
 ARG GID=$UID
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # mirror repo by bfsu
 RUN echo deb https://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse > /etc/apt/sources.list \
     && echo deb https://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse >> /etc/apt/sources.list \
     && echo deb https://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse >> /etc/apt/sources.list \
     && echo deb https://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy-security main restricted universe multiverse >> /etc/apt/sources.list
 
-RUN apt update -q
-RUN apt install -y curl gnupg2
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN apt update -q && apt install -y curl gnupg2 htop usbutils zsh tzdata vim tmux git openssh-server && ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+RUN curl -sSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.bfsu.edu.cn/ros2/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2-latest.list > /dev/null
-RUN apt update -q \
-    && apt upgrade -q -y
+
+RUN apt update -q && apt upgrade -q -y
+
 # Install some dependencies packages
 RUN apt install -y --no-install-recommends \
     software-properties-common \
@@ -29,18 +32,19 @@ RUN apt install -y --no-install-recommends \
 # Create and switch to user
 RUN groupadd -g $GID $USERNAME \
     && useradd -lm -u $UID -g $USERNAME -s /bin/bash $USERNAME \
-    && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    && echo "$USERNAME ALL=(ALL) NOPASSWD: NOPASSWD: ALL" > /etc/sudoers.d/sudonopasswd
 USER $USERNAME
 
+# install zsh
+RUN sudo usermod -s /bin/zsh $USERNAME
+RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
 # Create workspace so that user own this directory
-RUN mkdir -p /home/$USERNAME/ros2_ws/src
+RUN sudo mkdir -p /home/$USERNAME/ros2_ws && sudo chown ${USERNAME}:${USERNAME} /home/$USERNAME/ros2_ws
 WORKDIR /home/$USERNAME/ros2_ws
 
 # Copy configuration files
-RUN echo 'source /opt/ros/'$ROS_DISTRO'/setup.bash' >> /home/$USERNAME/.bashrc \
-    && echo 'source /home/'$USERNAME'/ros2_ws/install/setup.bash' >> /home/$USERNAME/.bashrc
+COPY ./ros2init.sh /tmp
+RUN cat /tmp/ros2init.sh >> ~/.zshrc && sudo rm -f /tmp/ros2init.sh
 
-# Setup entrypoint
-COPY ./ros_entrypoint.sh /
-ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["bash"]
+CMD ["zsh"]

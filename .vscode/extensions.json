@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.debugpy",
+    "charliermarsh.ruff",
+    "twxs.cmake",
+    "ms-toolsai.jupyter-keymap",
+    "ms-vscode.cmake-tools",
+    "donjayamanne.githistory",
+    "ms-toolsai.jupyter",
+    "ms-python.vscode-pylance",
+    "yzhang.markdown-all-in-one",
+    "ms-vscode.cpptools-extension-pack",
+    "ms-iot.vscode-ros",
+    "smilerobotics.urdf",
+    "redhat.vscode-xml",
+    "tamasfe.even-better-toml",
+    "timonwong.shellcheck",
+    "yzhang.markdown-all-in-one",
+  ]
+}
