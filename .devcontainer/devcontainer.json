@@ -25,6 +25,7 @@
       "--net=host",
       "--privileged",
       "--ipc=host",
-      "--device=/dev/bus/usb:/dev/bus/usb"
+      "--device=/dev/bus/usb:/dev/bus/usb",
+      "--device=/dev/oradar:/dev/oradar"
   ]
 }
