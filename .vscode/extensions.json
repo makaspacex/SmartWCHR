@@ -4,6 +4,7 @@
     "ms-python.debugpy",
     "charliermarsh.ruff",
     "twxs.cmake",
+    "ms-vscode.makefile-tools",
     "ms-toolsai.jupyter-keymap",
     "ms-vscode.cmake-tools",
     "donjayamanne.githistory",
