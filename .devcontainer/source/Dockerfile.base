@@ -1,10 +1,19 @@
-FROM ros:humble-ros-base
-
-ARG USERNAME=rosdev
-ARG UID=1000
-ARG GID=$UID
+FROM ubuntu:22.04
 
 ARG TARGETARCH
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV ROS_DISTRO=humble
+
+
+RUN echo 'Asia/Shanghai' > /etc/timezone && \
+    ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+# some dependencies packages and update to lastest packages
+RUN apt update && \
+    apt install -y --no-install-recommends ca-certificates && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # mirror repo by bfsu
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
@@ -19,35 +28,30 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
         echo "deb https://mirrors.bfsu.edu.cn/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list; \
     fi
 
-RUN apt update -q && apt install -y curl gnupg2 htop usbutils zsh tzdata vim tmux git openssh-server && ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# some dependencies packages and update to lastest packages
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y --no-install-recommends curl gnupg2 htop usbutils zsh tzdata vim tmux git python3-pip xauth && \
+    chsh -s /bin/zsh && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN curl -sSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.bfsu.edu.cn/ros2/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2-latest.list > /dev/null
-
-RUN apt update -q && apt upgrade -q -y
-
-# Install some dependencies packages
-RUN apt install -y --no-install-recommends \
-    software-properties-common \
-    python3-pip \
-    xauth \
-    ros-humble-navigation2 \
-    ros-humble-nav2-bringup \
+# Install ros-humble-ros-core
+RUN curl -sSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.bfsu.edu.cn/ros2/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
+    apt update && \
+    apt install -y --no-install-recommends \
+    ros-humble-ros-core \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Create and switch to user
-RUN groupadd -g $GID $USERNAME \
-    && useradd -lm -u $UID -g $USERNAME -s /bin/bash $USERNAME \
-    && echo "$USERNAME ALL=(ALL) NOPASSWD: NOPASSWD: ALL" > /etc/sudoers.d/sudonopasswd
-USER $USERNAME
-
-# install zsh
-RUN sudo usermod -s /bin/zsh $USERNAME
-RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# install zsh and tools
+RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    sed -i "s/plugins=(git.*)$/plugins=(git zsh-autosuggestions)/" ~/.zshrc
 
 # Create workspace so that user own this directory
-RUN sudo mkdir -p /home/$USERNAME && sudo chown ${USERNAME}:${USERNAME} /home/$USERNAME
-WORKDIR /home/$USERNAME
+RUN mkdir -p /ros2_ws
+WORKDIR /ros2_ws
 
 CMD ["zsh"]
