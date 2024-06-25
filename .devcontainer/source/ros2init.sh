@@ -1,3 +1,4 @@
+
 function load_ros2() {
     # 初始化全局的ros2
     if [[ -f /opt/ros/"$ROS_DISTRO"/setup.zsh ]]; then
@@ -13,4 +14,3 @@ function load_ws_ros2() {
 }
 
 load_ros2
-

@@ -50,8 +50,6 @@ RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent
     git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
     sed -i "s/plugins=(git.*)$/plugins=(git zsh-autosuggestions)/" ~/.zshrc
 
-# Create workspace so that user own this directory
-RUN mkdir -p /ros2_ws
-WORKDIR /ros2_ws
+WORKDIR /root
 
 CMD ["zsh"]

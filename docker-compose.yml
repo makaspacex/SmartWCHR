@@ -1,0 +1,16 @@
+
+services:
+  smartwchr:
+    image: makaspacex/smartwchr:dev
+    container_name: smartwchr
+    # restart: always
+    network_mode: bridge
+    privileged: true
+    # volumes:
+      # - ./:/home/rosdev/ros2_ws
+    # devices:
+      # - /dev/bus/usb:/dev/bus/usb
+      # - /dev/ttyUSB2:/dev/ttyUSB2
+    # environment:
+      # - TZ=Asia/Shanghai
+    command: "/bin/bash"
