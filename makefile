@@ -1,5 +1,5 @@
 # ROS 2 workspace Makefile
-SHELL := /bin/zsh
+SHELL := $(shell echo $$SHELL)
 
 # Variables
 ROS2_WS = .
