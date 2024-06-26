@@ -9,7 +9,7 @@ services:
       - ./:/ros2_ws
     devices:
       - /dev/bus/usb:/dev/bus/usb
-      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB1:/dev/imu_usb
       - /dev/ttyUSB2:/dev/oradar
     environment:
       - TZ=Asia/Shanghai
