@@ -1,4 +1,4 @@
-import glob
+from glob import glob
 import os
 
 from setuptools import setup
@@ -10,7 +10,7 @@ setup(
     version='0.0.0',
     packages=[package_name],
     data_files=[
-        ('share/' + package_name + '/launch', ['launch/imu.launch.py']),
+        ('share/' + package_name + '/launch', glob('launch/*.py')),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'imu = imu.imu:main'
+        'start = imu.imu:main'
         ],
     },
 )
