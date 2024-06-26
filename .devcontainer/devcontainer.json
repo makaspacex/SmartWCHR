@@ -20,7 +20,8 @@
     "runArgs": [
         "--net=host",
         "--device=/dev/bus/usb:/dev/bus/usb",
-        "--device=/dev/ttyUSB2:/dev/ttyUSB2"
+        "--device=/dev/ttyUSB1:/dev/ttyUSB1",
+        "--device=/dev/ttyUSB2:/dev/oradar"
     ],
-    "postCreateCommand": "if [ -f /dev/ttyUSB2 ]; then ln -sf  /dev/ttyUSB2 /dev/oradar; fi"
+    // "postCreateCommand": "if [ -f /dev/ttyUSB2 ]; then ln -sf  /dev/ttyUSB2 /dev/oradar; fi"
 }

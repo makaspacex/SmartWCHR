@@ -1,0 +1,12 @@
+
+services:
+  smartwchr:
+    image: makaspacex/smartwchr:dev
+    container_name: smartwchr
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./:/ros2_ws
+    environment:
+      - TZ=Asia/Shanghai
+    command: "/bin/zsh"

@@ -1,0 +1,16 @@
+
+services:
+  smartwchr:
+    image: makaspacex/smartwchr:dev
+    container_name: smartwchr
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./:/ros2_ws
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB2:/dev/oradar
+    environment:
+      - TZ=Asia/Shanghai
+    command: "/bin/zsh"

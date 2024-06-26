@@ -7,7 +7,7 @@ SRC_DIR = $(ROS2_WS)/src
 BUILD_DIR = $(ROS2_WS)/build
 INSTALL_DIR = $(ROS2_WS)/install
 LOG_DIR = $(ROS2_WS)/log
-VALID_TARGETS = all build clean run launch
+VALID_TARGETS = all build clean run launch docker
 OPTS = $(filter-out $(VALID_TARGETS),$(MAKECMDGOALS))
 BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
 RUN_CC = ros2 run
@@ -24,16 +24,19 @@ ifeq ($(strip $(OPTS)),)
     BUILD_PACKAGES = 
 	RUN_ARGS =
 	LAUNCH_ARGS = 
+	DOCKER_ARGS =  -f docker-compose.dc.yml run --rm smartwchr
 # 处理特殊选项名字
 else ifeq ($(OPTS),$(WC_NAME))
 	BUILD_PACKAGES = --packages-select $(WHEEL_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS = 
+	DOCKER_ARGS = -f docker-compose.wc.yml run --rm smartwchr
 
 else ifeq ($(OPTS),$(DC_NAME))
 	BUILD_PACKAGES = --packages-select $(DC_PACKAGES)
 	RUN_ARGS =
-	LAUNCH_ARGS = 
+	LAUNCH_ARGS =
+	DOCKER_ARGS =  -f docker-compose.dc.yml run --rm smartwchr
 
 # 否则等于指定选项名字
 else
@@ -63,8 +66,11 @@ run:
 launch:
 	$(LAUNCH_CC) $(LAUNCH_ARGS)
 
+docker:
+	docker-compose $(DOCKER_ARGS)
+
 # Phony targets
-.PHONY: all build clean run launch
+.PHONY: all build clean run launch docker
 
 # Ignore targets that are not defined
 %:
