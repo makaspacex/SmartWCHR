@@ -1,5 +1,19 @@
 FROM makaspacex/smartwchr:base
 
+
+
+# slim and wheel describesion
+RUN apt update &&  \
+    apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-robot-state-publisher \
+    ros-$ROS_DISTRO-joint-state-publisher-gui \
+    ros-$ROS_DISTRO-cartographer ros-$ROS_DISTRO-cartographer-ros && \
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# imu
+RUN pip3 install pyserial numpy
+
+
 # Create workspace so that user own this directory
 RUN mkdir /ros2_ws
 WORKDIR /ros2_ws
