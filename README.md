@@ -3,7 +3,6 @@
 
 ## Install Docker on Ubuntu by `apt`
 refer: `https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository`
-### Install using the apt repository
 
 Before you install Docker Engine for the first time on a new host machine, you need to set up the Docker repository. Afterward, you can install and update Docker from the repository.
 
@@ -36,3 +35,11 @@ sudo docker run hello-world
 ```
 This command downloads a test image and runs it in a container. When the container runs, it prints a confirmation message and exits.
 
+## Setup Devices
+
+### oradar_lidar
+
+to be finished
+
+### wit_ros2_imu
+to be finished
