@@ -4,6 +4,7 @@
 ## Install Docker on Ubuntu by `apt`
 
 Please refer to the [official link](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) to install Docker components.
+For Ubuntu 20.04, you need to add `/usr/libexec/docker/cli-plugins` to `PATH`, otherwise `docker-compose` cannot be found.
 
 ## Setup Devices
 
