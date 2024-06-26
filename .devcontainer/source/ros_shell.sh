@@ -1,3 +1,8 @@
+function load_ws_ros2() {
+    if [[ -f install/local_setup.zsh ]]; then
+        . install/local_setup.zsh
+    fi
+}
 
 function load_ros2() {
     # 初始化全局的ros2
@@ -6,11 +11,4 @@ function load_ros2() {
     fi
     load_ws_ros2
 }
-
-function load_ws_ros2() {
-    if [[ -f install/local_setup.zsh ]]; then
-        . install/local_setup.zsh
-    fi
-}
-
 load_ros2

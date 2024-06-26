@@ -1,32 +1,7 @@
 FROM makaspacex/smartwchr:base
 
-
-# lsleida
-RUN apt update &&  \
-    apt install -y --no-install-recommends \
-    libpcap-dev libboost1.74-dev \
-    ros-$ROS_DISTRO-pcl-ros ros-$ROS_DISTRO-pluginlib ros-$ROS_DISTRO-pcl-conversions && \
-    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# navigation2
-RUN apt update && \
-    apt install -y --no-install-recommends \
-    ros-$ROS_DISTRO-navigation2 \
-    ros-$ROS_DISTRO-nav2-bringup && \
-    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# rtabmap-ros
-RUN apt update && \
-    apt install -y --no-install-recommends \
-    ros-$ROS_DISTRO-rtabmap-ros && \
-    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # Create workspace so that user own this directory
 RUN mkdir /ros2_ws
 WORKDIR /ros2_ws
-
-# Copy configuration files
-COPY ./ros2init.sh /tmp
-RUN cat /tmp/ros2init.sh >> ~/.zshrc && rm -f /tmp/ros2init.sh
 
 CMD ["zsh"]
