@@ -1,11 +1,13 @@
+import os
+
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration
-from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-import os
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
 
@@ -14,9 +16,15 @@ def generate_launch_description():
 
     # 定位到 cartographer 功能包的地址
     pkg_share = FindPackageShare('cartographer_ros').find('cartographer_ros')
-    configuration_directory = '/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/config'
+    # configuration_directory = '/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/config'
+    current_file_path = os.path.dirname(os.path.abspath(__file__))
+    configuration_directory = os.path.join(current_file_path, '..', '..', 'config')
+    configuration_directory = os.path.normpath(configuration_directory)
     configuration_basename = 'slam_2d.lua'
-    pbstream_path = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/map/map_test.pbstream"
+
+    # pbstream_path = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/map/map_test.pbstream"
+    # pbstream_directory = os.path.join(current_file_path, '..', '..', 'map')
+    # pbstream_path = os.path.join(pbstream_directory, 'map_test.pbstream')
 
     base_footprint_to_base_link = Node(
         package='tf2_ros',
