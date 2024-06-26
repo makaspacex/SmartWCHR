@@ -20,24 +20,26 @@ DC_PACKAGES = nav2 slam_2d
 WC_NAME = wc
 DC_NAME = dc
 
+DOCKER_RUN_ARGS = run -e CUID=$$(id -u) -it --rm smartwchr
+
 # Check if opts is empty
 ifeq ($(strip $(OPTS)),)
     BUILD_PACKAGES = 
 	RUN_ARGS =
 	LAUNCH_ARGS = 
-	DOCKER_ARGS =  -f docker-compose.dc.yml run --rm smartwchr
+	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
 # 处理特殊选项名字
 else ifeq ($(OPTS),$(WC_NAME))
 	BUILD_PACKAGES = --packages-select $(WHEEL_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS = 
-	DOCKER_ARGS = -f docker-compose.wc.yml run --rm smartwchr
+	DOCKER_ARGS = -f docker-compose.wc.yml $(DOCKER_RUN_ARGS)
 
 else ifeq ($(OPTS),$(DC_NAME))
 	BUILD_PACKAGES = --packages-select $(DC_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS =
-	DOCKER_ARGS =  -f docker-compose.dc.yml run --rm smartwchr
+	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
 
 # 否则等于指定选项名字
 else

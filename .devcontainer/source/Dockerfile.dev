@@ -15,7 +15,6 @@ RUN pip3 install pyserial numpy
 
 
 # Create workspace so that user own this directory
-RUN mkdir /ros2_ws
 WORKDIR /ros2_ws
 
 CMD ["zsh"]

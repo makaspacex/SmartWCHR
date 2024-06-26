@@ -31,8 +31,10 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
 # some dependencies packages and update to lastest packages
 RUN apt update && \
     apt upgrade -y && \
-    apt install -y --no-install-recommends curl gnupg2 htop usbutils zsh tzdata vim tmux git python3-pip xauth  net-tools && \
+    apt install -y --no-install-recommends file dirmngr gpg curl gnupg2 htop usbutils zsh tzdata vim tmux git python3-pip xauth  net-tools && \
     chsh -s /bin/zsh && \
+    curl -o /usr/local/bin/gosu -SL "https://mirror.ghproxy.com/https://github.com/tianon/gosu/releases/latest/download/gosu-$(dpkg --print-architecture)" && \
+    chmod +x /usr/local/bin/gosu && \
     apt clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -42,15 +44,11 @@ RUN curl -sSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ros/r
     apt update && \
     apt install -y --no-install-recommends \
     ros-$ROS_DISTRO-ros-core \
-    ros-humble-demo-nodes-cpp ros-humble-demo-nodes-py \
+    ros-$ROS_DISTRO-demo-nodes-cpp ros-$ROS_DISTRO-demo-nodes-py \
     build-essential git python3-colcon-common-extensions python3-colcon-mixin python3-rosdep python3-vcstool \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# install zsh and tools
-RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
-    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
-    sed -i "s/plugins=(git.*)$/plugins=(git zsh-autosuggestions)/" ~/.zshrc
 
 # lsleida
 RUN apt update &&  \
@@ -72,12 +70,19 @@ RUN apt update && \
     ros-$ROS_DISTRO-rtabmap-ros && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# install oh-my-zsh and tools
+RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    sed -i "s/plugins=(git.*)$/plugins=(git zsh-autosuggestions)/" ~/.zshrc
 COPY ./ros_shell.sh /tmp/
 RUN cat /tmp/ros_shell.sh >> ~/.zshrc && rm -f /tmp/ros_shell.sh
 
-# COPY ./ros_entrypoint.sh /
-# RUN chmod +x /ros_entrypoint.sh
-# ENTRYPOINT ["/ros_entrypoint.sh"]
+# set workdir
+WORKDIR /
 
-WORKDIR /root
+# set entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod a+x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["zsh"]
