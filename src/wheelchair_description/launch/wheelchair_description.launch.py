@@ -11,8 +11,13 @@ def generate_launch_description():
     urdf_name = "wheelchair_base.urdf"
 
     ld = LaunchDescription()
-    pkg_share = FindPackageShare(package=package_name).find(package_name) 
-    urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
+    # pkg_share = FindPackageShare(package=package_name).find(package_name) 
+    # urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
+
+    current_file_path = os.path.dirname(os.path.abspath(__file__))
+    urdf_directory = os.path.join(current_file_path, '..', '..', 'urdf')
+    urdf_directory = os.path.normpath(urdf_directory)
+    urdf_model_path = os.path.join(urdf_directory, urdf_name)
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -27,16 +32,9 @@ def generate_launch_description():
         arguments=[urdf_model_path]
         )
 
-    # rviz2_node = Node(
-    #     package='rviz2',
-    #     executable='rviz2',
-    #     name='rviz2',
-    #     output='screen',
-    #     )
 
     ld.add_action(robot_state_publisher_node)
     ld.add_action(joint_state_publisher_node)
-    # ld.add_action(rviz2_node)
+    #ld.add_action(rviz2_node)
 
-    return ld
     return ld

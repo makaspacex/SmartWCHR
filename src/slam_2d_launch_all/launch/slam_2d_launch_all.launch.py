@@ -1,10 +1,12 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.substitutions import FindPackageShare
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-import os
+from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
     # oradar_launch_file = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/oradar_ros/launch/ms200_scan_view.launch.py"
@@ -13,7 +15,8 @@ def generate_launch_description():
     oradar_launch_file = os.path.join(
         get_package_share_directory('oradar_lidar'),
         'launch',
-        'ms200_scan_view.launch.py'
+        'ms200_scan.launch.py'
+        # 'ms200_scan_view.launch.py'
     )
     imu_launch_file = os.path.join(
         get_package_share_directory('wit_ros2_imu'),

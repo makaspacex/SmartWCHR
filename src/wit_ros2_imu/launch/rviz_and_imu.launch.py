@@ -40,8 +40,9 @@ def generate_launch_description():
         [
             # rviz_and_imu_node
             base_link_to_imu_tf_node,
-            rviz_and_imu_node,
-            rviz_display_node
+            rviz_and_imu_node
+            # ,
+            # rviz_display_node
             
         ]
     )
