@@ -1,5 +1,7 @@
+import glob
+import os
+
 from setuptools import setup
-import os, glob
 
 package_name = 'wit_ros2_imu'
 
@@ -10,8 +12,9 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
+        ('share/' + package_name + '/launch', ['launch/rviz_and_imu.launch.py']),
         ('share/' + package_name, ['package.xml']),
-        ('share/' +package_name, ['launch/rviz_and_imu.launch.py']),
+        
     ],
     install_requires=['setuptools'],
     zip_safe=True,
