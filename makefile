@@ -14,8 +14,8 @@ RUN_CC = ros2 run
 LAUNCH_CC = ros2 launch
 
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wheelchair_description wit_ros2_imu 
-WHEEL_PACKAGES = oradar_lidar system_controller wheelchair_description wit_ros2_imu 
-DC_PACKAGES = guide_nav2 slam_2d slam_2d_launch_all
+WHEEL_PACKAGES = driver imu lidar wheelchair_description 
+DC_PACKAGES = nav2 slam_2d
 
 WC_NAME = wc
 DC_NAME = dc
