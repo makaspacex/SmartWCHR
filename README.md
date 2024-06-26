@@ -43,3 +43,48 @@ to be finished
 
 ### wit_ros2_imu
 to be finished
+
+
+## Build and Run
+
+### On the Wheelchair Machine Side
+
+```bash
+# Pull the latest Docker image
+docker pull makaspacex/smartwchr:dev
+
+# Open an interactive shell in Docker on the wheelchair side
+make docker wc
+
+# Build the wheelchair sensor library
+make build wc
+
+# Run wheelchair sensor packages
+make run wc
+```
+
+### On the Development Machine Side
+
+```bash
+# Pull the latest Docker image
+docker pull makaspacex/smartwchr:dev
+
+# Open an interactive shell in Docker on the development machine side
+make docker dc
+
+# Build the decision-center library
+make build dc
+
+# Run decision-center packages
+make run dc
+```
+
+## Run All Services on the Wheelchair
+
+```bash
+# Start all services using Docker Compose
+docker-compose up
+```
+
+## How to Develop and Debug
+A virtual machine in VMware is recommended for high-performance graphical rendering when running rviz and debugging code.
