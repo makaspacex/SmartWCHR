@@ -11,8 +11,9 @@ echo "$UNAME ALL=(ALL) NOPASSWD: NOPASSWD: ALL"  > /etc/sudoers.d/sudonopasswd
 useradd --shell /bin/zsh -u $USER_ID -o -c "" -m $UNAME
 usermod -aG root $UNAME
 
-# 设置目录
+# 设置目录与SHELL环境变量(重要！)
 export HOME=/home/$UNAME
-rm -rf $HOME && cp -r /root $HOME && chown -R $UNAME:$UNAME $HOME
+export SHELL=/bin/zsh
 
+rm -rf $HOME && cp -r /root $HOME && chown -R $UNAME:$UNAME $HOME
 exec /usr/local/bin/gosu user "$@"
