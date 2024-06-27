@@ -1,6 +1,6 @@
 FROM makaspacex/smartwchr:base
 
-
+ENV ROS_DISTRO=humble
 
 # slim and wheel describesion
 RUN apt update &&  \
@@ -11,10 +11,15 @@ RUN apt update &&  \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # imu
-RUN pip3 install pyserial numpy
-
+RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
+    && pip3 install pyserial numpy 
 
 # Create workspace so that user own this directory
 WORKDIR /ros2_ws
+
+# set entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod a+x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["zsh"]

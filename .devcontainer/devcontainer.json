@@ -18,7 +18,7 @@
     "mounts": [
     ],
     "runArgs": [
-        "--net=host",
+        // "--net=host",
         // "--device=/dev/bus/usb:/dev/bus/usb",
         // "--device=/dev/ttyUSB1:/dev/imu_usb",
         // "--device=/dev/ttyUSB2:/dev/oradar"

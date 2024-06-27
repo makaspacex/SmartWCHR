@@ -80,9 +80,4 @@ RUN cat /tmp/ros_shell.sh >> ~/.zshrc && rm -f /tmp/ros_shell.sh
 # set workdir
 WORKDIR /
 
-# set entrypoint
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod a+x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-
 CMD ["zsh"]
