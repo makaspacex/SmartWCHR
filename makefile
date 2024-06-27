@@ -13,9 +13,9 @@ BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $
 RUN_CC = ros2 run
 LAUNCH_CC = ros2 launch
 
-# WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wheelchair_description wit_ros2_imu 
-WHEEL_PACKAGES = driver imu lidar wheelchair_description 
-DC_PACKAGES = nav2 slam_2d
+# WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
+WHEEL_PACKAGES = driver imu lidar  
+DC_PACKAGES = nav2 slam_2d wcmodel
 
 WC_NAME = wc
 DC_NAME = dc

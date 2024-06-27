@@ -7,7 +7,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    package_name = 'wheelchair_description'
+    package_name = 'wcmodel'
     urdf_name = "wheelchair_base.urdf"
 
     ld = LaunchDescription()

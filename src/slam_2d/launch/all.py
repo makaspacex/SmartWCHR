@@ -9,31 +9,31 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    # oradar_launch_file = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/oradar_ros/launch/ms200_scan_view.launch.py"
-    # imu_launch_file = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/wit_ros2_imu/launch/rviz_and_imu.launch.py"
+    # oradar_launch_file = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/lidar/launch/scan_view.py"
+    # imu_launch_file = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/imu/launch/imu.py"
 
     oradar_launch_file = os.path.join(
-        get_package_share_directory('oradar_lidar'),
+        get_package_share_directory('lidar'),
         'launch',
-        'ms200_scan.launch.py'
-        # 'ms200_scan_view.launch.py'
+        'scan.py'
+        # 'scan_view.py'
     )
     imu_launch_file = os.path.join(
-        get_package_share_directory('wit_ros2_imu'),
+        get_package_share_directory('imu'),
         'launch',
-        'rviz_and_imu.launch.py'
+        'imu.py'
     )
 
     description_launch_file = os.path.join(
-        get_package_share_directory('wheelchair_description'),
+        get_package_share_directory('wcmodel'),
         'launch',
-        'wheelchair_description.launch.py'
+        'wc_base.py'
     )
 
     slam_launch_file = os.path.join(
         get_package_share_directory('slam_2d'),
         'launch',
-        'slam_2d.launch.py'
+        'slam_2d.py'
     )
 
     return LaunchDescription([

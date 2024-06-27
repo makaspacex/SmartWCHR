@@ -26,7 +26,7 @@ def generate_launch_description():
   ordlidar_launch = IncludeLaunchDescription(
       launch_description_source=PythonLaunchDescriptionSource([
           get_package_share_directory('lidar'),
-          '/launch/ms200_scan.launch.py'
+          '/launch/scan.py'
       ])
   )
 

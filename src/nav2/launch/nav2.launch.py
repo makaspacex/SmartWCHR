@@ -22,13 +22,13 @@ def generate_launch_description():
     map_file = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.yaml"
     pbstream_path = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.pbstream'
     # urdf_name = "wheelchair_base.urdf"
-    # wheelchair_description_pkg_share = FindPackageShare('wheelchair_description').find('wheelchair_description') 
-    # urdf_model_path = os.path.join(wheelchair_description_pkg_share, f'urdf/{urdf_name}')
+    # wcmodel_pkg_share = FindPackageShare('wcmodel').find('wcmodel') 
+    # urdf_model_path = os.path.join(wcmodel_pkg_share, f'urdf/{urdf_name}')
 
     # Wheelchair description launch file
-    wheelchair_launch_file = os.path.join(get_package_share_directory('wheelchair_description'), 'launch', 'wheelchair_description.launch.py')
-    oradar_launch_file = os.path.join(get_package_share_directory('oradar_lidar'), 'launch', 'ms200_scan_view.launch.py')
-    imu_launch_file = os.path.join(get_package_share_directory('wit_ros2_imu'), 'launch', 'rviz_and_imu.launch.py')
+    wheelchair_launch_file = os.path.join(get_package_share_directory('wcmodel'), 'launch', 'wc_base.py')
+    oradar_launch_file = os.path.join(get_package_share_directory('lidar'), 'launch', 'scan_view.py')
+    imu_launch_file = os.path.join(get_package_share_directory('imu'), 'launch', 'imu.py')
 
     configuration_directory = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config'
     configuration_basename = 'nav2.lua'

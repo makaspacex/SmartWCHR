@@ -204,7 +204,7 @@ int main(int argc, char **argv)
   uint8_t type = ORADAR_TYPE_SERIAL;
   int model = ORADAR_MS200;
 #ifdef ROS_FOUND
-  ros::init(argc, argv, "oradar_ros");
+  ros::init(argc, argv, "lidar");
 
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
 
   #elif ROS2_FOUND
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("oradar_ros"); // create a ROS2 Node
+  auto node = std::make_shared<rclcpp::Node>("lidar"); // create a ROS2 Node
 
     // declare ros2 param
   node->declare_parameter<std::string>("port_name", port);

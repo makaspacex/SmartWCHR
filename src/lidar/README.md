@@ -66,7 +66,7 @@ ORADAR ROS 包用于连接Oradar MS200激光雷达，此ROS包支持ROS和ROS2�
 
 5. 配置雷达参数
 
-   打开oradar_ros/launch/ms200_scan.launch 进行参数配置或者oradar_ros/launch/ms200_scan.launch.py 进行参数配置
+   打开oradar_ros/launch/ms200_scan.launch 进行参数配置或者oradar_ros/launch/ms200_scan.py 进行参数配置
 
    参数说明如下：
 
@@ -98,9 +98,9 @@ ORADAR ROS 包用于连接Oradar MS200激光雷达，此ROS包支持ROS和ROS2�
    当环境是ROS2时：
 
    ```
-   ros2 launch lidar ms200_scan.launch.py
+   ros2 launch lidar ms200_scan.py
    或者
-   ros2 launch lidar ms200_scan_view.launch.py（使用rviz2显示）
+   ros2 launch lidar ms200_scan_view.py（使用rviz2显示）
    ```
 
    

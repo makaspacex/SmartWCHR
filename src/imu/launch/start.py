@@ -20,7 +20,7 @@ def generate_launch_description():
 
     rviz_and_imu_node = Node(
         package='imu',
-        executable='imu',
+        executable='start',
         name='imu',
         remappings=[('/wit/imu', '/imu/data')],
         parameters=[{'port': '/dev/ttyUSB1'},
