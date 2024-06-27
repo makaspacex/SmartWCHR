@@ -66,10 +66,10 @@ if(rclcpp_FOUND AND ${COMPILE_METHOD} STREQUAL "COLCON")
   DESTINATION share/${PROJECT_NAME}/
   )
   
-  # install(
-  #   DIRECTORY config launch rviz
-  #   DESTINATION share/${PROJECT_NAME}
-  # )  
+  install(
+    DIRECTORY config launch
+    DESTINATION share/${PROJECT_NAME}
+  )  
   ament_package()
 
 endif(rclcpp_FOUND AND ${COMPILE_METHOD} STREQUAL "COLCON")
