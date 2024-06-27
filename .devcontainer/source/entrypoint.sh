@@ -15,5 +15,11 @@ usermod -aG root $UNAME
 export HOME=/home/$UNAME
 export SHELL=/bin/zsh
 
+# 初始化home目录
 rm -rf $HOME && cp -r /root $HOME && chown -R $UNAME:$UNAME $HOME
+
+# 将工作目录的权限改为当前用户
+chown $UNAME:$UNAME $(pwd)
+
+# 执行用户自定义程序
 exec /usr/local/bin/gosu user "$@"
