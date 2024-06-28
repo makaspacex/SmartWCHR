@@ -15,12 +15,16 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
     # 定位到 cartographer 功能包的地址
-    pkg_share = FindPackageShare('cartographer_ros').find('cartographer_ros')
+    # pkg_share = FindPackageShare('cartographer_ros').find('cartographer_ros')
+    slam_package_path = FindPackageShare('slam_2d').find('slam_2d')
+    lua_name = 'slam_2d.lua'
+    lua_directory = os.path.join(slam_package_path, 'config')
+    # lua_file = os.path.join(slam_package_path, f'config/{lua_name}')
     # configuration_directory = '/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/config'
-    current_file_path = os.path.dirname(os.path.abspath(__file__))
-    configuration_directory = os.path.join(current_file_path, '..', '..', 'config')
-    configuration_directory = os.path.normpath(configuration_directory)
-    configuration_basename = 'slam_2d.lua'
+    # current_file_path = os.path.dirname(os.path.abspath(__file__))
+    # configuration_directory = os.path.join(current_file_path, '..', '..', 'config')
+    # configuration_directory = os.path.normpath(configuration_directory)
+    # configuration_basename = 'slam_2d.lua'
 
     # pbstream_path = "/home/jetson/Desktop/data/cyq/slam/slam_2d_ws/src/slam_2d/map/map_test.pbstream"
     # pbstream_directory = os.path.join(current_file_path, '..', '..', 'map')
@@ -53,13 +57,12 @@ def generate_launch_description():
         package = 'cartographer_ros',
         executable = 'cartographer_node',
         arguments = [
-            '-configuration_directory', configuration_directory,
+            '-configuration_directory', lua_directory,
             # '-load_state_filename', pbstream_path,
-            '-configuration_basename', configuration_basename],
+            '-configuration_basename', lua_name],
         remappings = [
             ('scan', 'scan'),
             ('imu', 'imu/data_raw')
-            # ('scan', 'scan')
             ],
         parameters=[{'use_sim_time': use_sim_time}],
         output = 'screen'
@@ -67,14 +70,13 @@ def generate_launch_description():
 
     rviz_node = Node(
         package='rviz2',
-        # namespace='rviz2',
         executable='rviz2',
         name='rviz2',
         output='screen')
 
     occupancy_grid_node = Node(
         package = 'cartographer_ros',
-        executable = 'occupancy_grid_node',
+        executable = 'cartographer_occupancy_grid_node', # use occupancy_grid_node instead in foxy
         parameters = [
             {'use_sim_time': use_sim_time},
             {'resolution': 0.05}],
@@ -83,13 +85,12 @@ def generate_launch_description():
     
     ld = LaunchDescription()
     ld.add_action(base_footprint_to_base_link)
-    ld.add_action(base_link_to_imu_tf_node) #------
+    ld.add_action(base_link_to_imu_tf_node)
     ld.add_action(base_link_to_laser_tf_node)
-
     ld.add_action(rviz_node)
     ld.add_action(cartographer_node)
-    ld.add_action(occupancy_grid_node)  
-    
+    ld.add_action(occupancy_grid_node)
+
     # return LaunchDescription([
     #     use_sim_time_arg,
     #     rviz_node,
@@ -97,4 +98,3 @@ def generate_launch_description():
     #     cartographer_occupancy_grid_node,
     # ])
     return ld
-
