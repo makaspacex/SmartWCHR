@@ -207,7 +207,7 @@ int main(int argc, char **argv)
       {
         publish_msg(publisher, &scan_data, start_scan_time, scan_duration, frame_id, clockwise, angle_min, angle_max, min_range, max_range);
         if(now_t - pub_t > 1){
-          // std::cout << "data[0].angle=" << scan_data.data[0].angle << std::endl;
+          std::cout << "data[0].angle=" << scan_data.data[0].angle << std::endl;
           pub_t = now_t;
         }
 

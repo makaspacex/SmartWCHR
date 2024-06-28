@@ -226,10 +226,10 @@ class IMUDriverNode(Node):
         # 发布IMU消息
         self.imu_pub.publish(self.imu_msg)
 
-        # if time.time() - self.pub_time > 1:
-        #     self.pub_n = (self.pub_n + 1) % 10000
-        #     rich.print(f"[cyan]linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
-        #     self.pub_time = time.time()
+        if time.time() - self.pub_time > 1:
+            self.pub_n = (self.pub_n + 1) % 10000
+            rich.print(f"[cyan]linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            self.pub_time = time.time()
 
     def compute_orientation(self, wx, wy, wz, ax, ay, az, dt):
         # 计算旋转矩阵
