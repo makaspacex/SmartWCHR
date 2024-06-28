@@ -15,12 +15,14 @@ controller_server:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.5				# 机器人向目标前进所需的最小移动量
       movement_time_allowance: 10.0
+    
     # Goal checker parameters
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
+    
     # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"  # dwb_controller适用于差分小车
