@@ -12,7 +12,7 @@ RUN apt update &&  \
 
 # imu
 RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
-    && pip3 install pyserial numpy 
+    && pip3 install pyserial numpy rich
 
 # Create workspace so that user own this directory
 WORKDIR /ros2_ws

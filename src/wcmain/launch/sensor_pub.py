@@ -10,11 +10,9 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     oradar_launch_file = os.path.join(get_package_share_directory("lidar"), "launch", "scan.py")
-
     imu_launch_file = os.path.join(get_package_share_directory("imu"), "launch", "start.py")
 
     # description_launch_file = os.path.join(get_package_share_directory("wcmodel"), "launch", "wc_base.py")
-
     # slam_launch_file = os.path.join(get_package_share_directory("slam_2d"), "launch", "slam_2d.py")
 
     return LaunchDescription(

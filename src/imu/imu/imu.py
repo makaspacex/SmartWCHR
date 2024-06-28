@@ -8,6 +8,7 @@ import rclpy
 import serial
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
+import rich
 
 key = 0
 flag = 0
@@ -16,6 +17,7 @@ angularVelocity = [0, 0, 0]
 acceleration = [0, 0, 0]
 magnetometer = [0, 0, 0]
 angle_degree = [0, 0, 0]
+
 
 
 # 定义IMU驱动节点类
@@ -146,32 +148,37 @@ class IMUDriverNode(Node):
         # 启动IMU驱动线程
         self.driver_thread = threading.Thread(target=self.driver_loop, args=(port_name,))
         self.driver_thread.start()
-
-    def driver_loop(self, port_name):
+        
+        # 用来控制打印输出频率的
+        self.pub_n, self.pub_time = 0, time.time()
+    
+    def connect_dev(self, port_name):
         # 打开串口
-
-        try:
-            wt_imu = serial.Serial(port=port_name, baudrate=9600, timeout=0.5)
-            if wt_imu.isOpen():
-                self.get_logger().info(f"\033[32mSerial port {port_name} opened successfully...\033[0m")
-            else:
-                wt_imu.open()
-                self.get_logger().info(f"\033[32mSerial port {port_name} opened successfully...\033[0m")
-        except Exception as e:
-            print(e)
-            self.get_logger().info(f"\033[31mSerial port {port_name} opening failure\033[0m")
-            exit(0)
-
+        while True:
+            try:
+                wt_imu = serial.Serial(port=port_name, baudrate=9600, timeout=1)
+                if wt_imu.isOpen():
+                    self.get_logger().info(f"\033[32mSerial port {port_name} opened successfully...\033[0m")
+                else:
+                    wt_imu.open()
+                    self.get_logger().info(f"\033[32mSerial port {port_name} opened successfully...\033[0m")
+                return wt_imu
+            except Exception as e:
+                print(e)
+                self.get_logger().info(f"\033[31mSerial port {port_name} opening failure\033[0m")
+                time.sleep(1)
+        
+    def driver_loop(self, port_name):
+        wt_imu = self.connect_dev(port_name=port_name)
         # 循环读取IMU数据
         while True:
             # 读取加速度计数据
-
             try:
                 buff_count = wt_imu.inWaiting()
             except Exception as e:
                 print("exception:" + str(e))
                 print("imu disconnect")
-                exit(0)
+                wt_imu = self.connect_dev(port_name=port_name)
             else:
                 if buff_count > 0:
                     buff_data = wt_imu.read(buff_count)
@@ -218,6 +225,10 @@ class IMUDriverNode(Node):
 
         # 发布IMU消息
         self.imu_pub.publish(self.imu_msg)
+        if time.time() - self.pub_time > 1:
+            self.pub_n = (self.pub_n + 1) % 10000
+            rich.print(f"[cyan]{self.pub_n} linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            self.pub_time = time.time()
 
     def compute_orientation(self, wx, wy, wz, ax, ay, az, dt):
         # 计算旋转矩阵

@@ -14,7 +14,7 @@ def generate_launch_description():
     base_link_to_imu_tf_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
-        name='base_link_to_base_imu',
+        name='imu_stf',
         arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
     ) 
 

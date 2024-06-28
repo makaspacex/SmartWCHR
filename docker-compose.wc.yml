@@ -1,5 +1,5 @@
 services:
-  Sensors:
+  smartwchr:
     image: makaspacex/smartwchr:dev
     container_name: smartwchr
     network_mode: host
@@ -17,5 +17,4 @@ services:
       - /dev/ttyUSB2:/dev/oradar
     environment:
       - TZ=Asia/Shanghai
-      - CUID=0
-    command: "/bin/zsh -c 'source ~/.zshrc && make build wc && source ~/.zshrc && make launch wcmain sensor_pub.py'"
+    command: "/bin/zsh -c 'source ~/.zshrc && make build wc && load_ros2 && make launch wcmain sensor_pub.py'"
