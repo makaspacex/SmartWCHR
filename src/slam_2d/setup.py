@@ -8,7 +8,7 @@ setup(
     version='0.0.0',
     packages=[package_name],
     data_files=[
-        ('share/' + package_name + '/config', ['config/slam_2d.lua']),
+        ('share/' + package_name + '/config', glob("config/*")),
         ('share/' + package_name + '/launch', glob("launch/*.py")),
         ('share/' + package_name, ['package.xml']),
 

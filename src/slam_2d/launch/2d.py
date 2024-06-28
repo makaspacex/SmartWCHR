@@ -9,6 +9,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import IncludeLaunchDescription
 from ament_index_python.packages import get_package_share_directory
+from pathlib import Path
 
 def generate_launch_description():
 
@@ -23,7 +24,10 @@ def generate_launch_description():
     # find wheelchair model launch file
     wcmodel_package_path = FindPackageShare('wcmodel').find('wcmodel')
     wheelchair_launch_file = os.path.join(wcmodel_package_path, 'launch', 'wc_base.py')
-
+    
+    # set rviz config file path
+    rviz_config_path = str( Path(FindPackageShare('slam_2d').find('slam_2d')) / Path("config/rviz2.rviz"))
+    
     # # launch the nodes below
     # return LaunchDescription([
     #     # coordinate transform nodes
@@ -136,10 +140,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(wheelchair_launch_file)
         )
 
+   
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
+        arguments=['-d', rviz_config_path],
         output='screen')
 
     # launch nodes above
