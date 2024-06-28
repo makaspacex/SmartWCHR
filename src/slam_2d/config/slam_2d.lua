@@ -44,6 +44,7 @@ options = {
   fixed_frame_pose_sampling_ratio = 1.,     -- 固定帧消息的固定比率采样
   imu_sampling_ratio = 1.,                  -- IMU消息的固定比率采样
   landmarks_sampling_ratio = 1.,            -- 地标消息的固定比率采样
+  -- pure_localization = true,                 -- 设置纯定位模式
 }
 
 MAP_BUILDER.use_trajectory_builder_2d = true
@@ -63,8 +64,7 @@ TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true   -- 设置是
 
 
 
-TRAJECTORY_BUILDER.pure_localization = true
-POSE_GRAPH.optimize_every_n_nodes = 20
+-- TRAJECTORY_BUILDER.pure_localization = true
 
 
 TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.linear_search_window = 0.1 -- 设置在线相关扫描匹配的线性搜索窗口大小
