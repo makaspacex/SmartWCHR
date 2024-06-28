@@ -96,7 +96,6 @@ void publish_msg(rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr &pub,
       last_index = index;
     }
   }
-  std::cout << "data[0].angle=" << scan_frame->data[0].angle << std::endl;
   pub->publish(scanMsg);
 }
 
@@ -196,15 +195,22 @@ int main(int argc, char **argv)
       device.SetRotationSpeed(motor_speed);
     }
     int n = 0;
+    time_t pub_t = time(NULL);
     while (rclcpp::ok())
     {
       start_scan_time = node->now();
       ret = device.GrabFullScanBlocking(scan_data, 1000);
       end_scan_time = node->now();
       scan_duration = (end_scan_time.seconds() - start_scan_time.seconds());
+      time_t now_t = time(NULL);
       if (ret)
       {
         publish_msg(publisher, &scan_data, start_scan_time, scan_duration, frame_id, clockwise, angle_min, angle_max, min_range, max_range);
+        if(now_t - pub_t > 1){
+          std::cout << "data[0].angle=" << scan_data.data[0].angle << std::endl;
+          pub_t = now_t;
+        }
+
       }else{
         n += 1;
         n = n % 1000;
