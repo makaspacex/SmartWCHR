@@ -1,33 +1,40 @@
-import os
+"""
+This module provides slam function for wheelchair.
 
+Functions:
+- generate_launch_description(): launch nodes for slam_2d.
+"""
+
+import os
+from pathlib import Path
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition, UnlessCondition
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import IncludeLaunchDescription
-from ament_index_python.packages import get_package_share_directory
-from pathlib import Path
+
 
 def generate_launch_description():
+    """
+    Function to load nav2 server config files and launch nav2 nodes.
+    """
 
     # do not use sim time
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    
+
     # find config lua file
     slam_package_path = FindPackageShare('slam_2d').find('slam_2d')
     lua_name = 'slam_2d.lua'
     lua_directory = os.path.join(slam_package_path, 'config')
-    
+
     # find wheelchair model launch file
     wcmodel_package_path = FindPackageShare('wcmodel').find('wcmodel')
     wheelchair_launch_file = os.path.join(wcmodel_package_path, 'launch', 'wc_base.py')
-    
+
     # set rviz config file path
-    rviz_config_path = str( Path(FindPackageShare('slam_2d').find('slam_2d')) / Path("config/rviz2.rviz"))
-    
+    rviz_config_path = str( Path(slam_package_path ) / Path("config/rviz2.rviz"))
+
     # # launch the nodes below
     # return LaunchDescription([
     #     # coordinate transform nodes
@@ -70,7 +77,8 @@ def generate_launch_description():
 
     #     Node(
     #         package = 'cartographer_ros',
-    #         executable = 'cartographer_occupancy_grid_node', # use occupancy_grid_node instead in foxy
+    #         executable = 'cartographer_occupancy_grid_node',
+    #           # use occupancy_grid_node instead in foxy
     #         parameters = [
     #             {'use_sim_time': use_sim_time},
     #             {'resolution': 0.05}],
@@ -85,6 +93,7 @@ def generate_launch_description():
     #         package='rviz2',
     #         executable='rviz2',
     #         name='rviz2',
+    #         arguments=['-d', rviz_config_path],
     #         output='screen')
     # ])
 
@@ -126,7 +135,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
         output = 'screen'
         )
-    
+
     occupancy_grid_node = Node(
         package = 'cartographer_ros',
         executable = 'cartographer_occupancy_grid_node', # use occupancy_grid_node instead in foxy
@@ -134,13 +143,12 @@ def generate_launch_description():
             {'use_sim_time': use_sim_time},
             {'resolution': 0.05}],
         )
-    
+
     # visualization nodes
     wcmodel_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(wheelchair_launch_file)
         )
 
-   
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',

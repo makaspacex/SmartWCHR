@@ -56,7 +56,12 @@ TRAJECTORY_BUILDER_2D.use_imu_data = true               -- 设置是否使用 IM
 TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true   -- 设置是否使用实时回环检测
 
 
-TRAJECTORY_BUILDER.pure_localization = true -- 启用pure_localization模式
+-- -- TRAJECTORY_BUILDER.pure_localization = true -- 启用pure_localization模式
+-- TRAJECTORY_BUILDER.pure_localization_trimmer = {
+--   max_submaps_to_keep = 3,
+-- }
+-- POSE_GRAPH.optimize_every_n_nodes = 80  --每80个有效帧组成一个子图，子图构建完成要闭环检测一次，这个数越小，闭环检测越频繁
+
 POSE_GRAPH.optimize_every_n_nodes = 0       -- 禁用位姿图优化
 
 

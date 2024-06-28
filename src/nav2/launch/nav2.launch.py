@@ -1,43 +1,71 @@
-import os
+"""
+This module provides navigation function for wheelchair.
 
-from ament_index_python.packages import get_package_share_directory
+Functions:
+- generate_launch_description(): launch nodes for navigation.
+"""
+
+from pathlib import Path
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
-
 def generate_launch_description():
-    amcl_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'amcl.yaml')
-    bt_navigator_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'bt_navigator.yaml')
-    controller_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'controller_server.yaml')
-    planner_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'planner_server.yaml')
-    recoveries_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'recoveries_server.yaml')
+    """
+    Function to load nav2 server config files and launch nav2 nodes.
+    """
+    # load servers config file
+    nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
+    amcl_yaml = str( nav2_package_path / Path("config/amcl.yaml"))
+    bt_navigator_yaml = str( nav2_package_path / Path("config/bt_navigator.yaml"))
+    controller_server_yaml = str( nav2_package_path / Path("config/controller_server.yaml"))
+    planner_server_yaml = str( nav2_package_path / Path("config/planner_server.yaml"))
+
+    # amcl_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'amcl.yaml')
+    # bt_navigator_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'bt_navigator.yaml')
+    # controller_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'controller_server.yaml')
+    # planner_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'planner_server.yaml')
+    # recoveries_server_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'recoveries_server.yaml')
+
     # acml_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/acml.yaml"
     # bt_navigator_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/bt_navigator.yaml"
     # controller_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/controller_server.yaml"
     # planner_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/planner_server.yaml"
     # recoveries_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/recoveries_server.yaml"
-    
-    # map_file = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.yaml"
-    map_file = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.yaml')
-    # pbstream_path = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.pbstream'
-    pbstream_path = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.pbstream')
-    
+
+    # # map_file = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.yaml"
+    # map_file = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.yaml')
+    # # pbstream_path = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.pbstream'
+    # pbstream_path = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.pbstream')
+
+    # load slam_2d map file
+    # ! ! ! map file path need to be optimized to slam_2d map path ! ! !
+    map_file = str( nav2_package_path / Path("maps/map-0619.yaml"))
+    pbstream_path = str( nav2_package_path / Path("maps/map-0619.pbstream"))
+
     # urdf_name = "wheelchair_base.urdf"
     # wcmodel_pkg_share = FindPackageShare('wcmodel').find('wcmodel') 
     # urdf_model_path = os.path.join(wcmodel_pkg_share, f'urdf/{urdf_name}')
 
-    # Wheelchair description launch file
-    wheelchair_launch_file = os.path.join(get_package_share_directory('wcmodel'), 'launch', 'wc_base.py')
-    oradar_launch_file = os.path.join(get_package_share_directory('lidar'), 'launch', 'scan_view.py')
-    imu_launch_file = os.path.join(get_package_share_directory('imu'), 'launch', 'start.py')
 
-    configuration_directory = os.path.join(get_package_share_directory('nav2'), 'config')
-    # configuration_directory = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config'
+    # load nav2 config lua file
+    configuration_directory = str( nav2_package_path / Path("config"))
     configuration_basename = 'nav2.lua'
+    # load wheelchair description launch file
+    wcmodel_package_path = Path(FindPackageShare('wcmodel').find('wcmodel'))
+    wheelchair_launch_file = str( wcmodel_package_path / Path("launch/wc_base.py"))
 
+
+    # # load wheelchair description launch file
+    # wheelchair_launch_file = os.path.join(get_package_share_directory('wcmodel'), 'launch', 'wc_base.py')
+    # oradar_launch_file = os.path.join(get_package_share_directory('lidar'), 'launch', 'scan_view.py')
+    # imu_launch_file = os.path.join(get_package_share_directory('imu'), 'launch', 'start.py')
+
+    # configuration_directory = os.path.join(get_package_share_directory('nav2'), 'config')
+    # # configuration_directory = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config'
+    # configuration_basename = 'nav2.lua'
 
 
     return LaunchDescription(
@@ -55,8 +83,8 @@ def generate_launch_description():
                 executable='static_transform_publisher',
                 name='base_link_to_base_imu',
                 arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
-            ),    
-            
+            ),
+
             Node(
                 package='tf2_ros',
                 executable='static_transform_publisher',
@@ -105,7 +133,7 @@ def generate_launch_description():
                 executable='map_server',
                 name='map_server',
                 output='screen',
-                parameters=[{'use_sim_time': False}, 
+                parameters=[{'use_sim_time': False},
                             {'yaml_filename':map_file}]
             ),
 
@@ -116,7 +144,7 @@ def generate_launch_description():
                 output='screen',
                 parameters=[amcl_yaml]
             ),
-            
+
             Node(
                 package='nav2_controller',
                 executable='controller_server',
@@ -174,4 +202,3 @@ def generate_launch_description():
             )
         ]
     )
-
