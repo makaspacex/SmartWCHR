@@ -22,6 +22,7 @@ def generate_launch_description():
     bt_navigator_yaml = str( nav2_package_path / Path("config/bt_navigator.yaml"))
     controller_server_yaml = str( nav2_package_path / Path("config/controller_server.yaml"))
     planner_server_yaml = str( nav2_package_path / Path("config/planner_server.yaml"))
+    behavior_server_yaml = str( nav2_package_path / Path("config/behavior_server.yaml"))
 
     # amcl_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'amcl.yaml')
     # bt_navigator_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'bt_navigator.yaml')
@@ -161,13 +162,13 @@ def generate_launch_description():
                 parameters=[planner_server_yaml]
             ),
 
-            # Node(
-            #     package='nav2_recoveries',
-            #     executable='recoveries_server',
-            #     name='recoveries_server',
-            #     parameters=[recoveries_server_yaml],
-            #     output='screen'
-            # ),
+            Node(
+                package='nav2_behaviors',
+                executable='behavior_server',
+                name='behavior_server',
+                parameters=[behavior_server_yaml],
+                output='screen'
+            ),
 
             Node(
                 package='nav2_bt_navigator',
@@ -196,7 +197,7 @@ def generate_launch_description():
                                             'amcl',
                                             'planner_server',
                                             'controller_server',
-                                            # 'recoveries_server',
+                                            'behavior_server',
                                             'bt_navigator'
                                             ]}]
             )
