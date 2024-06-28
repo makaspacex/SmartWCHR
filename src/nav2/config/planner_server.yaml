@@ -1,7 +1,7 @@
 planner_server:
   ros__parameters:
     expected_planner_frequency: 10.0
-    use_sim_time: false
+    use_sim_time: False
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
@@ -15,7 +15,7 @@ planner_server:
           publish_frequency: 2.0
           global_frame: odom
           robot_base_frame: base_link
-          use_sim_time: True
+          use_sim_time: False
           rolling_window: true
           width: 1
           height: 1

@@ -1,12 +1,12 @@
 bt_navigator:
   ros__parameters:
-    use_sim_time: True
+    use_sim_time: False
     global_frame: map
     robot_base_frame: base_link
     odom_topic: /odom
-    bt_loop_duration: 10.0
-    default_server_timeout: 20.0
-    default_nav_to_pose_bt_xml: "/home/jetson/Desktop/data/cyq/slam/guide_nav2_ws/src/guide_nav2/config/behavior.xml" #包含用于导航到姿势的行为的文件的完整路径
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    default_nav_to_pose_bt_xml: "../bt_navigator.yaml" #包含用于导航到姿势的行为的文件的完整路径
     plugin_lib_names:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_compute_path_through_poses_action_bt_node
