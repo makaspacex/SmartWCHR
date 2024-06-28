@@ -19,8 +19,12 @@ def generate_launch_description():
     # controller_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/controller_server.yaml"
     # planner_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/planner_server.yaml"
     # recoveries_server_yaml = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config/recoveries_server.yaml"
-    map_file = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.yaml"
-    pbstream_path = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.pbstream'
+    
+    # map_file = "/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.yaml"
+    map_file = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.yaml')
+    # pbstream_path = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/maps/map-0619.pbstream'
+    pbstream_path = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.pbstream')
+    
     # urdf_name = "wheelchair_base.urdf"
     # wcmodel_pkg_share = FindPackageShare('wcmodel').find('wcmodel') 
     # urdf_model_path = os.path.join(wcmodel_pkg_share, f'urdf/{urdf_name}')
@@ -28,9 +32,10 @@ def generate_launch_description():
     # Wheelchair description launch file
     wheelchair_launch_file = os.path.join(get_package_share_directory('wcmodel'), 'launch', 'wc_base.py')
     oradar_launch_file = os.path.join(get_package_share_directory('lidar'), 'launch', 'scan_view.py')
-    imu_launch_file = os.path.join(get_package_share_directory('imu'), 'launch', 'imu.py')
+    imu_launch_file = os.path.join(get_package_share_directory('imu'), 'launch', 'start.py')
 
-    configuration_directory = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config'
+    configuration_directory = os.path.join(get_package_share_directory('nav2'), 'config')
+    # configuration_directory = '/home/jetson/Desktop/data/cyq/slam/nav2_ws/src/nav2/config'
     configuration_basename = 'nav2.lua'
 
 
@@ -63,12 +68,12 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(wheelchair_launch_file)
             ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(oradar_launch_file)
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(imu_launch_file)
-            ),
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(oradar_launch_file)
+            # ),
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(imu_launch_file)
+            # ),
 
             Node(
                 package = 'cartographer_ros',
@@ -87,7 +92,7 @@ def generate_launch_description():
 
             Node(
                 package = 'cartographer_ros',
-                executable = 'occupancy_grid_node',
+                executable = 'cartographer_occupancy_grid_node',
                 parameters = [
                     {'use_sim_time': False},
                     {'resolution': 0.05}],
@@ -127,14 +132,14 @@ def generate_launch_description():
                 output='screen',
                 parameters=[planner_server_yaml]
             ),
-                
-            Node(
-                package='nav2_recoveries',
-                executable='recoveries_server',
-                name='recoveries_server',
-                parameters=[recoveries_server_yaml],
-                output='screen'
-            ),
+
+            # Node(
+            #     package='nav2_recoveries',
+            #     executable='recoveries_server',
+            #     name='recoveries_server',
+            #     parameters=[recoveries_server_yaml],
+            #     output='screen'
+            # ),
 
             Node(
                 package='nav2_bt_navigator',
@@ -159,11 +164,11 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{'use_sim_time': False},
                             {'autostart': True},
-                            {'node_names': ['map_server', 
+                            {'node_names': ['map_server',
                                             'amcl',
                                             'planner_server',
                                             'controller_server',
-                                            'recoveries_server'                                        ,
+                                            # 'recoveries_server',
                                             'bt_navigator'
                                             ]}]
             )

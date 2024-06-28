@@ -14,10 +14,13 @@ def generate_launch_description():
     # pkg_share = FindPackageShare(package=package_name).find(package_name) 
     # urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
 
-    current_file_path = os.path.dirname(os.path.abspath(__file__))
-    urdf_directory = os.path.join(current_file_path, '..', '..', 'urdf')
-    urdf_directory = os.path.normpath(urdf_directory)
-    urdf_model_path = os.path.join(urdf_directory, urdf_name)
+    # current_file_path = os.path.dirname(os.path.abspath(__file__))
+    # urdf_directory = os.path.join(current_file_path, '..', '..', 'urdf')
+    # urdf_directory = os.path.normpath(urdf_directory)
+    # urdf_model_path = os.path.join(urdf_directory, urdf_name)
+
+    pkg_share = FindPackageShare(package=package_name).find(package_name)
+    urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',

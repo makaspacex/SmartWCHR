@@ -31,6 +31,12 @@ install(DIRECTORY launch
   FILES_MATCHING PATTERN "*.py"
 )
 
+# Install config folder and files
+install(DIRECTORY maps
+  DESTINATION share/${PROJECT_NAME}
+  FILES_MATCHING PATTERN "*.pbstream" PATTERN "*.yaml" PATTERN "*.pgm"
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
