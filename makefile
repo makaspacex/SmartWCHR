@@ -28,21 +28,21 @@ ifeq ($(strip $(OPTS)),)
 	RUN_ARGS =
 	LAUNCH_ARGS = 
 	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
-	UP_ARGS =  -f docker-compose.yml up
+	UP_ARGS =  -f docker-compose.yml up -d
 # 处理特殊选项名字
 else ifeq ($(OPTS),$(WC_NAME))
 	BUILD_PACKAGES = --packages-select $(WHEEL_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS = 
 	DOCKER_ARGS = -f docker-compose.wc.yml $(DOCKER_RUN_ARGS)
-	UP_ARGS =  -f docker-compose.wc.yml up
+	UP_ARGS =  -f docker-compose.wc.yml up -d
 
 else ifeq ($(OPTS),$(DC_NAME))
 	BUILD_PACKAGES = --packages-select $(DC_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS =
 	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
-	UP_ARGS =  -f docker-compose.dc.yml up
+	UP_ARGS =  -f docker-compose.dc.yml up -d
 
 # 否则等于指定选项名字
 else
