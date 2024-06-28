@@ -227,7 +227,7 @@ class IMUDriverNode(Node):
         self.imu_pub.publish(self.imu_msg)
         if time.time() - self.pub_time > 1:
             self.pub_n = (self.pub_n + 1) % 10000
-            rich.print(f"[cyan]{self.pub_n} linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            rich.print(f"[cyan]linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
             self.pub_time = time.time()
 
     def compute_orientation(self, wx, wy, wz, ax, ay, az, dt):
