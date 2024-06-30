@@ -17,6 +17,10 @@ def generate_launch_description():
     Function to load nav2 server config files and launch nav2 nodes.
     """
     # load servers config file
+
+    nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
+    guide_yaml = str( nav2_package_path / Path("config/guide.yaml"))
+
     nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
     amcl_yaml = str( nav2_package_path / Path("config/amcl.yaml"))
     bt_navigator_yaml = str( nav2_package_path / Path("config/bt_navigator.yaml"))
@@ -143,7 +147,8 @@ def generate_launch_description():
                 executable='amcl',
                 name='amcl',
                 output='screen',
-                parameters=[amcl_yaml]
+                # parameters=[amcl_yaml]
+                parameters=[guide_yaml]
             ),
 
             Node(
@@ -151,7 +156,8 @@ def generate_launch_description():
                 executable='controller_server',
                 name='controller_server',
                 output='screen',
-                parameters=[controller_server_yaml]
+                # parameters=[controller_server_yaml]
+                parameters=[guide_yaml]
             ),
 
             Node(
@@ -159,15 +165,17 @@ def generate_launch_description():
                 executable='planner_server',
                 name='planner_server',
                 output='screen',
-                parameters=[planner_server_yaml]
+                # parameters=[planner_server_yaml]
+                parameters=[guide_yaml]
             ),
 
             Node(
                 package='nav2_behaviors',
                 executable='behavior_server',
                 name='behavior_server',
-                parameters=[behavior_server_yaml],
-                output='screen'
+                output='screen',
+                # parameters=[behavior_server_yaml],
+                parameters=[guide_yaml]
             ),
 
             Node(
@@ -175,7 +183,8 @@ def generate_launch_description():
                 executable='bt_navigator',
                 name='bt_navigator',
                 output='screen',
-                parameters=[bt_navigator_yaml]
+                # parameters=[bt_navigator_yaml]
+                parameters=[guide_yaml]
             ),
 
             Node(
