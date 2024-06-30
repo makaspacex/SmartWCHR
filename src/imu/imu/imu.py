@@ -150,7 +150,7 @@ class IMUDriverNode(Node):
         self.driver_thread.start()
         
         # 用来控制打印输出频率的
-        self.pub_n, self.pub_time = 0, time.time()
+        self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
     
     def connect_dev(self, port_name):
         # 打开串口
@@ -180,12 +180,14 @@ class IMUDriverNode(Node):
                 print("imu disconnect")
                 wt_imu = self.connect_dev(port_name=port_name)
             else:
-                if buff_count > 0:
-                    buff_data = wt_imu.read(buff_count)
-                    for i in range(0, buff_count):
-                        tag = handle_serial_data(buff_data[i])
-                        if tag:
-                            self.imu_data()
+                if buff_count <= 0:
+                    continue
+                buff_data = wt_imu.read(buff_count)
+                for i in range(0, buff_count):
+                    tag = handle_serial_data(buff_data[i])
+                    if not tag:
+                        continue
+                    self.imu_data()
 
     def imu_data(self):
         accel_x, accel_y, accel_z = acceleration[0], acceleration[1], acceleration[2]  # struct.unpack('hhh', accel_raw)
@@ -225,11 +227,14 @@ class IMUDriverNode(Node):
 
         # 发布IMU消息
         self.imu_pub.publish(self.imu_msg)
-
-        if time.time() - self.pub_time > 1:
-            self.pub_n = (self.pub_n + 1) % 10000
-            rich.print(f"[cyan]linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
-            self.pub_time = time.time()
+        now_time = time.time()
+        self.pub_n = self.pub_n + 1
+        
+        if now_time - self.last_print_time > 1:
+            rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
+            rich.print(f"[cyan]imu pub rate = {rate}hz, linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            self.last_print_time = time.time()
+            self.last_n = self.pub_n
 
     def compute_orientation(self, wx, wy, wz, ax, ay, az, dt):
         # 计算旋转矩阵

@@ -195,20 +195,28 @@ int main(int argc, char **argv)
       device.SetRotationSpeed(motor_speed);
     }
     int n = 0;
-    time_t pub_t = time(NULL);
+    time_t last_pub_time = time(NULL);
+    unsigned int pub_n = 0;
+    unsigned int last_pub_n = 0;
+
     while (rclcpp::ok())
     {
       start_scan_time = node->now();
       ret = device.GrabFullScanBlocking(scan_data, 1000);
       end_scan_time = node->now();
       scan_duration = (end_scan_time.seconds() - start_scan_time.seconds());
-      time_t now_t = time(NULL);
+      
       if (ret)
       {
         publish_msg(publisher, &scan_data, start_scan_time, scan_duration, frame_id, clockwise, angle_min, angle_max, min_range, max_range);
-        if(now_t - pub_t > 1){
-          std::cout << "data[0].angle=" << scan_data.data[0].angle << std::endl;
-          pub_t = now_t;
+        pub_n += 1;
+
+        time_t now_t = time(NULL);
+        if(now_t - last_pub_time > 1){
+          double rate = (pub_n - last_pub_n) / (now_t - last_pub_time);
+          std::cout << "lidar pub rate=" <<rate << "hz, data[0].angle=" << scan_data.data[0].angle << std::endl;
+          last_pub_time = now_t;
+          last_pub_n = pub_n;
         }
 
       }else{
