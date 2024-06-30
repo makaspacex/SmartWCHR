@@ -2,17 +2,22 @@ FROM makaspacex/smartwchr:base
 
 ENV ROS_DISTRO=humble
 
-# slim and wheel describesion
+# slam and wheel describesion
 RUN apt update &&  \
     apt install -y --no-install-recommends \
     ros-$ROS_DISTRO-robot-state-publisher \
     ros-$ROS_DISTRO-joint-state-publisher-gui \
-    ros-$ROS_DISTRO-cartographer ros-$ROS_DISTRO-cartographer-ros && \
+    ros-$ROS_DISTRO-cartographer ros-$ROS_DISTRO-cartographer-ros \
+    python3-argcomplete ros-$ROS_DISTRO-tf-transformations && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # imu
 RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
     && pip3 install pyserial numpy rich
+
+# update 
+COPY ./ros_shell.sh /tmp/
+RUN cat /tmp/ros_shell.sh >> ~/.zshrc && rm -f /tmp/ros_shell.sh
 
 # Create workspace so that user own this directory
 WORKDIR /ros2_ws
