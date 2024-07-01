@@ -141,7 +141,7 @@ class IMUDriverNode(Node):
         self.imu_msg.header.frame_id = 'imu_link'
 
         # 创建IMU数据发布器
-        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 50)
         #self.port = self.get_parameter('port')
         #self.baud_rate = self.get_parameter('baud')
 
