@@ -33,7 +33,7 @@ def generate_launch_description():
     wheelchair_launch_file = os.path.join(wcmodel_package_path, 'launch', 'wc_base.py')
 
     # set rviz config file path
-    rviz_config_path = str( Path(slam_package_path ) / Path("config/rviz2.rviz"))
+    rviz_config_path = str( Path(slam_package_path ) / Path("config/slam2d.rviz"))
 
     # # launch the nodes below
     # return LaunchDescription([
