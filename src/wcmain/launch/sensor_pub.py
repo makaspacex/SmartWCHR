@@ -14,11 +14,16 @@ def generate_launch_description():
 
     # description_launch_file = os.path.join(get_package_share_directory("wcmodel"), "launch", "wc_base.py")
     # slam_launch_file = os.path.join(get_package_share_directory("slam_2d"), "launch", "slam_2d.py")
-
+    driver_node = Node(
+        package='driver',
+        executable='start',
+        name='driver'
+    )
     return LaunchDescription(
         [
             IncludeLaunchDescription(PythonLaunchDescriptionSource(oradar_launch_file)),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(imu_launch_file)),
+            driver_node
         ]
     )
 

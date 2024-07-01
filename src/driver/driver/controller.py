@@ -9,8 +9,8 @@ import serial
 
 class ControllerNode(Node):
     """控制节点"""
-    def __init__(self):
-        super().__init__('controller')
+    def __init__(self, portname="/dev/ttyUSB0", rate=115200):
+        super().__init__('driver')
         
         self.lineSpeed = 0.0                    # 初始化线速度
         self.angleSpeed = 0.0                   # 初始化角速度
@@ -22,7 +22,7 @@ class ControllerNode(Node):
 
         try:
             # 创建接口对象 串口设备名：'/dev/ttyUSB0' 比特率：115200
-            self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1000)
+            self.ser = serial.Serial(portname, rate, timeout=1000)
         except Exception as e:
             print("串口异常：", e)
 
@@ -67,7 +67,9 @@ class ControllerNode(Node):
 
         sendData[0:4] = leftSpeedData
         sendData[4:]  = rightSpeedData
-
+        
+        print(f"msg:{msg} leftSpeedData:{leftSpeedData} rightSpeedData:{rightSpeedData}")
+        
         self.BuffToSerial(sendData, 12)
         # self.ser.write(self.buffe)
 
