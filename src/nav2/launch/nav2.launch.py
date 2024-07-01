@@ -62,7 +62,7 @@ def generate_launch_description():
     wcmodel_package_path = Path(FindPackageShare('wcmodel').find('wcmodel'))
     wheelchair_launch_file = str( wcmodel_package_path / Path("launch/wc_base.py"))
 
-
+    rviz_config_path = str( Path(nav2_package_path ) / Path("config/guide.rviz"))
     # # load wheelchair description launch file
     # wheelchair_launch_file = os.path.join(get_package_share_directory('wcmodel'), 'launch', 'wc_base.py')
     # oradar_launch_file = os.path.join(get_package_share_directory('lidar'), 'launch', 'scan_view.py')
@@ -191,6 +191,7 @@ def generate_launch_description():
                 package='rviz2',
                 # namespace='rviz2',
                 executable='rviz2',
+                arguments=['-d', rviz_config_path],
                 name='rviz2',
                 output='screen'
             ),

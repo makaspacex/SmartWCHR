@@ -22,7 +22,7 @@ find_package(nav2_bringup REQUIRED)
 # Install config folder and files
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.lua" PATTERN "*.yaml" PATTERN "*.xml"
+  FILES_MATCHING PATTERN "*.lua" PATTERN "*.yaml" PATTERN "*.xml" PATTERN "*.rviz"
 )
 
 # Install config folder and files
