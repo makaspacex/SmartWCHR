@@ -44,17 +44,22 @@ options = {
   fixed_frame_pose_sampling_ratio = 1.,     -- 固定帧消息的固定比率采样
   imu_sampling_ratio = 1.,                  -- IMU消息的固定比率采样
   landmarks_sampling_ratio = 1.,            -- 地标消息的固定比率采样
-  -- pure_localization = true,                 -- 设置纯定位模式
 }
 
 MAP_BUILDER.use_trajectory_builder_2d = true
-TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 10   -- 设置每次更新子地图时积累的激光雷达扫描数量 10
-TRAJECTORY_BUILDER_2D.submaps.num_range_data = 35       -- 设置每个子地图中包含的激光雷达扫描次数 35
+TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 6   -- 设置每次更新子地图时积累的激光雷达扫描数量 10
+TRAJECTORY_BUILDER_2D.submaps.num_range_data = 20       -- 设置每个子地图中包含的激光雷达扫描次数 35
 TRAJECTORY_BUILDER_2D.min_range = 0.3                   -- 设置激光雷达数据的最小有效范围
 TRAJECTORY_BUILDER_2D.max_range = 12.                   -- 设置激光雷达数据的最大有效范围
 TRAJECTORY_BUILDER_2D.missing_data_ray_length = 5.      -- 设置缺失数据射线的长度
 TRAJECTORY_BUILDER_2D.use_imu_data = true              -- 设置是否使用 IMU 数据
 TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true   -- 设置是否使用实时回环检测
+
+
+TRAJECTORY_BUILDER.pure_localization_trimmer = {
+  max_submaps_to_keep = 3,
+}
+POSE_GRAPH.optimize_every_n_nodes = 20
 
 -- --尽量小点；如果移动距离或旋转过小, 或者时间过短, 不进行地图的更新
 -- TRAJECTORY_BUILDER_2D.motion_filter.max_distance_meters = 0.05
