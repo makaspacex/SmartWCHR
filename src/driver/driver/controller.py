@@ -67,10 +67,9 @@ class ControllerNode(Node):
 
         sendData[0:4] = leftSpeedData
         sendData[4:]  = rightSpeedData
+        self.get_logger().info(f"\033[32mmsg:{msg} leftSpeedData:{leftSpeedData} rightSpeedData:{rightSpeedData}\033[0m")
         
-        print(f"msg:{msg} leftSpeedData:{leftSpeedData} rightSpeedData:{rightSpeedData}")
-        
-        self.BuffToSerial(sendData, 12)
+        # self.BuffToSerial(sendData, 12)
         # self.ser.write(self.buffe)
 
     def SpeedCallBack(self):
