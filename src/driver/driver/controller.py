@@ -73,6 +73,8 @@ class ControllerNode(Node):
         # self.ser.write(self.buffe)
 
     def SpeedCallBack(self):
+        if not self.ser:
+            return
         self.ser.write(self.buffer)
 
 def main(args = None):
