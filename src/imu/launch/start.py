@@ -23,7 +23,7 @@ def generate_launch_description():
         executable='start',
         name='imu',
         remappings=[('/wit/imu', '/imu/data')],
-        parameters=[{'port': '/dev/ttyUSB1'},
+        parameters=[{'port': '/dev/imu_usb'},
                     {"baud": 9600}],
         output="screen"
 

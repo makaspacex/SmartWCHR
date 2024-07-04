@@ -9,7 +9,7 @@ import serial
 
 class ControllerNode(Node):
     """控制节点"""
-    def __init__(self, portname="/dev/ttyUSB0", rate=115200):
+    def __init__(self, portname="/dev/driver", rate=115200):
         super().__init__('driver')
         
         self.lineSpeed = 0.0                    # 初始化线速度
@@ -21,7 +21,7 @@ class ControllerNode(Node):
         self.buffer = 12 * [0]                  # 串口发送内容
 
         try:
-            # 创建接口对象 串口设备名：'/dev/ttyUSB0' 比特率：115200
+            # 创建接口对象 串口设备名：'/dev/driver' 比特率：115200
             self.ser = serial.Serial(portname, rate, timeout=1000)
         except Exception as e:
             print("串口异常：", e)

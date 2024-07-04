@@ -1,1 +1,0 @@
-KERNEL=="ttyUSB1", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="0001", MODE:="0777", SYMLINK+="imu_usb"
