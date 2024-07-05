@@ -76,26 +76,26 @@ def generate_launch_description():
     return LaunchDescription(
         [
             # ------ 坐标变换 节点 ------ #
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='base_footprint_to_base_link',
-                arguments=['0','0','-0.54','0','0','0','base_link','base_footprint']
-            ),
+            # Node(
+            #     package='tf2_ros',
+            #     executable='static_transform_publisher',
+            #     name='base_footprint_to_base_link',
+            #     arguments=['0','0','-0.54','0','0','0','base_link','base_footprint']
+            # ),
 
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='base_link_to_base_imu',
-                arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
-            ),
+            # Node(
+            #     package='tf2_ros',
+            #     executable='static_transform_publisher',
+            #     name='base_link_to_base_imu',
+            #     arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
+            # ),
 
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='base_link_to_base_laser',
-                arguments=['0','0','0.18','0','0','0','base_link','lidar']
-            ),
+            # Node(
+            #     package='tf2_ros',
+            #     executable='static_transform_publisher',
+            #     name='base_link_to_base_laser',
+            #     arguments=['0','0','0.18','0','0','0','base_link','lidar']
+            # ),
 
             # ------ cartographer 传感器 节点 ------ #
             IncludeLaunchDescription(
