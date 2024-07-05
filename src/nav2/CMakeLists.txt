@@ -25,13 +25,13 @@ install(DIRECTORY config
   FILES_MATCHING PATTERN "*.lua" PATTERN "*.yaml" PATTERN "*.xml" PATTERN "*.rviz"
 )
 
-# Install config folder and files
+# Install launch folder and files
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.py"
 )
 
-# Install config folder and files
+# Install share folder and files
 install(DIRECTORY maps
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.pbstream" PATTERN "*.yaml" PATTERN "*.pgm"

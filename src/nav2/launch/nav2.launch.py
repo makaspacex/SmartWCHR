@@ -21,12 +21,12 @@ def generate_launch_description():
     nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
     guide_yaml = str( nav2_package_path / Path("config/guide.yaml"))
 
-    nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
-    amcl_yaml = str( nav2_package_path / Path("config/amcl.yaml"))
-    bt_navigator_yaml = str( nav2_package_path / Path("config/bt_navigator.yaml"))
-    controller_server_yaml = str( nav2_package_path / Path("config/controller_server.yaml"))
-    planner_server_yaml = str( nav2_package_path / Path("config/planner_server.yaml"))
-    behavior_server_yaml = str( nav2_package_path / Path("config/behavior_server.yaml"))
+    # load servers config file separately
+    # amcl_yaml = str( nav2_package_path / Path("config/amcl.yaml"))
+    # bt_navigator_yaml = str( nav2_package_path / Path("config/bt_navigator.yaml"))
+    # controller_server_yaml = str( nav2_package_path / Path("config/controller_server.yaml"))
+    # planner_server_yaml = str( nav2_package_path / Path("config/planner_server.yaml"))
+    # behavior_server_yaml = str( nav2_package_path / Path("config/behavior_server.yaml"))
 
     # amcl_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'amcl.yaml')
     # bt_navigator_yaml = os.path.join(get_package_share_directory('nav2'), 'config', 'bt_navigator.yaml')
@@ -46,7 +46,7 @@ def generate_launch_description():
     # pbstream_path = os.path.join(get_package_share_directory('nav2'), 'maps', 'map-0619.pbstream')
 
     # load slam_2d map file
-    # ! ! ! map file path need to be optimized to slam_2d map path ! ! !
+    # ! ! ! TODO : map file path need to be optimized to slam_2d map path ! ! !
     map_file = str( nav2_package_path / Path("maps/map-0619.yaml"))
     pbstream_path = str( nav2_package_path / Path("maps/map-0619.pbstream"))
 

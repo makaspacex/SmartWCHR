@@ -19,11 +19,20 @@ def generate_launch_description():
         executable='start',
         name='driver'
     )
+
+    particle_to_point_node = Node(
+        package='wcmain',
+        executable='particle_to_point',
+        name='particle_to_point',
+        output='screen'
+    )
+
     return LaunchDescription(
         [
             IncludeLaunchDescription(PythonLaunchDescriptionSource(oradar_launch_file)),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(imu_launch_file)),
-            driver_node
+            driver_node ,
+            particle_to_point_node
         ]
     )
 
