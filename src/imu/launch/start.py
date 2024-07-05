@@ -11,14 +11,7 @@ def generate_launch_description():
     #         arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
     #     )
 
-    base_link_to_imu_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='imu_stf',
-        arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
-    ) 
-
-    rviz_and_imu_node = Node(
+    imu_node = Node(
         package='imu',
         executable='start',
         name='imu',
@@ -26,13 +19,10 @@ def generate_launch_description():
         parameters=[{'port': '/dev/imu_usb'},
                     {"baud": 9600}],
         output="screen"
-
     )
 
     return LaunchDescription(
         [
-            base_link_to_imu_tf_node,
-            rviz_and_imu_node
-          
+            imu_node
         ]
     )

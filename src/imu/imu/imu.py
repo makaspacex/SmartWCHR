@@ -133,15 +133,14 @@ def get_quaternion_from_euler(roll, pitch, yaw):
 
 
 class IMUDriverNode(Node):
-    def __init__(self, port_name):
+    def __init__(self, port_name, frame_id="imu_link"):
         super().__init__(node_name='imu_node')
 
         # 初始化IMU消息
         self.imu_msg = Imu()
-        self.imu_msg.header.frame_id = 'imu_link'
-
+        self.imu_msg.header.frame_id = frame_id
         # 创建IMU数据发布器
-        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 50)
+        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
         #self.port = self.get_parameter('port')
         #self.baud_rate = self.get_parameter('baud')
 
