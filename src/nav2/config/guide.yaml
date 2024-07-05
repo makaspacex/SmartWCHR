@@ -58,7 +58,7 @@ bt_navigator:
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
-    default_nav_to_pose_bt_xml: "/home/byl/Desktop/SmartWCHR/src/nav2/config/behavior.xml" #包含用于导航到姿势的行为的文件的完整路径
+    default_nav_to_pose_bt_xml: "/home/jetson/Desktop/SmartWCHR/src/nav2/config/behavior.xml" #包含用于导航到姿势的行为的文件的完整路径
     plugin_lib_names:
       - nav2_compute_path_to_pose_action_bt_node
       - nav2_compute_path_through_poses_action_bt_node
