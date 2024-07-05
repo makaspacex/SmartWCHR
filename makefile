@@ -16,7 +16,7 @@ LAUNCH_CC = ros2 launch
 
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
 WHEEL_PACKAGES = driver imu lidar wcmain
-DC_PACKAGES = nav2 slam_2d wcmodel wcmain
+DC_PACKAGES = nav2 ros_local slam_2d wcmodel wcmain
 
 WC_NAME = wc
 DC_NAME = dc
