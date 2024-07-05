@@ -8,7 +8,7 @@ RUN apt update &&  \
     ros-$ROS_DISTRO-robot-state-publisher \
     ros-$ROS_DISTRO-joint-state-publisher-gui \
     ros-$ROS_DISTRO-cartographer ros-$ROS_DISTRO-cartographer-ros \
-    python3-argcomplete ros-$ROS_DISTRO-tf-transformations && \
+    python3-argcomplete ros-$ROS_DISTRO-tf-transformations ros-$ROS_DISTRO-robot-localization && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # imu
