@@ -17,11 +17,12 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     """
-    Function to load nav2 server config files and launch nav2 nodes.
+    Function to load slam 2d config files and launch carto nodes.
     """
 
     # do not use sim time
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    use_sim_time = False
 
     # find config lua file
     slam_package_path = FindPackageShare('slam_2d').find('slam_2d')
@@ -35,27 +36,27 @@ def generate_launch_description():
     # set rviz config file path
     rviz_config_path = str( Path(slam_package_path ) / Path("config/slam2d.rviz"))
 
-    # tf nodes
-    base_footprint_to_base_link = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_footprint_to_base_link',
-        arguments=['0','0','-0.54','0','0','0','base_link','base_footprint']
-    )
+    # # tf nodes
+    # base_footprint_to_base_link = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='base_footprint_to_base_link',
+    #     arguments=['0','0','-0.54','0','0','0','base_link','base_footprint']
+    # )
 
-    base_link_to_imu_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_link_to_base_imu',
-        arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
-    )
+    # base_link_to_imu_tf_node = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='base_link_to_base_imu',
+    #     arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'imu_link']
+    # )
 
-    base_link_to_laser_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_link_to_base_laser',
-        arguments=['0','0','0.18','0','0','0','base_link','lidar']
-    )
+    # base_link_to_laser_tf_node = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='base_link_to_base_laser',
+    #     arguments=['0','0','0.18','0','0','0','base_link','lidar']
+    # )
 
     # carto nodes
     cartographer_node = Node(
@@ -91,13 +92,14 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', rviz_config_path],
-        output='screen')
+        output='screen'
+        )
 
     # launch nodes above
     return LaunchDescription([
-        base_footprint_to_base_link,
-        base_link_to_imu_tf_node,
-        base_link_to_laser_tf_node,
+        # base_footprint_to_base_link,
+        # base_link_to_imu_tf_node,
+        # base_link_to_laser_tf_node,
         wcmodel_node,
         rviz_node,
         cartographer_node,

@@ -62,7 +62,7 @@ class OdomCalculator(Node):
         # 上一次的发布时间
         self.last_pub_odom = None
         
-        self.rate = self.create_rate(10)  # 10hz
+        # self.rate = self.create_rate(10)  # 10hz
         
         # 机器人参数
         self.wheel_radius = 0.27        # 轮子半径，单位：米
@@ -123,8 +123,8 @@ class OdomCalculator(Node):
             # 首次获取需要初始化上一次的发布数据
             if self.last_pub_odom is None:
                 self.last_pub_odom = now
-                self.init_l_enc = self.l_enc_pos       # 最初的位置,运行周期内不变
-                self.init_r_enc = self.r_enc_pos       # 最初的位置,运行周期内不变
+                self.init_l_enc_pos = self.l_enc_pos   # init position
+                self.init_r_enc_pos = self.r_enc_pos   
                 self.last_l_enc_pos = self.l_enc_pos   # 上一次的位置，用于计算速度
                 self.last_r_enc_pos = self.r_enc_pos   # 上一次的位置，用于计算速度
                 return # 等待下一次调用
@@ -132,7 +132,9 @@ class OdomCalculator(Node):
             # 计算偏移距离与时间
             diff_l = self.l_enc_pos - self.last_l_enc_pos
             diff_r = self.r_enc_pos - self.last_r_enc_pos
-            diff_t = (now - self.last_pub_odom).nanoseconds / 1_000_000_000.0
+            total_diff_l = self.l_enc_pos - self.init_l_enc_pos
+            total_diff_r = self.r_enc_pos - self.init_r_enc_pos
+            elapsed = (now - self.last_pub_odom).nanoseconds / 1_000_000_000.0
             
             # 计算完偏移后，就可以更新编码器的最后位置
             self.last_pub_odom = now
@@ -142,15 +144,32 @@ class OdomCalculator(Node):
             # 计算每个轮子的位移
             delta_left =  diff_l /360  *  2 * math.pi * self.wheel_radius
             delta_right = diff_r /360  *  2 * math.pi * self.wheel_radius
+            total_delta_left = total_diff_l /360  *  2 * math.pi * self.wheel_radius
+            total_delta_right = total_diff_r /360  *  2 * math.pi * self.wheel_radius
 
-            # 计算机器人的平均线速度和角速度
+            # 计算机器人的平均 odom
             delta_s = (delta_right + delta_left) / 2.0 
             delta_theta = (delta_right - delta_left) / self.wheel_separation
-
+            total_delta_theta = (total_delta_right - total_delta_left) / self.wheel_separation
+            
             # 更新机器人的位置和姿态
-            self.theta += delta_theta
-            self.x = (self.l_enc_pos - self.init_l_enc)/360  *  2 * math.pi * self.wheel_radius
-            self.y = (self.r_enc_pos - self.init_r_enc)/360  *  2 * math.pi * self.wheel_radius
+            self.dx = delta_s / elapsed      # 线速度
+            self.dr = delta_theta / elapsed  # 角速度
+
+            if (delta_s != 0):
+                # calculate distance traveled in x and y
+                x = math.cos( delta_theta ) * delta_s
+                y = - math.sin( delta_theta ) * delta_s
+                # calculate the final position of the robot
+                self.x = self.x + ( math.cos( self.theta ) * x - math.sin( self.theta ) * y )
+                self.y = self.y + ( math.sin( self.theta ) * x + math.cos( self.theta ) * y )
+            
+            # 角度
+            # if( delta_theta != 0):
+                # self.theta = (delta_right - delta_left) / self.wheel_separation
+            
+            self.theta = total_delta_theta
+
 
             # 发布里程计数据
             odom_msg = Odometry()
@@ -159,9 +178,9 @@ class OdomCalculator(Node):
             odom_msg.child_frame_id = 'base_link'
             odom_msg.pose.pose.position.x = self.x
             odom_msg.pose.pose.position.y = self.y
-            odom_msg.twist.twist.linear.x = delta_s / diff_t
+            odom_msg.twist.twist.linear.x = self.dx
             odom_msg.twist.twist.linear.y = 0.0
-            odom_msg.twist.twist.angular.z = delta_theta /diff_t
+            odom_msg.twist.twist.angular.z = self.dr
             
             # 将欧拉角转换为四元数（roll, pitch, yaw）
             quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, self.theta)
@@ -178,7 +197,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} rate:{_rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos}")
+                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} self.theta={self.theta} rate:{_rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos} x={self.x} y={self.y} dx{self.dx} delta_s{delta_s}")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             

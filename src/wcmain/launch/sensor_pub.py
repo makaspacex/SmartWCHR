@@ -11,15 +11,10 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     oradar_launch_file = os.path.join(get_package_share_directory("lidar"), "launch", "scan.py")
     imu_launch_file = os.path.join(get_package_share_directory("imu"), "launch", "start.py")
+    driver_launch_file = os.path.join(get_package_share_directory("driver"), "launch", "driver.py")
 
     # description_launch_file = os.path.join(get_package_share_directory("wcmodel"), "launch", "wc_base.py")
     # slam_launch_file = os.path.join(get_package_share_directory("slam_2d"), "launch", "slam_2d.py")
-    driver_node = Node(
-        package='driver',
-        executable='start',
-        name='driver'
-    )
-
     particle_to_point_node = Node(
         package='wcmain',
         executable='particle_to_point',
@@ -29,13 +24,12 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            IncludeLaunchDescription(PythonLaunchDescriptionSource(driver_launch_file)),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(oradar_launch_file)),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(imu_launch_file)),
-            driver_node ,
             particle_to_point_node
         ]
     )
-
 
 # from launch import LaunchDescription
 # from launch_ros.actions import Node

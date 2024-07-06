@@ -24,11 +24,11 @@ options = {
   trajectory_builder = TRAJECTORY_BUILDER,
   map_frame = "map",                        -- 构建地图所使用的坐标系
   tracking_frame = "imu_link",              -- *SLAM算法跟踪的帧的ROS帧ID，如果要使用IMU，它应该在这个地方被选用，尽管它可能会漂移(imu_link)
-  published_frame = "base_link",                -- *要用作发布坐标的子帧的ROS帧ID --lidar
-  odom_frame = "odom",                      -- 仅当provide_odom_frame为true时使用，通常是“odom”。
+  published_frame = "odom",            -- *要用作发布坐标的子帧的ROS帧ID --lidar
+  odom_frame = "odom",         -- 仅当provide_odom_frame为true时使用，通常是“odom”。
   provide_odom_frame = false,
   publish_frame_projected_to_2d = false,    -- 如果enable，则发布姿态将严格限制在纯2D位姿下
-  use_odometry = true,                     -- 如果enable，则订阅topic为odom中的nav_msgs/Odometry，这种情况下必须提供【里程计】
+  use_odometry = true,                      -- 如果enable，则订阅topic为odom中的nav_msgs/Odometry，这种情况下必须提供【里程计】
   use_nav_sat = false,                      -- 如果enable，则订阅主题为fix中的sensor_msgs/NavSatFix，这种情况下必须要使用【导航数据】
   use_landmarks = false,                    -- 如果enable，则订阅主题为landmarks中的cartographer_ros_msgs/LandmarkList，必须提供LandmarkLists数据
   num_laser_scans = 1,                      -- *要订阅的laser scan的主题数量
@@ -47,19 +47,18 @@ options = {
 }
 
 MAP_BUILDER.use_trajectory_builder_2d = true
-TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 6   -- 设置每次更新子地图时积累的激光雷达扫描数量 10
-TRAJECTORY_BUILDER_2D.submaps.num_range_data = 20       -- 设置每个子地图中包含的激光雷达扫描次数 35
+TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 5  -- 设置每次更新子地图时积累的激光雷达扫描数量 10
+TRAJECTORY_BUILDER_2D.submaps.num_range_data = 35       -- 设置每个子地图中包含的激光雷达扫描次数 35
 TRAJECTORY_BUILDER_2D.min_range = 0.3                   -- 设置激光雷达数据的最小有效范围
 TRAJECTORY_BUILDER_2D.max_range = 12.                   -- 设置激光雷达数据的最大有效范围
 TRAJECTORY_BUILDER_2D.missing_data_ray_length = 5.      -- 设置缺失数据射线的长度
-TRAJECTORY_BUILDER_2D.use_imu_data = true              -- 设置是否使用 IMU 数据
+TRAJECTORY_BUILDER_2D.use_imu_data = false              -- 设置是否使用 IMU 数据
 TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true   -- 设置是否使用实时回环检测
 
 
-TRAJECTORY_BUILDER.pure_localization_trimmer = {
-  max_submaps_to_keep = 3,
-}
-POSE_GRAPH.optimize_every_n_nodes = 20
+-- TRAJECTORY_BUILDER.pure_localization_trimmer = {
+--   max_submaps_to_keep = 3,
+-- }
 
 -- --尽量小点；如果移动距离或旋转过小, 或者时间过短, 不进行地图的更新
 -- TRAJECTORY_BUILDER_2D.motion_filter.max_distance_meters = 0.05
@@ -77,7 +76,7 @@ TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.translation_delta_cost_
 TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.rotation_delta_cost_weight = 1e-1      -- 设置旋转增量的代价权重
 
 POSE_GRAPH.optimization_problem.huber_scale = 1e2   -- 设置 Huber 损失函数的尺度参数
-POSE_GRAPH.optimize_every_n_nodes = 10              -- 设置每隔多少个节点进行一次图优化 35
+POSE_GRAPH.optimize_every_n_nodes = 80              -- 设置每隔多少个节点进行一次图优化 35
 POSE_GRAPH.constraint_builder.min_score = 0.65      -- 设置生成约束时的最小匹配分数
 
 
