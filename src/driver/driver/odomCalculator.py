@@ -29,34 +29,43 @@
 # 总结来说，编码器是一种角度传感器，但它们在机器人应用中主要用于通过测量轮子的旋转来计算移动距离和速度。编码器的数据可以转换为线速度和角速度，这对于机器人的定位和导航至关重要。
 
 import rclpy
+import rclpy.clock
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion, TransformStamped
 import math
 import minimalmodbus
+import rclpy.time
+import rclpy.timer
 import tf_transformations
 import serial
 from serial import serialutil
 import time
-
+import traceback
 
 class OdomCalculator(Node):
     def __init__(self, port="/dev/ttyUSB0"):
         super().__init__('odom_diff')
         self.publisher = self.create_publisher(Odometry, '/odom_diff', 10)
         
+        # 总的累积里程
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
 
         # 编码器初始值，实际应从硬件接口获取
-        self.l_enc_pos = 0
-        self.r_enc_pos = 0
+        self.l_enc_pos = None
+        self.r_enc_pos = None
         self.last_l_enc_pos = self.l_enc_pos
         self.last_r_enc_pos = self.r_enc_pos
-
+        
+        # 上一次的发布时间
+        self.last_pub_odom = None
+        
+        self.rate = self.create_rate(10)  # 10hz
+        
         # 机器人参数
-        self.wheel_radius = 0.27        # 轮子半径，单位：米, # TODO
+        self.wheel_radius = 0.27        # 轮子半径，单位：米
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
         
@@ -70,8 +79,7 @@ class OdomCalculator(Node):
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
         
-        self.timer = self.create_timer(0.1, self.update_odom)  # 10 Hz
-        
+        self.create_timer(0.1, self.update_odom)
         
     def init_encoder(self, port):
         ser = None
@@ -106,29 +114,43 @@ class OdomCalculator(Node):
         return new_val*360/1024
         
     def update_odom(self):
+        # while rclpy.ok():
         try:
+            now = self.get_clock().now()
             self.l_enc_pos = self.get_encoder_dis(self.l_enc_inst)
             self.r_enc_pos = self.get_encoder_dis(self.r_enc_inst)
             
+            # 首次获取需要初始化上一次的发布数据
+            if self.last_pub_odom is None:
+                self.last_pub_odom = now
+                self.init_l_enc = self.l_enc_pos       # 最初的位置,运行周期内不变
+                self.init_r_enc = self.r_enc_pos       # 最初的位置,运行周期内不变
+                self.last_l_enc_pos = self.l_enc_pos   # 上一次的位置，用于计算速度
+                self.last_r_enc_pos = self.r_enc_pos   # 上一次的位置，用于计算速度
+                return # 等待下一次调用
+            
+            # 计算偏移距离与时间
             diff_l = self.l_enc_pos - self.last_l_enc_pos
             diff_r = self.r_enc_pos - self.last_r_enc_pos
+            diff_t = (now - self.last_pub_odom).nanoseconds / 1_000_000_000.0
             
-            # 更新编码器的最后位置
-            self.last_l_enc_pos = self.l_enc_pos
-            self.last_r_enc_pos = self.r_enc_pos
+            # 计算完偏移后，就可以更新编码器的最后位置
+            self.last_pub_odom = now
+            self.last_l_enc_pos = self.l_enc_pos   # 上一次的位置，用于计算速度
+            self.last_r_enc_pos = self.r_enc_pos   # 上一次的位置，用于计算速度
             
             # 计算每个轮子的位移
             delta_left =  diff_l /360  *  2 * math.pi * self.wheel_radius
             delta_right = diff_r /360  *  2 * math.pi * self.wheel_radius
 
             # 计算机器人的平均线速度和角速度
-            delta_s = (delta_right + delta_left) / 2.0
+            delta_s = (delta_right + delta_left) / 2.0 
             delta_theta = (delta_right - delta_left) / self.wheel_separation
 
             # 更新机器人的位置和姿态
             self.theta += delta_theta
-            self.x += delta_s * math.cos(self.theta)
-            self.y += delta_s * math.sin(self.theta)
+            self.x = (self.l_enc_pos - self.init_l_enc)/360  *  2 * math.pi * self.wheel_radius
+            self.y = (self.r_enc_pos - self.init_r_enc)/360  *  2 * math.pi * self.wheel_radius
 
             # 发布里程计数据
             odom_msg = Odometry()
@@ -137,9 +159,12 @@ class OdomCalculator(Node):
             odom_msg.child_frame_id = 'base_link'
             odom_msg.pose.pose.position.x = self.x
             odom_msg.pose.pose.position.y = self.y
+            odom_msg.twist.twist.linear.x = delta_s / diff_t
+            odom_msg.twist.twist.linear.y = 0.0
+            odom_msg.twist.twist.angular.z = delta_theta /diff_t
             
             # 将欧拉角转换为四元数（roll, pitch, yaw）
-            quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, delta_theta)
+            quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, self.theta)
             quat_msg = Quaternion()
             quat_msg.x = quaternion[0]
             quat_msg.y = quaternion[1]
@@ -152,13 +177,20 @@ class OdomCalculator(Node):
             now_time = time.time()
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
-                rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} rate:{rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos}")
+                _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
+                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} rate:{_rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos}")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             
         except Exception as e:
             print(e)
+            traceback.print_exc()
+            
+        finally:
+            # 执行一些操作
+            # self.rate.sleep()
+            pass
+        
 
 def main(args=None):
     rclpy.init(args=args)
