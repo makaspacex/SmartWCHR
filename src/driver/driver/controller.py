@@ -19,7 +19,8 @@ class ControllerNode(Node):
         self.SpeedControll_Macro = 0x01         # 速度控制地址
         self.MaxSpeed = 0.5                    # 最大速度
         self.buffer = 12 * [0]                  # 串口发送内容
-
+        
+        self.ser = None
         try:
             # 创建接口对象 串口设备名：'/dev/driver' 比特率：115200
             self.ser = serial.Serial(portname, rate, timeout=1000)

@@ -31,63 +31,134 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, TransformStamped
 import math
+import minimalmodbus
+import tf_transformations
+import serial
+from serial import serialutil
+import time
+
 
 class OdomCalculator(Node):
-    def __init__(self):
-        super().__init__('odom_calculator')
-        self.publisher = self.create_publisher(Odometry, '/odom', 10)
-        self.timer = self.create_timer(0.1, self.update_odom)  # 10 Hz
+    def __init__(self, port="/dev/ttyUSB0"):
+        super().__init__('odom_diff')
+        self.publisher = self.create_publisher(Odometry, '/odom_diff', 10)
+        
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
 
-        # 假设的编码器读数，实际应从硬件接口获取
-        self.left_encoder = 0
-        self.right_encoder = 0
-        self.last_left_encoder = 0
-        self.last_right_encoder = 0
+        # 编码器初始值，实际应从硬件接口获取
+        self.l_enc_pos = 0
+        self.r_enc_pos = 0
+        self.last_l_enc_pos = self.l_enc_pos
+        self.last_r_enc_pos = self.r_enc_pos
 
         # 机器人参数
-        self.wheel_radius = 0.1  # 轮子半径，单位：米
-        self.wheel_separation = 0.5  # 轮距，单位：米
-        self.encoder_resolution = 360  # 编码器分辨率（每圈脉冲数）
-
+        self.wheel_radius = 0.27        # 轮子半径，单位：米, # TODO
+        self.wheel_separation = 0.56    # 轮距，单位：米
+        self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
+        
+        self.get_logger().info("正在设置左侧编码器")
+        self.l_enc_inst = self.init_encoder(port="/dev/encoder_left")
+        
+        # 设置串口
+        self.get_logger().info("正在设置右侧编码器")
+        self.r_enc_inst = self.init_encoder(port="/dev/encoder_right")
+        
+        # 用来控制打印输出频率的
+        self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
+        
+        self.timer = self.create_timer(0.1, self.update_odom)  # 10 Hz
+        
+        
+    def init_encoder(self, port):
+        ser = None
+        try:
+            ser = serial.Serial(port=port, baudrate=9600, bytesize=serialutil.EIGHTBITS, parity=serialutil.PARITY_NONE, stopbits=serialutil.STOPBITS_ONE, timeout=1)
+        except Exception as e:
+            print(f"串口打开失败:{port}, {e}")
+            raise e
+        try:
+            instrument = minimalmodbus.Instrument(port=ser, slaveaddress=1, mode=minimalmodbus.MODE_RTU, debug = False)
+        except Exception as e:
+            print(f"Instrument失败:{port}, {e}")
+        
+        try:
+            # 编码器重置零点标志位，此地址写入 1 后，即设置编码器当前位置为零点，当前编码器单圈值读取为 0
+            instrument.write_register(0x8, 1, functioncode=0x6)
+            time.sleep(0.5)
+            return instrument
+        except Exception as e:
+            print(f"write_register编码器重置零点失败:{port}, {e}")
+        
+        if ser:
+            ser.close()
+        
+    def get_encoder_dis(self,enc_inst):
+        multi = enc_inst.read_registers(registeraddress=0, number_of_registers=2, functioncode=3)
+        new_val= int(f"{hex(multi[0])[2:]}{hex(multi[1])[2:]}", 16)
+        
+        # TODO 处理异常漂移 这个地方逻辑有些问题，没有考虑正常增加到这个位置
+        if new_val > 2 ** 30:
+            new_val -= 2 ** 31
+        return new_val*360/1024
+        
     def update_odom(self):
-        # 计算每个轮子的位移
-        delta_left = (self.left_encoder - self.last_left_encoder) * (2 * math.pi * self.wheel_radius) / self.encoder_resolution
-        delta_right = (self.right_encoder - self.last_right_encoder) * (2 * math.pi * self.wheel_radius) / self.encoder_resolution
+        try:
+            self.l_enc_pos = self.get_encoder_dis(self.l_enc_inst)
+            self.r_enc_pos = self.get_encoder_dis(self.r_enc_inst)
+            
+            diff_l = self.l_enc_pos - self.last_l_enc_pos
+            diff_r = self.r_enc_pos - self.last_r_enc_pos
+            
+            # 更新编码器的最后位置
+            self.last_l_enc_pos = self.l_enc_pos
+            self.last_r_enc_pos = self.r_enc_pos
+            
+            # 计算每个轮子的位移
+            delta_left =  diff_l /360  *  2 * math.pi * self.wheel_radius
+            delta_right = diff_r /360  *  2 * math.pi * self.wheel_radius
 
-        # 更新编码器的最后位置
-        self.last_left_encoder = self.left_encoder
-        self.last_right_encoder = self.right_encoder
+            # 计算机器人的平均线速度和角速度
+            delta_s = (delta_right + delta_left) / 2.0
+            delta_theta = (delta_right - delta_left) / self.wheel_separation
 
-        # 计算机器人的平均线速度和角速度
-        delta_s = (delta_right + delta_left) / 2.0
-        delta_theta = (delta_right - delta_left) / self.wheel_separation
+            # 更新机器人的位置和姿态
+            self.theta += delta_theta
+            self.x += delta_s * math.cos(self.theta)
+            self.y += delta_s * math.sin(self.theta)
 
-        # 更新机器人的位置和姿态
-        self.theta += delta_theta
-        self.x += delta_s * math.cos(self.theta)
-        self.y += delta_s * math.sin(self.theta)
-
-        # 发布里程计数据
-        odom_msg = Odometry()
-        odom_msg.header.stamp = self.get_clock().now().to_msg()
-        odom_msg.header.frame_id = 'odom'
-        odom_msg.child_frame_id = 'base_link'
-        odom_msg.pose.pose.position.x = self.x
-        odom_msg.pose.pose.position.y = self.y
-        odom_msg.pose.pose.orientation = Quaternion(*self.euler_to_quaternion(0, 0, self.theta))
-        self.publisher.publish(odom_msg)
-
-    def euler_to_quaternion(self, roll, pitch, yaw):
-        qx = math.sin(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) - math.cos(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
-        qy = math.cos(roll/2) * math.sin(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.cos(pitch/2) * math.sin(yaw/2)
-        qz = math.cos(roll/2) * math.cos(pitch/2) * math.sin(yaw/2) - math.sin(roll/2) * math.sin(pitch/2) * math.cos(yaw/2)
-        qw = math.cos(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
-        return [qx, qy, qz, qw]
+            # 发布里程计数据
+            odom_msg = Odometry()
+            odom_msg.header.stamp = self.get_clock().now().to_msg()
+            odom_msg.header.frame_id = 'odom'
+            odom_msg.child_frame_id = 'base_link'
+            odom_msg.pose.pose.position.x = self.x
+            odom_msg.pose.pose.position.y = self.y
+            
+            # 将欧拉角转换为四元数（roll, pitch, yaw）
+            quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, delta_theta)
+            quat_msg = Quaternion()
+            quat_msg.x = quaternion[0]
+            quat_msg.y = quaternion[1]
+            quat_msg.z = quaternion[2]
+            quat_msg.w = quaternion[3]
+            odom_msg.pose.pose.orientation = quat_msg
+            
+            self.publisher.publish(odom_msg)
+            
+            now_time = time.time()
+            self.pub_n = self.pub_n + 1
+            if now_time - self.last_print_time > 1:
+                rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
+                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} rate:{rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos}")
+                self.last_print_time = time.time()
+                self.last_n = self.pub_n
+            
+        except Exception as e:
+            print(e)
 
 def main(args=None):
     rclpy.init(args=args)
