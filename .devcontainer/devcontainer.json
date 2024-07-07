@@ -1,6 +1,7 @@
 {
     "name": "humble",
-    "image": "makaspacex/smartwchr:dev",
+    "dockerComposeFile": "../docker-compose.wc.yml",
+    "service": "smartwchr",
     "customizations": {
         "vscode": {
             "settings": {
@@ -13,15 +14,5 @@
             }
         }
     },
-    "workspaceFolder": "/ros2_ws",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws,type=bind",
-    "mounts": [
-    ],
-    "runArgs": [
-        // "--net=host",
-        // "--device=/dev/bus/usb:/dev/bus/usb",
-        // "--device=/dev/ttyUSB1:/dev/imu_usb",
-        // "--device=/dev/ttyUSB2:/dev/oradar"
-    ],
-    // "postCreateCommand": "if [ -f /dev/ttyUSB2 ]; then ln -sf  /dev/ttyUSB2 /dev/oradar; fi"
+    "workspaceFolder": "/ros2_ws"
 }

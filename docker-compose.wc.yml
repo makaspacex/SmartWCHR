@@ -3,18 +3,13 @@ services:
     image: makaspacex/smartwchr:dev
     container_name: smartwchr
     network_mode: host
-    privileged: false
+    privileged: true
     working_dir: /ros2_ws
     volumes:
-      - ./src:/ros2_ws/src
-      - ./makefile:/ros2_ws/makefile
-    devices:
-      - /dev/bus/usb:/dev/bus/usb
-      - /dev/ttyUSB0:/dev/ttyUSB0
-      - /dev/ttyUSB1:/dev/ttyUSB1
-      - /dev/ttyUSB1:/dev/imu_usb
-      - /dev/ttyUSB2:/dev/ttyUSB2
-      - /dev/ttyUSB2:/dev/oradar
+      - ./:/ros2_ws
+      - /dev/imu_usb:/dev/imu_usb
+      - /dev/oradar:/dev/oradar
+      - /dev/driver:/dev/driver
     environment:
       - TZ=Asia/Shanghai
     command: "/bin/zsh -c 'source ~/.zshrc && make build wc && load_ros2 && make launch wcmain sensor_pub.py'"

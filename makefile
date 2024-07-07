@@ -79,7 +79,7 @@ up:
 	docker-compose $(UP_ARGS)
 
 # Phony targets
-.PHONY: all build clean run launch docker up
+.PHONY: $(VALID_TARGETS)
 
 # Ignore targets that are not defined
 %:
