@@ -3,7 +3,7 @@ services:
     image: makaspacex/smartwchr:dev
     container_name: smartwchr
     network_mode: host
-    privileged: true
+    privileged: false
     working_dir: /ros2_ws
     volumes:
       - ./src:/ros2_ws/src

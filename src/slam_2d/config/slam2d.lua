@@ -47,7 +47,7 @@ options = {
 }
 
 MAP_BUILDER.use_trajectory_builder_2d = true
-TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 5  -- 设置每次更新子地图时积累的激光雷达扫描数量 10
+TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 10  -- 设置每次更新子地图时积累的激光雷达扫描数量 10
 TRAJECTORY_BUILDER_2D.submaps.num_range_data = 35       -- 设置每个子地图中包含的激光雷达扫描次数 35
 TRAJECTORY_BUILDER_2D.min_range = 0.3                   -- 设置激光雷达数据的最小有效范围
 TRAJECTORY_BUILDER_2D.max_range = 12.                   -- 设置激光雷达数据的最大有效范围
@@ -76,7 +76,7 @@ TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.translation_delta_cost_
 TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.rotation_delta_cost_weight = 1e-1      -- 设置旋转增量的代价权重
 
 POSE_GRAPH.optimization_problem.huber_scale = 1e2   -- 设置 Huber 损失函数的尺度参数
-POSE_GRAPH.optimize_every_n_nodes = 80              -- 设置每隔多少个节点进行一次图优化 35
+POSE_GRAPH.optimize_every_n_nodes = 35              -- 设置每隔多少个节点进行一次图优化 35
 POSE_GRAPH.constraint_builder.min_score = 0.65      -- 设置生成约束时的最小匹配分数
 
 
