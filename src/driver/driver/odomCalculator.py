@@ -43,6 +43,33 @@ from serial import serialutil
 import time
 import traceback
 
+class InfiniteEncoder:
+    def __init__(self, enc_range=2**31 + 1):
+        self.last_value = 0
+        self.infinite_count = 0
+        self.encoder_range = enc_range
+
+    def update(self, cur_val_raw):
+        # 计算差值
+        delta = cur_val_raw - self.last_value
+
+        # 如果差值大于一半的范围（即认为编码器向后旋转）
+        if delta > self.encoder_range / 2:
+            delta -= self.encoder_range
+        # 如果差值小于负的一半的范围（即认为编码器向前旋转）
+        elif delta < -self.encoder_range / 2:
+            delta += self.encoder_range
+
+        # 更新无限计数
+        self.infinite_count += delta
+
+        # 更新最后的编码器值
+        self.last_value = cur_val_raw
+
+        # 返回无限计数的当前值
+        return self.infinite_count
+
+
 class OdomCalculator(Node):
     def __init__(self, port="/dev/ttyUSB0"):
         super().__init__('odom_diff')
@@ -68,6 +95,12 @@ class OdomCalculator(Node):
         self.wheel_radius = 0.27        # 轮子半径，单位：米
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
+        self.encoder_range = 2**31
+        
+        # 编码器数值处理类，用于无限计数
+        self.left_encoder = InfiniteEncoder(enc_range=self.encoder_range)
+        self.right_encoder = InfiniteEncoder(enc_range=self.encoder_range)
+        
         
         self.get_logger().info("正在设置左侧编码器")
         self.l_enc_inst = self.init_encoder(port="/dev/encoder_left")
@@ -104,20 +137,19 @@ class OdomCalculator(Node):
         if ser:
             ser.close()
         
-    def get_encoder_dis(self,enc_inst):
+    def get_encoder_dis(self, enc_inst):
         multi = enc_inst.read_registers(registeraddress=0, number_of_registers=2, functioncode=3)
-        new_val= int(f"{hex(multi[0])[2:]}{hex(multi[1])[2:]}", 16)
+        cur_val_raw= int(f"{hex(multi[0])[2:]}{hex(multi[1])[2:]}", 16)
+        cur_val_raw = self.left_encoder.update(cur_val_raw)
         
-        # TODO 处理异常漂移 这个地方逻辑有些问题，没有考虑正常增加到这个位置
-        if new_val > 2 ** 30:
-            new_val -= 2 ** 31
-        return new_val*360/1024
+        enc_pos = cur_val_raw*360/1024
+        return enc_pos
         
     def update_odom(self):
         # while rclpy.ok():
         try:
             now = self.get_clock().now()
-            self.l_enc_pos = self.get_encoder_dis(self.l_enc_inst)
+            self.l_enc_pos =  self.get_encoder_dis(self.l_enc_inst)
             self.r_enc_pos = self.get_encoder_dis(self.r_enc_inst)
             
             # 首次获取需要初始化上一次的发布数据
@@ -220,17 +252,25 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
 '''
-░░░░░░░░░░░░░░░░░░░░░░░░▄░░
-░░░░░░░░░▐█░░░░░░░░░░░▄▀▒▌░
-░░░░░░░░▐▀▒█░░░░░░░░▄▀▒▒▒▐░
-░░░░░▄▄▀▒░▒▒▒▒▒▒▒▒▒█▒▒▄█▒▐░
-░░░▄▀▒▒▒░░░▒▒▒░░░▒▒▒▀██▀▒▌░
-░░▐▒▒▒▄▄▒▒▒▒░░░▒▒▒▒▒▒▒▀▄▒▒░
-░░▌░░▌█▀▒▒▒▒▒▄▀█▄▒▒▒▒▒▒▒█▒▐
-░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄
-░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒
-▀▒▀▐████▌▄░▀▒▒░░░░░░░░░░▒▒▒
-狗狗保佑代码无bug
+                  _ooOoo_
+                 o8888888o
+                 88" . "88
+                 (| -_- |)
+                 O\  =  /O
+              ____/`---'\____
+            .'  \\|     |//  `.
+           /  \\|||  :  |||//  \
+          /  _||||| -:- |||||-  \
+          |   | \\\  -  /// |   |
+        | \_|  ''\---/''  |   |
+         \  .-\__  `-`  ___/-. /
+       ___`. .'  /--.--\  `. . __
+    ."" '<  `.___\_<|>_/___.'  >'"".
+   | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+     \  \ `-.   \_ __\ /__ _/   .-` /  /
+ =====`-.____`-.___\_____/___.-`____.-'======
+                  `=---='
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              佛祖保佑         永无BUG
 '''
