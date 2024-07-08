@@ -29,7 +29,7 @@ def generate_launch_description():
         {'device_model': 'MS200'},
         # {'frame_id': 'laser_frame'},
         # {'scan_topic': 'MS200/scan'},
-        {'frame_id': 'lidar_link'},
+        {'frame_id': 'laser_link'},
         {'scan_topic': 'scan'},
         {'port_name': '/dev/ttyACM0'},
         {'baudrate': 230400},
@@ -47,7 +47,7 @@ def generate_launch_description():
      package='tf2_ros',
      node_executable='static_transform_publisher',
      node_name='base_link_to_base_laser',
-     arguments=['-0.0019517','0.00040736','0.12059','-3.1416','0','0','base_link','lidar_link']
+     arguments=['-0.0019517','0.00040736','0.12059','-3.1416','0','0','base_link','laser_link']
    )  
 
 
