@@ -11,14 +11,15 @@ RUN apt update &&  \
     python3-argcomplete ros-$ROS_DISTRO-tf-transformations ros-$ROS_DISTRO-robot-localization && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# imu
-RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
-    && pip3 install pyserial numpy rich minimalmodbus transforms3d
-
 RUN apt update &&  \
     apt install -y --no-install-recommends \
     ros-$ROS_DISTRO-desktop-full && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+# imu
+RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
+    && pip3 install pyserial numpy rich minimalmodbus transforms3d
 
 # update 
 COPY ./ros_shell.sh /
