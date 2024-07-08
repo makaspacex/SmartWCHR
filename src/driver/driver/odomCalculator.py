@@ -44,7 +44,7 @@ import time
 import traceback
 
 class InfiniteEncoder:
-    def __init__(self,name:str, port:str, wheel_radius:float, enc_range=2**10):
+    def __init__(self,name:str, port:str, wheel_radius:float, single_mode=False):
         
         self.name:str = name
         self.last_value_raw:int = 0
@@ -53,9 +53,12 @@ class InfiniteEncoder:
         
         self.delta_move:float = 0
         self.total_delta_move:float = 0
+        self.encoder_range:int = 2**31
         
+        self.single_mode = single_mode
+        if single_mode:
+            self.encoder_range:int = 2**10
         
-        self.encoder_range:int = enc_range
         self.port:str = port
         self.wheel_radius:float = wheel_radius
         
@@ -79,7 +82,7 @@ class InfiniteEncoder:
             self.instrument.write_register(0x8, 1, functioncode=0x6)
             time.sleep(0.5)
             self.enc_value_raw = self.read_raw_value()
-            self.update(enc_raw=self.enc_value_raw)
+            self.cur_value_raw = self.update(enc_raw=self.enc_value_raw)
             self.last_value_raw = self.cur_value_raw
             self.init_value_raw = self.cur_value_raw
             
@@ -107,10 +110,18 @@ class InfiniteEncoder:
         # 返回无限计数的当前值
         return self.cur_value_raw
 
+    def _get_value(self, values):
+        if len(values) == 1:
+            return int(values[0])
+        new_val= int(f"{hex(values[0])[2:]}{hex(values[1])[2:]}", 16)
+        return new_val
 
     def read_raw_value(self) -> int:
-        values = self.instrument.read_registers(registeraddress=0, number_of_registers=1, functioncode=3)
-        self.enc_value_raw = int(values[0])
+        dl = 2
+        if self.single_mode:
+            dl = 1
+        values = self.instrument.read_registers(registeraddress=0, number_of_registers=dl, functioncode=3)
+        self.enc_value_raw = self._get_value(values=values)
         return self.enc_value_raw
 
     def update_status(self):
@@ -148,7 +159,7 @@ class InfiniteEncoder:
         return self._to_value(self.cur_value_raw)
     
     def __str__(self):
-        return f"[{self.name}-->enc_raw:{self.enc_value_raw:4d} cur_raw:{self.cur_value_raw:4d} cur_val:{self.cur_value:5.2f}]"
+        return f"[{self.name}-->enc_raw:{self.enc_value_raw:10d} cur_raw:{self.cur_value_raw:4d} cur_val:{self.cur_value:5.2f} init:{self.init_value:5.2f} totalmove:{self.total_delta_move:5.2f}]"
     
 class OdomCalculator(Node):
     def __init__(self):
@@ -160,23 +171,19 @@ class OdomCalculator(Node):
         self.y = 0.0
         self.theta = 0.0
         
-        # 上一次的发布时间
-        self.last_pub_odom = None
-        
-        # self.rate = self.create_rate(10)  # 10hz
-        
         # 机器人参数
         self.wheel_radius = 0.27        # 轮子半径，单位：米
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
-        self.encoder_range = 2**10
+        self.encoder_range = 2**31
+        self.single_mode = False
         
         # 编码器数值处理类，用于无限计数
         self.get_logger().info("正在设置左侧编码器")
-        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left", wheel_radius=self.wheel_radius, enc_range=self.encoder_range)
+        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left", wheel_radius=self.wheel_radius,single_mode=self.single_mode)
         
         self.get_logger().info("正在设置右侧编码器")
-        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right", wheel_radius=self.wheel_radius,  enc_range=self.encoder_range)
+        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right", wheel_radius=self.wheel_radius,  single_mode=self.single_mode)
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
@@ -193,7 +200,7 @@ class OdomCalculator(Node):
 
             # 计算差值变化
             delta_s = (self.R.delta_move + self.L.delta_move) / 2.0 
-            delta_theta = (self.R.delta_move + self.L.delta_move) / self.wheel_separation
+            delta_theta = (self.R.delta_move - self.L.delta_move) / self.wheel_separation
             total_delta_theta = (self.R.total_delta_move - self.L.total_delta_move) / self.wheel_separation
             elapsed = self.L.elapsed # 时间变化
             
@@ -202,11 +209,6 @@ class OdomCalculator(Node):
             self.dr = delta_theta / elapsed  # 角速度
             
             # 更新机器人坐标及角度
-            self.theta = total_delta_theta %  (2 *math.pi)
-            if total_delta_theta < 0:
-                self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
-                
-            
             if (delta_s != 0):
                 # calculate distance traveled in x and y
                 x = math.cos( delta_theta ) * delta_s
@@ -217,7 +219,9 @@ class OdomCalculator(Node):
             # 角度
             # if( delta_theta != 0):
                 # self.theta = (delta_right - delta_left) / self.wheel_separation
-            
+            self.theta = total_delta_theta %  (2 *math.pi)
+            if total_delta_theta < 0:
+                self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
 
             # 发布里程计数据
             odom_msg = Odometry()
@@ -245,7 +249,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta:2.2f} {self.L}{self.R} rate:{_rate:2.2f}hz")
+                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta/math.pi:2.2f}pi {self.L}{self.R} rate:{_rate:2.2f}hz")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             
