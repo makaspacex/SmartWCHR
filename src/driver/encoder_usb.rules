@@ -1,0 +1,2 @@
+KERNEL=="ttyUSB*", ATTRS{serial}=="YZZCL", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0660", SYMLINK+="encoder_left"
+KERNEL=="ttyUSB*", ATTRS{serial}=="YZZCR", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0660", SYMLINK+="encoder_right"

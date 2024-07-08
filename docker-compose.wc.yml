@@ -10,6 +10,8 @@ services:
       - /dev/imu_usb:/dev/imu_usb
       - /dev/oradar:/dev/oradar
       - /dev/driver:/dev/driver
+      - /dev/encoder_left:/dev/encoder_left
+      - /dev/encoder_right:/dev/encoder_right
     environment:
       - TZ=Asia/Shanghai
     command: "/bin/zsh -c 'source ~/.zshrc && make build wc && load_ros2 && make launch wcmain sensor_pub.py'"

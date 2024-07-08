@@ -21,8 +21,8 @@ RUN apt update &&  \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # update 
-COPY ./ros_shell.sh ~/
-RUN echo '[[ -f ~/.ros_shell.sh ]] && source ~/.ros_shell.sh' > ~/.zshrc
+COPY ./ros_shell.sh /
+RUN echo "" >> ~/.zshrc && echo '[[ -f /ros_shell.sh ]] && source /ros_shell.sh' >> ~/.zshrc
 
 # Create workspace so that user own this directory
 WORKDIR /ros2_ws
