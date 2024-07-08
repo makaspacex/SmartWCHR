@@ -44,47 +44,121 @@ import time
 import traceback
 
 class InfiniteEncoder:
-    def __init__(self, enc_range=2**31 + 1):
-        self.last_value = 0
-        self.infinite_count = 0
-        self.encoder_range = enc_range
+    def __init__(self,name:str, port:str, wheel_radius:float, enc_range=2**10):
+        
+        self.name:str = name
+        self.last_value_raw:int = 0
+        self.init_value_raw :int= 0
+        self.cur_value_raw:int = 0
+        
+        self.delta_move:float = 0
+        self.total_delta_move:float = 0
+        
+        
+        self.encoder_range:int = enc_range
+        self.port:str = port
+        self.wheel_radius:float = wheel_radius
+        
+        self.instrument = self.init_encoder(self.port)
+        self.last_time = time.time()
+        
+    
+    def init_encoder(self, port:str) -> minimalmodbus.Instrument :
+        ser = None
+        try:
+            ser = serial.Serial(port=port, baudrate=9600, bytesize=serialutil.EIGHTBITS, parity=serialutil.PARITY_NONE, stopbits=serialutil.STOPBITS_ONE, timeout=1)
+        except Exception as e:
+            print(f"串口打开失败:{port}, {e}")
+            raise e
+        try:
+            self.instrument = minimalmodbus.Instrument(port=ser, slaveaddress=1, mode=minimalmodbus.MODE_RTU, debug = False)
+        except Exception as e:
+            print(f"Instrument失败:{port}, {e}")
+        try:
+            # 编码器重置零点标志位，此地址写入 1 后，即设置编码器当前位置为零点，当前编码器单圈值读取为 0
+            self.instrument.write_register(0x8, 1, functioncode=0x6)
+            time.sleep(0.5)
+            self.enc_value_raw = self.read_raw_value()
+            self.update(enc_raw=self.enc_value_raw)
+            self.last_value_raw = self.cur_value_raw
+            self.init_value_raw = self.cur_value_raw
+            
+        except Exception as e:
+            print(f"write_register编码器重置零点失败:{port}, {e}")
+            if ser:
+                ser.close()
+            raise e
+        return self.instrument
 
-    def update(self, cur_val_raw):
+    def update(self, enc_raw:int) -> int:
         # 计算差值
-        delta = cur_val_raw - self.last_value
+        delta = enc_raw - self.last_value_raw
 
         # 如果差值大于一半的范围（即认为编码器向后旋转）
         if delta > self.encoder_range / 2:
             delta -= self.encoder_range
         # 如果差值小于负的一半的范围（即认为编码器向前旋转）
-        elif delta < -self.encoder_range / 2:
+        elif delta<0 and delta < -self.encoder_range / 2:
             delta += self.encoder_range
 
         # 更新无限计数
-        self.infinite_count += delta
-
-        # 更新最后的编码器值
-        self.last_value = cur_val_raw
+        self.cur_value_raw += int(delta)
 
         # 返回无限计数的当前值
-        return self.infinite_count
+        return self.cur_value_raw
 
 
+    def read_raw_value(self) -> int:
+        values = self.instrument.read_registers(registeraddress=0, number_of_registers=1, functioncode=3)
+        self.enc_value_raw = int(values[0])
+        return self.enc_value_raw
+
+    def update_status(self):
+        now = time.time()
+        self.enc_value_raw= self.read_raw_value()             # 直接从编码器读出的值
+        self.cur_value_raw = self.update(self.enc_value_raw)  # 处理后的累计值
+        
+        # 计算偏移距离与时间
+        diff_val = self.cur_value - self.last_value        # 本地偏移值
+        total_diff_val = self.cur_value - self.init_value   # 总偏移值
+        self.elapsed = now - self.last_time                      # 花费时间
+        
+        # 更新上一次的值
+        self.last_value_raw = self.cur_value_raw
+        self.last_time = now
+        
+        # 计算每个轮子的位移
+        self.delta_move =  diff_val /360  *  2 * math.pi * self.wheel_radius
+        self.total_delta_move = total_diff_val /360  *  2 * math.pi * self.wheel_radius
+        
+        return  self.cur_value
+    
+    def _to_value(self, value_raw:int):
+        return value_raw / 1024 * 360
+    
+    @property
+    def last_value(self):
+        return self._to_value(self.last_value_raw)
+    @property
+    def init_value(self):
+        return self._to_value(self.init_value_raw)
+    
+    @property
+    def cur_value(self):
+        return self._to_value(self.cur_value_raw)
+    
+    def __str__(self):
+        return f"[{self.name}-->enc_raw:{self.enc_value_raw:4d} cur_raw:{self.cur_value_raw:4d} cur_val:{self.cur_value:5.2f}]"
+    
 class OdomCalculator(Node):
-    def __init__(self, port="/dev/ttyUSB0"):
-        super().__init__('odom_diff')
+    def __init__(self):
+        super().__init__(node_name='odom_diff')
         self.publisher = self.create_publisher(Odometry, '/odom_diff', 10)
         
         # 总的累积里程
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
-
-        # 编码器初始值，实际应从硬件接口获取
-        self.l_enc_pos = None
-        self.r_enc_pos = None
-        self.last_l_enc_pos = self.l_enc_pos
-        self.last_r_enc_pos = self.r_enc_pos
         
         # 上一次的发布时间
         self.last_pub_odom = None
@@ -95,99 +169,44 @@ class OdomCalculator(Node):
         self.wheel_radius = 0.27        # 轮子半径，单位：米
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
-        self.encoder_range = 2**31
+        self.encoder_range = 2**10
         
         # 编码器数值处理类，用于无限计数
-        self.left_encoder = InfiniteEncoder(enc_range=self.encoder_range)
-        self.right_encoder = InfiniteEncoder(enc_range=self.encoder_range)
-        
-        
         self.get_logger().info("正在设置左侧编码器")
-        self.l_enc_inst = self.init_encoder(port="/dev/encoder_left")
+        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left", wheel_radius=self.wheel_radius, enc_range=self.encoder_range)
         
-        # 设置串口
         self.get_logger().info("正在设置右侧编码器")
-        self.r_enc_inst = self.init_encoder(port="/dev/encoder_right")
+        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right", wheel_radius=self.wheel_radius,  enc_range=self.encoder_range)
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
         
+        # 循环更新里程计
         self.create_timer(0.1, self.update_odom)
-        
-    def init_encoder(self, port):
-        ser = None
-        try:
-            ser = serial.Serial(port=port, baudrate=9600, bytesize=serialutil.EIGHTBITS, parity=serialutil.PARITY_NONE, stopbits=serialutil.STOPBITS_ONE, timeout=1)
-        except Exception as e:
-            print(f"串口打开失败:{port}, {e}")
-            raise e
-        try:
-            instrument = minimalmodbus.Instrument(port=ser, slaveaddress=1, mode=minimalmodbus.MODE_RTU, debug = False)
-        except Exception as e:
-            print(f"Instrument失败:{port}, {e}")
-        
-        try:
-            # 编码器重置零点标志位，此地址写入 1 后，即设置编码器当前位置为零点，当前编码器单圈值读取为 0
-            instrument.write_register(0x8, 1, functioncode=0x6)
-            time.sleep(0.5)
-            return instrument
-        except Exception as e:
-            print(f"write_register编码器重置零点失败:{port}, {e}")
-        
-        if ser:
-            ser.close()
-        
-    def get_encoder_dis(self, enc_inst):
-        multi = enc_inst.read_registers(registeraddress=0, number_of_registers=2, functioncode=3)
-        cur_val_raw= int(f"{hex(multi[0])[2:]}{hex(multi[1])[2:]}", 16)
-        cur_val_raw = self.left_encoder.update(cur_val_raw)
-        
-        enc_pos = cur_val_raw*360/1024
-        return enc_pos
+
         
     def update_odom(self):
         # while rclpy.ok():
         try:
-            now = self.get_clock().now()
-            self.l_enc_pos =  self.get_encoder_dis(self.l_enc_inst)
-            self.r_enc_pos = self.get_encoder_dis(self.r_enc_inst)
-            
-            # 首次获取需要初始化上一次的发布数据
-            if self.last_pub_odom is None:
-                self.last_pub_odom = now
-                self.init_l_enc_pos = self.l_enc_pos   # init position
-                self.init_r_enc_pos = self.r_enc_pos   
-                self.last_l_enc_pos = self.l_enc_pos   # 上一次的位置，用于计算速度
-                self.last_r_enc_pos = self.r_enc_pos   # 上一次的位置，用于计算速度
-                return # 等待下一次调用
-            
-            # 计算偏移距离与时间
-            diff_l = self.l_enc_pos - self.last_l_enc_pos
-            diff_r = self.r_enc_pos - self.last_r_enc_pos
-            total_diff_l = self.l_enc_pos - self.init_l_enc_pos
-            total_diff_r = self.r_enc_pos - self.init_r_enc_pos
-            elapsed = (now - self.last_pub_odom).nanoseconds / 1_000_000_000.0
-            
-            # 计算完偏移后，就可以更新编码器的最后位置
-            self.last_pub_odom = now
-            self.last_l_enc_pos = self.l_enc_pos   # 上一次的位置，用于计算速度
-            self.last_r_enc_pos = self.r_enc_pos   # 上一次的位置，用于计算速度
-            
-            # 计算每个轮子的位移
-            delta_left =  diff_l /360  *  2 * math.pi * self.wheel_radius
-            delta_right = diff_r /360  *  2 * math.pi * self.wheel_radius
-            total_delta_left = total_diff_l /360  *  2 * math.pi * self.wheel_radius
-            total_delta_right = total_diff_r /360  *  2 * math.pi * self.wheel_radius
+            self.L.update_status()
+            self.R.update_status()
 
-            # 计算机器人的平均 odom
-            delta_s = (delta_right + delta_left) / 2.0 
-            delta_theta = (delta_right - delta_left) / self.wheel_separation
-            total_delta_theta = (total_delta_right - total_delta_left) / self.wheel_separation
+            # 计算差值变化
+            delta_s = (self.R.delta_move + self.L.delta_move) / 2.0 
+            delta_theta = (self.R.delta_move + self.L.delta_move) / self.wheel_separation
+            total_delta_theta = (self.R.total_delta_move + self.L.total_delta_move) / self.wheel_separation
+            elapsed = self.L.elapsed # 时间变化
             
-            # 更新机器人的位置和姿态
+            # 更新机器人速度
             self.dx = delta_s / elapsed      # 线速度
             self.dr = delta_theta / elapsed  # 角速度
-
+            
+            # 更新机器人坐标及角度
+            self.theta = total_delta_theta %  (2 *math.pi)
+            if total_delta_theta < 0:
+                self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
+                
+            
             if (delta_s != 0):
                 # calculate distance traveled in x and y
                 x = math.cos( delta_theta ) * delta_s
@@ -195,13 +214,10 @@ class OdomCalculator(Node):
                 # calculate the final position of the robot
                 self.x = self.x + ( math.cos( self.theta ) * x - math.sin( self.theta ) * y )
                 self.y = self.y + ( math.sin( self.theta ) * x + math.cos( self.theta ) * y )
-            
             # 角度
             # if( delta_theta != 0):
                 # self.theta = (delta_right - delta_left) / self.wheel_separation
-            self.theta = total_delta_theta %  (2 *math.pi)
-            if total_delta_theta < 0:
-                self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
+            
 
             # 发布里程计数据
             odom_msg = Odometry()
@@ -229,7 +245,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"++++++ : {odom_msg.pose.pose.position} self.theta={self.theta} rate:{_rate}hz l_enc_pos:{self.l_enc_pos} r_enc_pos:{self.r_enc_pos} x={self.x} y={self.y} dx{self.dx} delta_s{delta_s}")
+                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta:2.2f} {self.L}{self.R} rate:{_rate:2.2f}hz")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             
