@@ -194,7 +194,7 @@ class OdomCalculator(Node):
             # 计算差值变化
             delta_s = (self.R.delta_move + self.L.delta_move) / 2.0 
             delta_theta = (self.R.delta_move + self.L.delta_move) / self.wheel_separation
-            total_delta_theta = (self.R.total_delta_move + self.L.total_delta_move) / self.wheel_separation
+            total_delta_theta = (self.R.total_delta_move - self.L.total_delta_move) / self.wheel_separation
             elapsed = self.L.elapsed # 时间变化
             
             # 更新机器人速度
