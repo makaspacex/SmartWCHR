@@ -93,7 +93,7 @@ def generate_launch_description():
 #         package='tf2_ros',
 #         executable='static_transform_publisher',
 #         name='base_link_to_base_laser',
-#         arguments=['0','0','0.18','0','0','0','base_link','lidar']
+#         arguments=['0','0','0.18','0','0','0',''base_link','laser_link']
 #     )
 
 #     # Define LaunchDescription variable

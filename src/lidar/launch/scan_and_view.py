@@ -20,7 +20,13 @@ def generate_launch_description():
         arguments=["-d", rviz2_config],
         output="screen",
     )
-
+    #Include OrdLidar launch file
+    ordlidar_launch = IncludeLaunchDescription(
+        launch_description_source=PythonLaunchDescriptionSource([
+            get_package_share_directory('lidar'),
+            '/launch/scan.py'
+        ])
+    )
     # base_link to laser_frame tf node
     base_link_to_laser_tf_node = Node(
         package="tf2_ros",
@@ -31,6 +37,7 @@ def generate_launch_description():
 
     # Define LaunchDescription variable
     ord = LaunchDescription()
+    ord.add_action(ordlidar_launch)
     ord.add_action(base_link_to_laser_tf_node)
     ord.add_action(rviz2_node)
 
