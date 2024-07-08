@@ -10,6 +10,7 @@ echo "$UNAME ALL=(ALL) NOPASSWD: NOPASSWD: ALL"  > /etc/sudoers.d/sudonopasswd
 # 创建和主机用户相同uid的用户，名为user
 useradd --shell /bin/zsh -u $USER_ID -o -c "" -m $UNAME
 usermod -aG root $UNAME
+usermod -aG dialout $UNAME
 
 # 设置目录与SHELL环境变量(重要！)
 export HOME=/home/$UNAME

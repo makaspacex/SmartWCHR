@@ -13,7 +13,7 @@ RUN apt update &&  \
 
 # imu
 RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
-    && pip3 install pyserial numpy rich
+    && pip3 install pyserial numpy rich minimalmodbus transforms3d
 
 RUN apt update &&  \
     apt install -y --no-install-recommends \
