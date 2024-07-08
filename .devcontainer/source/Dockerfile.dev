@@ -19,9 +19,10 @@ RUN apt update &&  \
     apt install -y --no-install-recommends \
     ros-$ROS_DISTRO-desktop-full && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # update 
-COPY ./ros_shell.sh /tmp/
-RUN cat /tmp/ros_shell.sh >> ~/.zshrc && rm -f /tmp/ros_shell.sh
+COPY ./ros_shell.sh ~/
+RUN echo '[[ -f ~/.ros_shell.sh ]] && source ~/.ros_shell.sh' > ~/.zshrc
 
 # Create workspace so that user own this directory
 WORKDIR /ros2_ws
