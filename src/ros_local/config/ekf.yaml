@@ -4,7 +4,8 @@ ekf_filter_node:
         # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
         # computation until it receives at least one message from one of the inputs. It will then run continuously at the
         # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
-        frequency: 10.0
+        # 滤波器产生状态估计的实值频率, 注意 过滤器在从输入之一接收到至少一条消息之前不会开始计算。
+        frequency: 30.0
         
         # ekf_localization_node and ukf_localization_node both use a 3D omnidirectional motion model. If this parameter is
         # set to true, no 3D information will be used in your state estimate. Use this if you are operating in a planar
@@ -27,9 +28,8 @@ ekf_filter_node:
         #     3a. Set your "world_frame" to your map_frame value
         #     3b. MAKE SURE something else is generating the odom->base_link transform. Note that this can even be another state estimation node 
         #         from robot_localization! However, that instance should *not* fuse the global data.
-        map_frame: map                        # Defaults to "map" if unspecified
+        # map_frame: map                        # Defaults to "map" if unspecified
         odom_frame: odom                      # Defaults to "odom" if unspecified
-        publish_tf: true
         base_link_frame: base_link            # Defaults to "base_link" if unspecified
         world_frame: odom                    # Defaults to the value of odom_frame if unspecified
         # odom0: /odom_diff
@@ -38,9 +38,11 @@ ekf_filter_node:
         #                false, false, true,
         #                false, false, false,
         #                false, false, false]
+
+        # 这里使用里程计消息的x,y坐标数据，且
         odom0: /odom_diff
-        odom0_config: [false, false, false,
-                       false, false, false,
+        odom0_config: [true, true, false,
+                       false, false, true,
                        true,  true,  false,
                        false, false, true,
                        false, false, false]
@@ -48,9 +50,9 @@ ekf_filter_node:
         imu0: /imu/data_raw
         imu0_config: [false, false, false,
                       false,  false,  true,
+                      true, true, false,
                       false, false, false,
-                      false, false, true,
-                      true, false, false]
+                      true, true, true]
 
         # # backup odom
         # odom0: /odom_diff

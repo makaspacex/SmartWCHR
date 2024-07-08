@@ -167,9 +167,9 @@ class OdomCalculator(Node):
             # 角度
             # if( delta_theta != 0):
                 # self.theta = (delta_right - delta_left) / self.wheel_separation
-            
-            self.theta = total_delta_theta
-
+            self.theta = total_delta_theta % math.pi
+            if total_delta_theta < 0:
+                self.theta = total_delta_theta % -math.pi
 
             # 发布里程计数据
             odom_msg = Odometry()
