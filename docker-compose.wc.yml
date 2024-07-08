@@ -14,4 +14,4 @@ services:
       - /dev/encoder_right:/dev/encoder_right
     environment:
       - TZ=Asia/Shanghai
-    command: "/bin/zsh -c 'source ~/.zshrc && make build wc && load_ros2 && make launch wcmain sensor_pub.py'"
+    command: "/bin/zsh -c 'source ~/.zshrc && make launch wcmain sensor_pub.py'"
