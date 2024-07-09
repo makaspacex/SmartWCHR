@@ -42,11 +42,17 @@ import serial
 from serial import serialutil
 import time
 import traceback
+import numpy as np
 
 class InfiniteEncoder:
     def __init__(self,name:str, port:str, wheel_radius:float, single_mode=False):
         
         self.name:str = name
+        
+        # 这是编码器上一次读取的值，用于判断如何计数
+        self._last_enc_value_raw:int = 0
+        
+        # 这次总计数上一次的值，用于计算偏移
         self.last_value_raw:int = 0
         self.init_value_raw :int= 0
         self.cur_value_raw:int = 0
@@ -62,9 +68,12 @@ class InfiniteEncoder:
         self.port:str = port
         self.wheel_radius:float = wheel_radius
         
-        self.instrument = self.init_encoder(self.port)
+        # 编码器初始化
         self.last_time = time.time()
+        self.instrument = self.init_encoder(self.port)
         
+        # 保留历史数据，用于绘图测试
+        # self.history = np.array([self._enc_value_raw, self.cur_value_raw, self.delta_move,self.total_delta_move])
     
     def init_encoder(self, port:str) -> minimalmodbus.Instrument :
         ser = None
@@ -81,8 +90,8 @@ class InfiniteEncoder:
             # 编码器重置零点标志位，此地址写入 1 后，即设置编码器当前位置为零点，当前编码器单圈值读取为 0
             self.instrument.write_register(0x8, 1, functioncode=0x6)
             time.sleep(0.5)
-            self.enc_value_raw = self.read_raw_value()
-            self.cur_value_raw = self.update(enc_raw=self.enc_value_raw)
+            self._enc_value_raw = self.read_raw_value()
+            self.cur_value_raw = self.update(_enc_raw=self._enc_value_raw)
             self.last_value_raw = self.cur_value_raw
             self.init_value_raw = self.cur_value_raw
             
@@ -93,20 +102,28 @@ class InfiniteEncoder:
             raise e
         return self.instrument
 
-    def update(self, enc_raw:int) -> int:
-        # 计算差值
-        delta = enc_raw - self.last_value_raw
-
-        # 如果差值大于一半的范围（即认为编码器向后旋转）
-        if delta > self.encoder_range / 2:
-            delta -= self.encoder_range
-        # 如果差值小于负的一半的范围（即认为编码器向前旋转）
-        elif delta<0 and delta < -self.encoder_range / 2:
-            delta += self.encoder_range
-
+    def update(self, _enc_raw:int) -> int:
+        
+        #!!! 如果编码器值当前值远远大于上一次值，说明是从零点反转了
+        #!!! 因为正转不可能这么快
+        
+        # 计算差值，正常情况下
+        delta = _enc_raw - self._last_enc_value_raw
+        
+        # 处理过零点的异常情况
+        # 差值大于一半的范围 --> 后转了
+        if delta > 0 and delta > self.encoder_range / 2:
+            delta = - (self.encoder_range - _enc_raw + self._last_enc_value_raw)
+        # 差值小于一半的范围 --> 后转了
+        elif delta < 0 and delta < -self.encoder_range / 2:
+            delta = self.encoder_range - self._last_enc_value_raw + _enc_raw
+        
         # 更新无限计数
         self.cur_value_raw += int(delta)
-
+        
+        # 更新上一次编码器的值，注意，不要更新成实际的值
+        self._last_enc_value_raw = _enc_raw
+        
         # 返回无限计数的当前值
         return self.cur_value_raw
 
@@ -121,26 +138,29 @@ class InfiniteEncoder:
         if self.single_mode:
             dl = 1
         values = self.instrument.read_registers(registeraddress=0, number_of_registers=dl, functioncode=3)
-        self.enc_value_raw = self._get_value(values=values)
-        return self.enc_value_raw
+        self._enc_value_raw = self._get_value(values=values)
+        return self._enc_value_raw
 
     def update_status(self):
         now = time.time()
-        self.enc_value_raw= self.read_raw_value()             # 直接从编码器读出的值
-        self.cur_value_raw = self.update(self.enc_value_raw)  # 处理后的累计值
+        self._enc_value_raw= self.read_raw_value()             # 直接从编码器读出的值
+        self.cur_value_raw = self.update(self._enc_value_raw)  # 处理后的累计值
         
         # 计算偏移距离与时间
         diff_val = self.cur_value - self.last_value        # 本地偏移值
         total_diff_val = self.cur_value - self.init_value   # 总偏移值
         self.elapsed = now - self.last_time                      # 花费时间
         
-        # 更新上一次的值
+        # 更新上一次的值，注意不要更新成编码器的
         self.last_value_raw = self.cur_value_raw
         self.last_time = now
         
         # 计算每个轮子的位移
         self.delta_move =  diff_val /360  *  2 * math.pi * self.wheel_radius
         self.total_delta_move = total_diff_val /360  *  2 * math.pi * self.wheel_radius
+        
+        # 计算轮子的速度
+        self.speed = self.delta_move / self.elapsed
         
         return  self.cur_value
     
@@ -159,7 +179,10 @@ class InfiniteEncoder:
         return self._to_value(self.cur_value_raw)
     
     def __str__(self):
-        return f"[{self.name}-->enc_raw:{self.enc_value_raw:10d} cur_raw:{self.cur_value_raw:4d} cur_val:{self.cur_value:5.2f} init:{self.init_value:5.2f} totalmove:{self.total_delta_move:5.2f}]"
+        _en_str = f"{self._enc_value_raw:10d}"
+        if self.single_mode:
+            _en_str = f"{self._enc_value_raw:4d}"
+        return f"[{self.name}-->enc_raw:{_en_str} cur_val:{self.cur_value:7.2f} init:{self.init_value:6.2f} totalmove:{self.total_delta_move:6.2f}]"
     
 class OdomCalculator(Node):
     def __init__(self):
@@ -176,7 +199,7 @@ class OdomCalculator(Node):
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
         self.encoder_range = 2**31
-        self.single_mode = False
+        self.single_mode = True
         
         # 编码器数值处理类，用于无限计数
         self.get_logger().info("正在设置左侧编码器")
@@ -190,11 +213,11 @@ class OdomCalculator(Node):
         
         # 循环更新里程计
         self.create_timer(0.1, self.update_odom)
-
         
     def update_odom(self):
         # while rclpy.ok():
         try:
+            # TODO 这个地方实际上由于串口延时，耗费时间略有不同
             self.L.update_status()
             self.R.update_status()
 
@@ -218,7 +241,7 @@ class OdomCalculator(Node):
                 self.y = self.y + ( math.sin( self.theta ) * x + math.cos( self.theta ) * y )
             # 角度
             # if( delta_theta != 0):
-                # self.theta = (delta_right - delta_left) / self.wheel_separation
+                # self.theta += (delta_right - delta_left) / self.wheel_separation
             self.theta = total_delta_theta %  (2 *math.pi)
             if total_delta_theta < 0:
                 self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
@@ -249,7 +272,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta/math.pi:2.2f}pi {self.L}{self.R} rate:{_rate:2.2f}hz")
+                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta/math.pi:6.2f}pi {self.L}{self.R} rate:{_rate:6.2f}hz")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             
