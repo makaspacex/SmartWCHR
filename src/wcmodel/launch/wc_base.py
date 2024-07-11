@@ -1,7 +1,6 @@
 import os
 
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -21,6 +20,8 @@ def generate_launch_description():
 
     pkg_share = FindPackageShare(package=package_name).find(package_name)
     urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
+    # test = 'test.urdf'
+    # urdf_model_path = os.path.join(pkg_share, f'urdf/{test}')
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -34,17 +35,31 @@ def generate_launch_description():
         name='joint_state_publisher',
         arguments=[urdf_model_path]
         )
-    
-    # joint_state_publisher_node = Node(
-    #     package='joint_state_publisher_gui',
-    #     executable='joint_state_publisher_gui',
-    #     name='joint_state_publisher_gui',
-    #     arguments=[urdf_model_path]
+
+    # static_transform_publisher_nodes = [
+    #     Node(
+    #         package='tf2_ros',
+    #         executable='static_transform_publisher',
+    #         arguments=["0", "0", "0.54", "0", "0", "0", "base_footprint", "base_link"]
+    #     ),
+    #     Node(
+    #         package='tf2_ros',
+    #         executable='static_transform_publisher',
+    #         arguments=["0.4", "0.3", "0.1", "0", "0", "0", "base_link", "laser_link"]
+    #     ),
+    #     Node(
+    #         package='tf2_ros',
+    #         executable='static_transform_publisher',
+    #         arguments=["0", "0", "0.3", "0", "0", "0", "base_link", "imu_link"]
     #     )
+    # ]
 
 
     ld.add_action(robot_state_publisher_node)
     ld.add_action(joint_state_publisher_node)
-    #ld.add_action(rviz2_node)
+    # ld.add_action(rviz2_node)
+
+    # for static_transform_publisher_node in static_transform_publisher_nodes:
+    #     ld.add_action(static_transform_publisher_node)
 
     return ld

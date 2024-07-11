@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <robot name="wheelchair">
   
-  <!-- Robot Footprint -->
-  <link name="base_footprint"/>
+
 
   <joint name="base_joint" type="fixed">
     <parent link="base_link"/>
@@ -10,7 +9,9 @@
     <origin xyz="0 0 -0.54" rpy="0 0 0"/>
   </joint>
 
-
+  <!-- Robot Footprint -->
+  <link name="base_footprint"/>
+  
   <!-- base link -->
   <link name="base_link">
       <visual>
@@ -23,7 +24,14 @@
       </material>
     </visual>
   </link>
-    
+  
+  <!-- laser joint -->
+  <joint name="laser_joint" type="fixed">
+      <parent link="base_link" />
+      <child link="laser_link" />
+      <origin xyz="0.4 0.3 0.1" />
+  </joint>
+
   <!-- laser link -->
   <link name="laser_link">
       <visual>
@@ -37,11 +45,11 @@
     </visual>
   </link>
     
-  <!-- laser joint -->
-  <joint name="laser_joint" type="fixed">
-      <parent link="base_link" />
-      <child link="laser_link" />
-      <origin xyz="0.4 0.3 0.1" />
+  <!-- imu joint -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="imu_link" />
+    <origin xyz="0 0 0.30" />
   </joint>
 
   <link name="imu_link">
@@ -53,12 +61,7 @@
     </visual>
   </link>
 
-  <!-- imu joint -->
-  <joint name="imu_joint" type="fixed">
-      <parent link="base_link" />
-      <child link="imu_link" />
-      <origin xyz="0 0 0.30" />
-  </joint>
+
 
 
   <link name="left_wheel_link">

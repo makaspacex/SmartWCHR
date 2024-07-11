@@ -47,7 +47,8 @@ def generate_launch_description():
 
     # load slam_2d map file
     # ! ! ! TODO : map file path need to be optimized to slam_2d map path ! ! !
-    map_file = str( nav2_package_path / Path("maps/map-0619.yaml"))
+    map_file = str( nav2_package_path / Path("maps/map_jidianlou-01.yaml"))
+    # src/nav2/maps/map_jidianlou-01.yaml  maps/map-0619.yaml
     pbstream_path = str( nav2_package_path / Path("maps/map-0619.pbstream"))
 
     # urdf_name = "wheelchair_base.urdf"
@@ -108,28 +109,28 @@ def generate_launch_description():
             #     PythonLaunchDescriptionSource(imu_launch_file)
             # ),
 
-            Node(
-                package = 'cartographer_ros',
-                executable = 'cartographer_node',
-                arguments = [
-                    '-configuration_directory', configuration_directory,
-                    '-load_state_filename', pbstream_path,
-                    '-configuration_basename', configuration_basename],
-                remappings = [
-                    ('scan', 'scan'),
-                    ('imu', 'imu/data_raw')
-                    ],
-                parameters=[{'use_sim_time': False}],
-                output = 'screen'
-            ),
+            # Node(
+            #     package = 'cartographer_ros',
+            #     executable = 'cartographer_node',
+            #     arguments = [
+            #         '-configuration_directory', configuration_directory,
+            #         '-load_state_filename', pbstream_path,
+            #         '-configuration_basename', configuration_basename],
+            #     remappings = [
+            #         ('scan', 'scan')
+            #         # ,('imu', 'imu/data_raw')
+            #         ],
+            #     parameters=[{'use_sim_time': False}],
+            #     output = 'screen'
+            # ),
 
-            Node(
-                package = 'cartographer_ros',
-                executable = 'cartographer_occupancy_grid_node',
-                parameters = [
-                    {'use_sim_time': False},
-                    {'resolution': 0.05}],
-            ),
+            # Node(
+            #     package = 'cartographer_ros',
+            #     executable = 'cartographer_occupancy_grid_node',
+            #     parameters = [
+            #         {'use_sim_time': False},
+            #         {'resolution': 0.05}],
+            # ),
 
 
             # ------ nav2 导航节点 ------ #

@@ -68,9 +68,9 @@ def generate_launch_description():
 
     
     ld = LaunchDescription()
+    ld.add_action(rviz_node)
     ld.add_action(base_link_to_imu_tf_node) #------
     ld.add_action(base_link_to_laser_tf_node)
-    ld.add_action(rviz_node)
     ld.add_action(cartographer_node)
     ld.add_action(occupancy_grid_node)  
     

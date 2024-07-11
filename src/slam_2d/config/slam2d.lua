@@ -16,6 +16,10 @@
 -- slam2d.lua 是为实现cartographer建图所创建的，使用了手动编写发布的里程计信息
 -- 参考了/opt/ros/eloquent/share/cartographer_ros/configuration_files/backpack_2d.lua
 
+--------------------------------------------------------------------------------
+-- slam_2d.lua : no odom
+-- slam2d.lua : with odom
+--------------------------------------------------------------------------------
 include "map_builder.lua"
 include "trajectory_builder.lua"
 
@@ -23,7 +27,7 @@ options = {
   map_builder = MAP_BUILDER,
   trajectory_builder = TRAJECTORY_BUILDER,
   map_frame = "map",                        -- 构建地图所使用的坐标系
-  tracking_frame = "imu_link",              -- *SLAM算法跟踪的帧的ROS帧ID，如果要使用IMU，它应该在这个地方被选用，尽管它可能会漂移(imu_link)
+  tracking_frame = "base_footprint",              -- *SLAM算法跟踪的帧的ROS帧ID，如果要使用IMU，它应该在这个地方被选用，尽管它可能会漂移(imu_link)
   published_frame = "odom",            -- *要用作发布坐标的子帧的ROS帧ID --lidar
   odom_frame = "odom",         -- 仅当provide_odom_frame为true时使用，通常是“odom”。
   provide_odom_frame = false,
