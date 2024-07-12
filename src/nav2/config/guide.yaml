@@ -134,7 +134,7 @@ controller_server:
     # Progress checker parameters
     progress_checker:     # 检查机器人在完成目标的过程中是被卡住了还是取得了进展。
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5				# 机器人向目标前进所需的最小移动量
+      required_movement_radius: 0.3				# 机器人向目标前进所需的最小移动量
       movement_time_allowance: 10.0
     
     # Goal checker parameters
@@ -198,7 +198,8 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.8
+      # robot_radius: 0.8
+      footprint: "[[0.6, 0.32], [0.6, -0.32], [-0.6, -0.32], [-0.6, 0.32]]" 
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -248,7 +249,7 @@ local_costmap:
 #         scan:
 #           topic: /scan
 #           max_obstacle_height: 2.0
-#           clearing: True
+#           clearing: False
 #           marking: True
 #           data_type: "LaserScan"
 #           raytrace_max_range: 3.0
@@ -275,47 +276,6 @@ planner_server:
       tolerance: 0.5
       use_astar: false
       allow_unknown: true
-    # local_costmap:
-    #   local_costmap:
-    #     ros__parameters:
-    #       update_frequency: 5.0
-    #       publish_frequency: 2.0
-    #       global_frame: odom
-    #       robot_base_frame: base_link
-    #       use_sim_time: False
-    #       rolling_window: true
-    #       width: 1
-    #       height: 1
-    #       resolution: 0.05
-    #       robot_radius: 0.50  # 通常使用圆形（或接近圆形）机器人
-    #       plugins: ["voxel_layer", "inflation_layer"]
-    #       inflation_layer:
-    #         plugin: "nav2_costmap_2d::InflationLayer"
-    #         cost_scaling_factor: 3.0
-    #         inflation_radius: 0.35
-    #       voxel_layer:
-    #         plugin: "nav2_costmap_2d::VoxelLayer"
-    #         enabled: True
-    #         publish_voxel_map: True
-    #         origin_z: 0.0
-    #         z_resolution: 0.05
-    #         z_voxels: 16
-    #         max_obstacle_height: 2.0
-    #         mark_threshold: 0
-    #         observation_sources: scan
-    #         scan:
-    #           topic: /scan
-    #           max_obstacle_height: 2.0
-    #           clearing: True
-    #           marking: True
-    #           data_type: "LaserScan"
-    #           raytrace_max_range: 3.0
-    #           raytrace_min_range: 0.0
-    #           obstacle_max_range: 2.5
-    #           obstacle_min_range: 0.0
-    #       static_layer:
-    #         map_subscribe_transient_local: True
-    #       always_send_full_costmap: True
             
 smoother_server:
   ros__parameters:
@@ -348,9 +308,9 @@ behavior_server:
     transform_tolerance: 0.1
     use_sim_time: False
     simulate_ahead_time: 2.0
-    max_rotational_vel: 1.0
-    min_rotational_vel: 0.4
-    rotational_acc_lim: 3.2
+    max_rotational_vel: 0.1 # 1.0
+    min_rotational_vel: 0.01 # 0.4
+    rotational_acc_lim: 0.05 # 3.2
 
 
 
@@ -375,10 +335,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 1.0]
-    min_velocity: [-0.26, 0.0, -1.0]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
+    max_velocity: [0.05, 0.0, 0.1]
+    min_velocity: [-0.05, 0.0, -0.1]
+    max_accel: [0.02, 0.0, 0.05]
+    max_decel: [-0.02, 0.0, -0.05]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
