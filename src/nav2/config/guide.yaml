@@ -6,6 +6,8 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
+    use_map_topic: true
+    tf_broadcast: true
     base_frame_id: "base_link"
     odom_frame_id: "odom"
     scan_topic: "scan"
@@ -32,7 +34,6 @@ amcl:
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
-    tf_broadcast: true
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25
@@ -58,7 +59,7 @@ bt_navigator:
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
-    default_nav_to_pose_bt_xml: "/home/jetson/Desktop/SmartWCHR/src/nav2/config/behavior.xml" #包含用于导航到姿势的行为的文件的完整路径
+    # default_nav_to_pose_bt_xml: "/home/jetson/Desktop/SmartWCHR/src/nav2/config/behavior.xml" #包含用于导航到姿势的行为的文件的完整路径
     plugin_lib_names:
       - nav2_compute_path_to_pose_action_bt_node
       - nav2_compute_path_through_poses_action_bt_node
@@ -149,21 +150,21 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.26
+      max_vel_x: 0.05
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      max_vel_theta: 0.1
       min_speed_xy: 0.0
-      max_speed_xy: 0.26
+      max_speed_xy: 0.05
       min_speed_theta: 0.0
-      acc_lim_x: 2.5
+      acc_lim_x: 0.02
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
+      acc_lim_theta: 0.05
+      decel_lim_x: -0.02
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
-      vx_samples: 20
+      decel_lim_theta: -0.05
+      vx_samples: 10
       vy_samples: 5
-      vtheta_samples: 20
+      vtheta_samples: 10
       sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
