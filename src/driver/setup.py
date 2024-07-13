@@ -20,8 +20,8 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "start = driver.controller:main",
-            "odom = driver.odomCalculator:main",
+            "controller = driver.controller:main",
+            "odom_cal = driver.odomCalculator:main",
         ],
     },
 )

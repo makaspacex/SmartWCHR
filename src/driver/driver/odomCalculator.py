@@ -270,7 +270,7 @@ class OdomCalculator(Node):
             
             now_time = time.time()
             self.pub_n = self.pub_n + 1
-            if now_time - self.last_print_time > 1:
+            if now_time - self.last_print_time > 8:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
                 self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta/math.pi:6.2f}pi {self.L}{self.R} rate:{_rate:6.2f}hz")
                 self.last_print_time = time.time()

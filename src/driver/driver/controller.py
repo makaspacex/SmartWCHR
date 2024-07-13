@@ -7,6 +7,14 @@ import serial
 import math
 import time
 
+def sign(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
 class SpeedController:
     def __init__(self, max_acceleration=0.05):
         self.current_speed = 0.0  # 当前速度
@@ -43,21 +51,19 @@ class SpeedController:
         return self.current_speed
 
 
-
-
 class ControllerNode(Node):
     """控制节点"""
     def __init__(self, portname="/dev/driver", rate=115200):
         super().__init__('driver')
         
-        self.lineSpeed = 0.0                    # 初始化线速度
-        self.angleSpeed = 0.0                   # 初始化角速度
         self.intervalWheel = 0.570              # 左右轮间距（m）
         self.FrameHead_Macro = 0x42             # 帧头
         self.SpeedControll_Macro = 0x01         # 速度控制地址
-        self.MaxSpeed = 0.5                    # 最大速度
-        self.MIN_SPEED = 0.022                  # 最小速度
+        self.MAX_SPEED = 0.5                    # 最大速度
         self.buffer = 12 * [0]                  # 串口发送内容
+        
+        self.liner_x_range = [0.03, 0.07]
+        self.angle_z_range = [0.10, 0.15]
         
         self.ser = None
         try:
@@ -66,28 +72,30 @@ class ControllerNode(Node):
         except Exception as e:
             print("串口异常：", e)
             raise e
+        
+        self.last_print_time = time.time()
+        self.update_buffer(linear_x=0, angle_z=0)
 
         # 接收cmd数据、计算发送数据
-        self.cmd_sub_ = self.create_subscription(Twist, 'cmd_vel', self.CMDCallBack, 1)
-        # 每隔0.05s向串口发送buffer                    修改成0.01s，看是否能够更加灵敏一些
+        self.cmd_sub_ = self.create_subscription(Twist, 'cmd_vel', self.CMDCallBack, 10)
+        # 每隔0.05s向串口发送buffer
         self.ser_write_timer_ = self.create_timer(0.1, self.SpeedCallBack)
         self.get_logger().info('Hi from controller')
+        
+        # # 当前状态   stop, starting, running, stopping四种
+        # self.state = 'stop'
+        # self.left_Control = SpeedController() 
+        # self.right_Control = SpeedController()
+    
+    def CMDCallBack(self, msg: Twist):
+        linear_x, angle_z =  msg.linear.x, msg.angular.z
+        self.update_buffer(linear_x=linear_x, angle_z=angle_z)
 
-        # 当前状态   stop, starting, running, stopping四种
-        self.state = 'stop'
-        # 当前发送到串口的左右轮速度
-        self.left_speed = 0
-        self.right_speed = 0
-
-
-        self.left_Control = SpeedController() 
-        self.right_Control = SpeedController()
-
-
-        self.last_print_time = time.time()
-
-
-    def BuffToSerial(self, sendData, len):
+    def SpeedCallBack(self):
+        if not self.ser:
+            return
+        self.ser.write(self.buffer)
+    def get_buffer(self, sendData, len=12):
         check = 0x0
 
         check += self.FrameHead_Macro
@@ -95,56 +103,59 @@ class ControllerNode(Node):
         check += len
         for data in sendData:
             check += data
+        
+        buffer = 12 * [0]
+        buffer[0] = self.FrameHead_Macro
+        buffer[1] = self.SpeedControll_Macro
+        buffer[2] = len
+        buffer[3:3+8] = sendData
+        buffer[len-1] = check & 0b11111111
+        return buffer
 
-        self.buffer[0] = self.FrameHead_Macro
-        self.buffer[1] = self.SpeedControll_Macro
-        self.buffer[2] = len
-        self.buffer[3:3+8] = sendData
-        self.buffer[len-1] = check & 0b11111111
+    def update_buffer(self, linear_x, angle_z, max_x=0.1, max_z=0.1):
 
-
-
-    def CMDCallBack(self, msg: Twist):
-        # sendData = 8 * [0]
-
-        self.lineSpeed = msg.linear.x
-        self.angleSpeed = msg.angular.z 
-
+        if abs(linear_x) > max(*self.liner_x_range):
+            linear_x = sign(linear_x) * self.liner_x_range[1]
+        elif abs(linear_x)< min(*self.liner_x_range) and abs(linear_x) > 0.022:
+            linear_x = sign(linear_x) * self.liner_x_range[0]
+        else:
+            angle_z = 0
+        
+        if abs(angle_z) > max(*self.angle_z_range):
+            angle_z = sign(angle_z) * self.angle_z_range[1]
+        elif abs(angle_z)< min(*self.angle_z_range) and abs(angle_z) > 0.05:
+            angle_z = sign(angle_z) * self.angle_z_range[0]
+        else:
+            angle_z = 0
+        
         # v = (Vr + Vl) / 2 线速度公式
         # w = (Vr - Vl) / l 角速度公式
-        leftSpeedData = self.lineSpeed - 0.5 * self.angleSpeed * self.intervalWheel
-        rightSpeedData = self.lineSpeed + 0.5 * self.angleSpeed * self.intervalWheel
-        leftSpeedData *= 1.12
-
-        self.left_speed = leftSpeedData
-        self.right_speed = rightSpeedData
-
-        # self.left_speed = self.left_Control.update_speed(leftSpeedData)
-        # self.right_speed = self.right_Control.update_speed(rightSpeedData)
-
-
-    def SpeedCallBack(self):
-        if not self.ser:
-            return
+        l_speed = linear_x - 0.5 * angle_z * self.intervalWheel
+        r_speed = linear_x + 0.5 * angle_z * self.intervalWheel
+        l_speed *= 1.12
         
-        sendData = 8 * [0]
-
-        leftSpeedData = int((self.left_speed / self.MaxSpeed) * 1500).to_bytes(4, byteorder='big', signed=True)
-        rightSpeedData = int((self.right_speed / self.MaxSpeed) * 1500).to_bytes(4, byteorder='big', signed=True)
-
-        sendData[0:4] = leftSpeedData
-        sendData[4:]  = rightSpeedData
-
-
+        # 处理最大速度
+        l_speed = min(l_speed, self.MAX_SPEED)
+        r_speed = min(r_speed, self.MAX_SPEED)
+        
+        # 处理最小值
+        # if l_speed < self.MIN_SPEED:
+        #     l_speed = 0
+        
         curtime = time.time()
         if curtime - self.last_print_time > 1:
-            self.get_logger().info("left_speed:" + str(self.left_speed) + '         right_speed:' + str(self.right_speed))
             self.last_print_time = curtime
+            print(l_speed, r_speed)
+            self.get_logger().info(f"l_speed:{l_speed:.2f} r_speed:{r_speed:.2f}")
         
-        self.BuffToSerial(sendData, 12)
-        
-        self.ser.write(self.buffer)
-
+        sendData = 8 * [0]
+        l_speed = int((l_speed / self.MAX_SPEED) * 1500).to_bytes(4, byteorder='big', signed=True)
+        r_speed = int((r_speed / self.MAX_SPEED) * 1500).to_bytes(4, byteorder='big', signed=True)
+        sendData[0:4] = l_speed
+        sendData[4:]  = r_speed
+        self.buffer = self.get_buffer(sendData=sendData)
+    
+   
 def main(args = None):
     rclpy.init(args=args)
     controller = ControllerNode()

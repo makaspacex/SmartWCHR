@@ -5,7 +5,7 @@ ekf_filter_node:
         # computation until it receives at least one message from one of the inputs. It will then run continuously at the
         # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
         # 滤波器产生状态估计的实值频率, 注意 过滤器在从输入之一接收到至少一条消息之前不会开始计算。
-        frequency: 30.0
+        frequency: 10.0
         
         # ekf_localization_node and ukf_localization_node both use a 3D omnidirectional motion model. If this parameter is
         # set to true, no 3D information will be used in your state estimate. Use this if you are operating in a planar

@@ -46,7 +46,6 @@ def generate_launch_description():
         remappings = [
             ('scan', 'scan'),
             ('imu', 'imu/data_raw'),
-            ('odom', 'odometry/filtered')
             ],
         parameters=[{'use_sim_time': use_sim_time}],
         output = 'screen'

@@ -11,6 +11,6 @@ def generate_launch_description():
     return LaunchDescription(
         [
             IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("wcmain"), "launch", "sensor_pub.py"))),
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("slam_2d"), "launch", "slam2d.py"))),
+            IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("nav2"), "launch", "nav2.launch.py"))),
         ]
     )

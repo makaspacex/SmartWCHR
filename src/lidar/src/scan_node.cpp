@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         pub_n += 1;
 
         time_t now_t = time(NULL);
-        if(now_t - last_pub_time > 1){
+        if(now_t - last_pub_time > 8){
           double rate = (pub_n - last_pub_n) / (now_t - last_pub_time);
           std::cout << "lidar pub rate=" <<rate << "hz, data[0].angle=" << scan_data.data[0].angle << std::endl;
           last_pub_time = now_t;

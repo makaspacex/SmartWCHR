@@ -229,7 +229,7 @@ class IMUDriverNode(Node):
         now_time = time.time()
         self.pub_n = self.pub_n + 1
         
-        if now_time - self.last_print_time > 1:
+        if now_time - self.last_print_time > 8:
             rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
             rich.print(f"[cyan]imu pub rate = {rate}hz, linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
             self.last_print_time = time.time()
