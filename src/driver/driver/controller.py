@@ -114,16 +114,21 @@ class ControllerNode(Node):
 
     def update_buffer(self, linear_x, angle_z, max_x=0.1, max_z=0.1):
 
-        if abs(linear_x) > max(*self.liner_x_range):
+        _linear_x,_angle_z = linear_x,angle_z 
+        if abs(linear_x) >= max(*self.liner_x_range):
             linear_x = sign(linear_x) * self.liner_x_range[1]
-        elif abs(linear_x)< min(*self.liner_x_range) and abs(linear_x) > 0.022:
+        elif abs(linear_x)>= min(*self.liner_x_range) and abs(linear_x) < max(*self.liner_x_range):
+            pass
+        elif abs(linear_x) >= 0.022 and abs(linear_x)< min(*self.liner_x_range):
             linear_x = sign(linear_x) * self.liner_x_range[0]
         else:
-            angle_z = 0
+            linear_x = 0
         
-        if abs(angle_z) > max(*self.angle_z_range):
+        if abs(angle_z) >= max(*self.angle_z_range):
             angle_z = sign(angle_z) * self.angle_z_range[1]
-        elif abs(angle_z)< min(*self.angle_z_range) and abs(angle_z) > 0.05:
+        elif abs(angle_z)>= min(*self.angle_z_range) and abs(angle_z) < max(*self.angle_z_range):
+            pass
+        elif abs(angle_z) >= 0.08 and abs(angle_z)< min(*self.angle_z_range):
             angle_z = sign(angle_z) * self.angle_z_range[0]
         else:
             angle_z = 0
@@ -146,7 +151,7 @@ class ControllerNode(Node):
         if curtime - self.last_print_time > 1:
             self.last_print_time = curtime
             print(l_speed, r_speed)
-            self.get_logger().info(f"l_speed:{l_speed:.2f} r_speed:{r_speed:.2f}")
+            self.get_logger().info(f"l_speed:{l_speed:.2f} r_speed:{r_speed:.2f} linearx:{_linear_x} {linear_x}  angle_z:{_angle_z} {angle_z}")
         
         sendData = 8 * [0]
         l_speed = int((l_speed / self.MAX_SPEED) * 1500).to_bytes(4, byteorder='big', signed=True)
