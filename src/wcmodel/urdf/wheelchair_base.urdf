@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <robot name="wheelchair">
 
-
-  <joint name="base_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="base_footprint" />
-    <origin xyz="0 0 -0.54" rpy="0 0 0" />
-  </joint>
-
   <!-- Robot Footprint -->
   <link name="base_footprint" />
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <origin xyz="0 0 0.54" rpy="0 0 0" />
+  </joint>
 
   <!-- base link -->
   <link name="base_link">

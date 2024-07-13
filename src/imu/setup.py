@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'start = imu.imu:main'
+        'imu = imu.imu:main'
         ],
     },
 )

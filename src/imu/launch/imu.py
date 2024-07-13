@@ -13,7 +13,7 @@ def generate_launch_description():
 
     imu_node = Node(
         package='imu',
-        executable='start',
+        executable='imu',
         name='imu',
         remappings=[('/wit/imu', '/imu/data')],
         parameters=[{'port': '/dev/imu_usb'},
