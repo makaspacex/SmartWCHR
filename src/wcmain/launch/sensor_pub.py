@@ -22,7 +22,6 @@ def generate_launch_description():
             IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("driver"), "launch", "driver.py"))),
             IncludeLaunchDescription(PythonLaunchDescriptionSource( os.path.join(get_package_share_directory("lidar"), "launch", "scan.py"))),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("imu"), "launch", "start.py"))),
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("ros_local"), "launch", "localization.py"))),
             particle_to_point_node
         ]
     )
