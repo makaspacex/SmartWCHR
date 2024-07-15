@@ -169,14 +169,13 @@ class HandDetector:
 
 
 
-
 class GestureRecognitionNode(Node):
 
     def __init__(self):
         super().__init__('gesture_recognition_node')
         self.subscription = self.create_subscription(
             Image,
-            '/image',
+            '/camera/color/image_raw',
             self.listener_callback,
             10)
         self.publisher = self.create_publisher(Image, '/gesture_image', 10)

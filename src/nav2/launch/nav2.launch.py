@@ -21,8 +21,11 @@ def generate_launch_description():
 
     nav2_package_path = Path(FindPackageShare('nav2').find('nav2'))
     guide_yaml = str( nav2_package_path / Path("config/guide.yaml"))
-
-    rviz_config_path = str( Path(nav2_package_path ) / Path("config/nav2.rviz"))
+    guide_yaml = "/home/jetson/Desktop/SmartWCHR/src/nav2/config/guide.yaml"
+    remappings = [
+            ('scan', 'scan'),
+            ('imu', 'imu/data_raw')]
+    rviz_config_path = str( Path(nav2_package_path ) / Path("config/nav2_default_view.rviz"))
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -36,9 +39,10 @@ def generate_launch_description():
     wcmodel_node = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(wheelchair_launch_file)
             )
-
-    map_file = str( nav2_package_path / Path("maps/map-0619.yaml"))
-    # src/nav2/maps/map_jidianlou-01.yaml  maps/map-0619.yaml
+    
+    map_file = str( nav2_package_path / Path("maps/map_fx.yaml"))
+    # map_file = str( nav2_package_path / Path("maps/map-0619.yaml"))
+    # map_file = str( nav2_package_path / Path("maps/map_jidianlou-01.yaml"))
     map_server_node = Node(
         package='nav2_map_server',
         executable='map_server',
@@ -53,16 +57,18 @@ def generate_launch_description():
         executable='amcl',
         name='amcl',
         output='screen',
+        remappings=remappings,
         # parameters=[amcl_yaml]
         parameters=[guide_yaml]
     )
-
+    
+    
     controller_server_node = Node(
         package='nav2_controller',
         executable='controller_server',
         name='controller_server',
         output='screen',
-        # parameters=[controller_server_yaml]
+        remappings=remappings,
         parameters=[guide_yaml]
     )
 
@@ -71,7 +77,7 @@ def generate_launch_description():
         executable='planner_server',
         name='planner_server',
         output='screen',
-        # parameters=[planner_server_yaml]
+        remappings=remappings,
         parameters=[guide_yaml]
     )
 
@@ -80,7 +86,7 @@ def generate_launch_description():
         executable='behavior_server',
         name='behavior_server',
         output='screen',
-        # parameters=[behavior_server_yaml],
+        remappings=remappings,
         parameters=[guide_yaml]
     )
 
@@ -90,7 +96,7 @@ def generate_launch_description():
         executable='bt_navigator',
         name='bt_navigator',
         output='screen',
-        # parameters=[bt_navigator_yaml]
+        remappings=remappings,
         parameters=[guide_yaml,
                     {'default_nav_to_pose_bt_xml':behavior_path}
                     ]
@@ -128,8 +134,8 @@ def generate_launch_description():
     )
     return LaunchDescription(
         [
-            rviz_node,
-            rviz_first_node,
+            # rviz_node,
+            # rviz_first_node,
             wcmodel_node,
             map_server_node,
             amcl_node,
