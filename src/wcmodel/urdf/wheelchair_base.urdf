@@ -204,7 +204,7 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_link" />
-    <origin xyz="0.0 0.25 0.25" />
+    <origin xyz="-0.25 0.25 0.25" />
   </joint>
 
   <!-- laser link -->

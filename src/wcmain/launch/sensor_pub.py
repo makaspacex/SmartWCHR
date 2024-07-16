@@ -19,7 +19,7 @@ def generate_launch_description():
     lidar = LaunchConfiguration("lidar")
     declare_lidar_type_cmd = DeclareLaunchArgument(
         "lidar",
-        default_value="sllidar",
+        default_value="lidar",
         description="lidar pacakge name, lidar/sllidar/lslidar_ros",
     )
     return LaunchDescription(
@@ -39,7 +39,7 @@ def generate_launch_description():
                         get_package_share_directory("lidar"), "launch", "scan.py"
                     )
                 ),
-                condition=IfCondition(PythonExpression(f"'{lidar}' == 'lidar'")),
+                condition=IfCondition(PythonExpression(["'", lidar, "' == 'lidar'"])),
             ),
             # 条件启动思岚s2雷达
             IncludeLaunchDescription(
