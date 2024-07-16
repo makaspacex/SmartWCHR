@@ -16,7 +16,6 @@ def generate_launch_description():
     urdf_name = "wheelchair_base.urdf"
     pkg_share = FindPackageShare(package=package_name).find(package_name)
     urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
-    urdf_model_path = "/home/makafly/Desktop/ResearchNav2/src/nav2_sample/urdf/wheelchair_base.urdf"
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     
     robot_description = Command([

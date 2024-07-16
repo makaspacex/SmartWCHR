@@ -6,22 +6,70 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.actions import DeclareLaunchArgument
+from pathlib import Path
+
 
 def generate_launch_description():
-    # description_launch_file = os.path.join(get_package_share_directory("wcmodel"), "launch", "wc_base.py")
-    # slam_launch_file = os.path.join(get_package_share_directory("slam_2d"), "launch", "slam_2d.py")
-    particle_to_point_node = Node(
-        package='wcmain',
-        executable='particle_to_point',
-        name='particle_to_point',
-        output='screen'
-    )
+    package_name = Path(__file__).parent.parent.stem
+    package_share_dir = get_package_share_directory(package_name)
 
+    lidar = LaunchConfiguration("lidar")
+    declare_lidar_type_cmd = DeclareLaunchArgument(
+        "lidar",
+        default_value="sllidar",
+        description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+    )
     return LaunchDescription(
         [
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("driver"), "launch", "driver.py"))),
-            IncludeLaunchDescription(PythonLaunchDescriptionSource( os.path.join(get_package_share_directory("lidar"), "launch", "scan.py"))),
-            IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(get_package_share_directory("imu"), "launch", "imu.py"))),
-            particle_to_point_node
+            declare_lidar_type_cmd,
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("driver"), "launch", "driver.py"
+                    )
+                )
+            ),
+            # 条件启动ms200雷达
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("lidar"), "launch", "scan.py"
+                    )
+                ),
+                condition=IfCondition(PythonExpression(f"'{lidar}' == 'lidar'")),
+            ),
+            # 条件启动思岚s2雷达
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("sllidar"), "launch", "scan.py"
+                    )
+                ),
+                condition=IfCondition(PythonExpression(["'", lidar, "' == 'sllidar'"])),
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
+                )
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("wcmodel"), "launch", "wc_base.py"
+                    )
+                )
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("wcmain"),
+                        "launch",
+                        "particle_to_point.py",
+                    )
+                )
+            ),
         ]
     )
