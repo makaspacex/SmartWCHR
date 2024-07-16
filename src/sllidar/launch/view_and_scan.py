@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
+from launch.conditions import IfCondition
 
 def generate_launch_description():
     channel_type = LaunchConfiguration("channel_type", default="serial")
@@ -20,6 +20,7 @@ def generate_launch_description():
     )  # for s2 is 1000000
     frame_id = LaunchConfiguration("frame_id", default="laser_link")
     inverted = LaunchConfiguration("inverted", default="false")
+    show_robot = LaunchConfiguration("show_robot", default="false")
     angle_compensate = LaunchConfiguration("angle_compensate", default="true")
     scan_mode = LaunchConfiguration("scan_mode", default="DenseBoost")
 
@@ -76,6 +77,19 @@ def generate_launch_description():
                 "scan_mode",
                 default_value=scan_mode,
                 description="Specifying scan mode of lidar",
+            ),
+            DeclareLaunchArgument(
+                "show_robot",
+                default_value=show_robot,
+                description="If show robot",
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("wcmodel"), "launch", "wc_base.py"
+                    )
+                ),
+                condition=IfCondition(show_robot)
             ),
             Node(
                 package="rviz2",

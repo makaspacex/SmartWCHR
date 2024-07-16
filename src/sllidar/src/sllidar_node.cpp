@@ -37,7 +37,6 @@
 #include <std_srvs/srv/empty.hpp>
 #include "sl_lidar.h"
 #include "math.h"
-
 #include <signal.h>
 
 #ifndef _countof
