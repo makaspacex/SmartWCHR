@@ -12,6 +12,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 
+
 def generate_launch_description():
     channel_type = LaunchConfiguration("channel_type", default="serial")
     serial_port = LaunchConfiguration("serial_port", default="/dev/rplidar")
@@ -27,19 +28,6 @@ def generate_launch_description():
     share_dir = get_package_share_directory("sllidar")
 
     rviz_config_dir = os.path.join(share_dir, "rviz", "sllidar.rviz")
-
-    scan_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([share_dir, "/launch/scan.py"]),
-        launch_arguments={
-            "channel_type": channel_type,
-            "serial_port": serial_port,
-            "serial_baudrate": serial_baudrate,
-            "frame_id": frame_id,
-            "inverted": inverted,
-            "angle_compensate": angle_compensate,
-            "scan_mode": scan_mode,
-        }.items(),
-    )
 
     return LaunchDescription(
         [
@@ -70,7 +58,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "angle_compensate",
-                default_value=angle_compensate,
+                default_value="true",
                 description="Specifying whether or not to enable angle_compensate of scan data",
             ),
             DeclareLaunchArgument(
@@ -89,7 +77,7 @@ def generate_launch_description():
                         get_package_share_directory("wcmodel"), "launch", "wc_base.py"
                     )
                 ),
-                condition=IfCondition(show_robot)
+                condition=IfCondition(show_robot),
             ),
             Node(
                 package="rviz2",
@@ -98,6 +86,29 @@ def generate_launch_description():
                 arguments=["-d", rviz_config_dir],
                 output="screen",
             ),
-            scan_launch,
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource([share_dir, "/launch/scan.py"]),
+            #     launch_arguments={
+            #         "channel_type": channel_type,
+            #         "serial_port": serial_port,
+            #         "serial_baudrate": serial_baudrate,
+            #         "frame_id": frame_id,
+            #         "inverted": inverted,
+            #         "angle_compensate": angle_compensate,
+            #         "scan_mode": scan_mode,
+            #     }.items(),
+            # ),
+            Node(
+            package='sllidar',
+            executable='sllidar_node',
+            name='sllidar_node',
+            parameters=[{'channel_type':channel_type,
+                         'serial_port': serial_port, 
+                         'serial_baudrate': serial_baudrate, 
+                         'frame_id': frame_id,
+                         'inverted': inverted, 
+                         'angle_compensate': angle_compensate, 
+                         'scan_mode': scan_mode}],
+            output='screen'),
         ]
     )

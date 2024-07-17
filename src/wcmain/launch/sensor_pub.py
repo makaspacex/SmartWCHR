@@ -6,7 +6,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
 from pathlib import Path
@@ -16,10 +16,10 @@ def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
 
-    lidar = LaunchConfiguration("lidar")
     declare_lidar_type_cmd = DeclareLaunchArgument(
         "lidar",
         default_value="lidar",
+        choices=['lidar','sllidar','lslidar_ros'],
         description="lidar pacakge name, lidar/sllidar/lslidar_ros",
     )
     return LaunchDescription(
@@ -39,7 +39,7 @@ def generate_launch_description():
                         get_package_share_directory("lidar"), "launch", "scan.py"
                     )
                 ),
-                condition=IfCondition(PythonExpression(["'", lidar, "' == 'lidar'"])),
+                condition=LaunchConfigurationEquals("lidar", "lidar"),
             ),
             # 条件启动思岚s2雷达
             IncludeLaunchDescription(
@@ -48,7 +48,7 @@ def generate_launch_description():
                         get_package_share_directory("sllidar"), "launch", "scan.py"
                     )
                 ),
-                condition=IfCondition(PythonExpression(["'", lidar, "' == 'sllidar'"])),
+                condition=LaunchConfigurationEquals("lidar", "sllidar"),
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
