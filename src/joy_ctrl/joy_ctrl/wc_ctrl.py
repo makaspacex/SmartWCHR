@@ -26,8 +26,12 @@ class JoyTeleop(Node):
         self.cancel_time = time.time()
         self.user_name = getpass.getuser()
 
-        self.x_speeds = [0.05,0.07,0.1]
-        self.angular_speeds = [0.11,0.13,0.15]
+        # self.x_speeds = [0.05,0.07,0.1]
+        # self.angular_speeds = [0.11,0.13,0.15]
+
+        # 对应国康轮椅的速度，把速度增大一些
+        self.x_speeds = [0.15,0.18,0.20]
+        self.angular_speeds = [0.18,0.22,0.24]
 
 
 
