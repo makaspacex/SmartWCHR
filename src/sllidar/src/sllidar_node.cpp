@@ -342,7 +342,7 @@ public:
             int points_per_circle = (int)(1000*1000/current_scan_mode.us_per_sample/scan_frequency);
             angle_compensate_multiple = points_per_circle/360.0  + 1;
             if(angle_compensate_multiple < 1) 
-            angle_compensate_multiple = 1.0;
+                angle_compensate_multiple = 1.0;
             max_distance = (float)current_scan_mode.max_distance;
             RCLCPP_INFO(this->get_logger(),"current scan mode: %s, sample rate: %d Khz, max_distance: %.1f m, scan frequency:%.1f Hz, ", 
                                 current_scan_mode.scan_mode,(int)(1000/current_scan_mode.us_per_sample+0.5),max_distance, scan_frequency);
@@ -366,8 +366,10 @@ public:
 
             if (op_result == SL_RESULT_OK) {
                 op_result = drv->ascendScanData(nodes, count);
-                float angle_min = DEG2RAD(0.0f);
-                float angle_max = DEG2RAD(360.0f);
+                // float angle_min = DEG2RAD(0.0f);
+                // float angle_max = DEG2RAD(360.0f);
+                float angle_min = DEG2RAD(360.0f);
+                float angle_max = DEG2RAD(0.0f);
                 if (op_result == SL_RESULT_OK) {
                     if (angle_compensate) {
                         //const int angle_compensate_multiple = 1;
