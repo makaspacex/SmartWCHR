@@ -7,7 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import serial
 import math
 import time
-import math
+from statistics import mean
 
 
 class CmdVelToSerial(Node):
@@ -24,18 +24,25 @@ class CmdVelToSerial(Node):
             10
         )
         self.subscription  # prevent unused variable warning
-        self.ser_write_timer_ = self.create_timer(0.1, self.timerCallback)
+        # self.ser_write_timer_ = self.create_timer(0.1, self.timerCallback)
 
         self.last_write_time = math.inf
         self.zero_data = "AF 01 00 00 00 00 01 00 00 00 00"
 
-        # 当前轮椅是否处于停止状态
-        self.isstop = True
+
+        # 记录刚刚接收到的几条速度指令
+        self.linear_queue = [1.0] * 4
+        self.angular_queue = [1.0] * 4
+        self.index_queue = 0
+
 
 
     
-    
+    '''
     def timerCallback(self):
+
+        # 去掉这个
+        # 改成1s连续发0，忽略
         curtime = time.time()
 
         # 当轮椅处于运动状态且超过1s没有接收到速度指令，向串口发送停止数据
@@ -43,6 +50,7 @@ class CmdVelToSerial(Node):
             ser_data = self.get_ser_data(0, 0)
             self.ser.write(ser_data)
             self.isstop = True
+    '''
 
     
     def get_ser_data(self, v_linear, v_angular):
@@ -80,17 +88,25 @@ class CmdVelToSerial(Node):
 
 
     def listener_callback(self, msg):
+        # 保留1s的平均速率，如果等于0，忽略后面的0速度指令
         linear_speed = msg.linear.x
         angular_speed = msg.angular.z
 
-        # 将接收到的速度转化为串口数据
-        ser_data = self.get_ser_data(linear_speed, angular_speed)
+        self.linear_queue[self.index_queue] = linear_speed
+        self.angular_queue[self.index_queue] = angular_speed
+        self.index_queue = (self.index_queue + 1) % len(self.angular_queue)
 
-        self.ser.write(ser_data)
-        self.isstop = False
-        self.last_write_time = time.time()
+        
+        if math.isclose(mean(self.linear_queue), 0.0) and math.isclose(mean(self.angular_queue), 0.0):
+            pass
+        else:
+            # 将接收到的速度转化为串口数据
+            ser_data = self.get_ser_data(linear_speed, angular_speed)
+            self.ser.write(ser_data)
+            self.get_logger().info(f'linear_speed:{linear_speed}   angular_speed:{angular_speed}')
+            self.isstop = True
+            
 
-        self.get_logger().info(f'linear_speed:{linear_speed}   angular_speed:{angular_speed}')
 
 
 
