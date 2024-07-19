@@ -18,7 +18,7 @@ def generate_launch_description():
 
     declare_lidar_type_cmd = DeclareLaunchArgument(
         "lidar",
-        default_value="lidar",
+        default_value="sllidar",
         choices=['lidar','sllidar','lslidar_ros'],
         description="lidar pacakge name, lidar/sllidar/lslidar_ros",
     )

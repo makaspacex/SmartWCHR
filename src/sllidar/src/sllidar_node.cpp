@@ -215,12 +215,15 @@ class SLlidarNode : public rclcpp::Node
 
         bool reversed = (angle_max > angle_min);
         if ( reversed ) {
-            scan_msg->angle_min =  M_PI - angle_max;
-            scan_msg->angle_max =  M_PI - angle_min;
+            scan_msg->angle_min =  2.0 * M_PI - angle_max;
+            scan_msg->angle_max =  2.0 * M_PI - angle_min;
         } else {
-            scan_msg->angle_min =  M_PI - angle_min;
-            scan_msg->angle_max =  M_PI - angle_max;
+            scan_msg->angle_min =  2.0 * M_PI - angle_min;
+            scan_msg->angle_max =  2.0 * M_PI - angle_max;
         }
+        
+        // std::cout<< "reversed=" << reversed << ", angle_min=" << angle_min << ", angle_max="  << angle_max<< ", scan_msg->angle_min="  << scan_msg->angle_min<< ", scan_msg->angle_min="  << scan_msg->angle_min << std::endl;
+
         scan_msg->angle_increment = (scan_msg->angle_max - scan_msg->angle_min) / (double)(node_count-1);
 
         scan_msg->scan_time = scan_time;
@@ -366,10 +369,10 @@ public:
 
             if (op_result == SL_RESULT_OK) {
                 op_result = drv->ascendScanData(nodes, count);
-                // float angle_min = DEG2RAD(0.0f);
-                // float angle_max = DEG2RAD(360.0f);
-                float angle_min = DEG2RAD(360.0f);
-                float angle_max = DEG2RAD(0.0f);
+                float angle_min = DEG2RAD(0.0f);
+                float angle_max = DEG2RAD(360.0f);
+                // float angle_min = DEG2RAD(359.0f);
+                // float angle_max = DEG2RAD(0.0f);
                 if (op_result == SL_RESULT_OK) {
                     if (angle_compensate) {
                         //const int angle_compensate_multiple = 1;
@@ -459,7 +462,7 @@ public:
     bool inverted = false;
     bool angle_compensate = true;
     float max_distance = 8.0;
-    size_t angle_compensate_multiple = 1;//it stand of angle compensate at per 1 degree
+    size_t angle_compensate_multiple = 1.0;//it stand of angle compensate at per 1 degree
     std::string scan_mode;
     float scan_frequency;
 
