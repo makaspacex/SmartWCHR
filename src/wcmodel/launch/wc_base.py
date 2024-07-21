@@ -15,12 +15,13 @@ def generate_launch_description():
     package_share_dir = get_package_share_directory(package_name)
 
     urdf_model_path = os.path.join(package_share_dir, "urdf/wheelchair_base.urdf")
+    urdf_model_path = os.path.join(package_share_dir, "urdf/gkchair01_base.urdf")
+    urdf_model_path = "/home/jetson/Desktop/SmartWCHR/src/wcmodel/urdf/gkchair01_base.urdf"
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     robot_description = ParameterValue(
         Command(["xacro ", str(urdf_model_path)]), value_type=str
     )
-
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -32,7 +33,7 @@ def generate_launch_description():
                 "robot_name",
                 default_value="gk01",
                 choices=["gk01", "v1"],
-                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+                description="robot_name, gk01/v1",
             ),
             Node(
                 package="robot_state_publisher",
