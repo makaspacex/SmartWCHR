@@ -15,7 +15,8 @@ class CmdVelToSerial(Node):
         super().__init__('cmd_vel_to_serial')
         
         # 串口配置
-        self.ser = serial.Serial(portname, baudrate, timeout=1000)
+        self.get_logger().info(f'opening port {portname}')
+        self.ser = serial.Serial(portname, baudrate, timeout=1)
 
         self.subscription = self.create_subscription(
             Twist,
@@ -35,23 +36,11 @@ class CmdVelToSerial(Node):
         self.angular_queue = [1.0] * 4
         self.index_queue = 0
 
-
-
+        self.get_logger().info(f'gk01 controller is here!')
+        
+        # 用来控制打印输出频率的
+        self.last_print_time = time.time()
     
-    '''
-    def timerCallback(self):
-
-        # 去掉这个
-        # 改成1s连续发0，忽略
-        curtime = time.time()
-
-        # 当轮椅处于运动状态且超过1s没有接收到速度指令，向串口发送停止数据
-        if (not self.isstop) and curtime - self.last_write_time > 1:
-            ser_data = self.get_ser_data(0, 0)
-            self.ser.write(ser_data)
-            self.isstop = True
-    '''
-
     
     def get_ser_data(self, v_linear, v_angular):
         def get_sign(hex_str):
@@ -98,17 +87,17 @@ class CmdVelToSerial(Node):
 
         
         if math.isclose(mean(self.linear_queue), 0.0) and math.isclose(mean(self.angular_queue), 0.0):
-            pass
-        else:
-            # 将接收到的速度转化为串口数据
-            ser_data = self.get_ser_data(linear_speed, angular_speed)
-            self.ser.write(ser_data)
+            return
+        
+        # 将接收到的速度转化为串口数据
+        ser_data = self.get_ser_data(linear_speed, angular_speed)
+        self.ser.write(ser_data)
+        self.isstop = True
+        
+        now_time = time.time()
+        if now_time - self.last_print_time > 1:
             self.get_logger().info(f'linear_speed:{linear_speed}   angular_speed:{angular_speed}')
-            self.isstop = True
-            
-
-
-
+            self.last_print_time = now_time
 
 def main(args=None):
     rclpy.init(args=args)

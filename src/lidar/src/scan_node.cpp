@@ -148,32 +148,29 @@ int main(int argc, char **argv)
   OrdlidarDriver device(type, model);
   bool ret = false;
 
-  if (port.empty())
-  {
-    std::cout << "can't find lidar ms200" << std::endl;
+  if (port.empty()){
+    RCLCPP_ERROR(node->get_logger(),"can't find lidar ms200");
   }
-  else
-  {
+  else {
     device.SetSerialPort(port, baudrate);
+    RCLCPP_INFO(node->get_logger(),"get lidar type:%s",device_model.c_str());
+    RCLCPP_INFO(node->get_logger(),"get serial port:%s, baudrate:%d",port.c_str(), baudrate);
 
-    std::cout << "get lidar type:" << device_model.c_str() << std::endl;
-    std::cout << "get serial port:" << port.c_str() << ", baudrate:" << baudrate << std::endl;
-    while (rclcpp::ok())
-    {
+    while (rclcpp::ok()){
       if (device.isConnected() == true)
       {
         device.Disconnect();
-        std::cout << "Disconnect lidar device." << std::endl;
+        RCLCPP_INFO(node->get_logger(),"Disconnect lidar device.");
       }
 
       if (device.Connect())
       {
-        std::cout << "lidar device connect succuss." << std::endl;
+        RCLCPP_INFO(node->get_logger(),"lidar device connect succuss.");
         break;
       }
       else
       {
-        std::cout << "lidar device connecting..." << std::endl;
+        RCLCPP_INFO(node->get_logger(),"lidar device connecting...");
         sleep(1);
       }
     }
@@ -184,8 +181,8 @@ int main(int argc, char **argv)
     rclcpp::Time end_scan_time;
     double scan_duration;
 
-    std::cout << "get lidar scan data" << std::endl;
-    std::cout << "ROS topic:" << scan_topic.c_str() << std::endl;
+    RCLCPP_INFO(node->get_logger(), "get lidar scan data");
+    RCLCPP_INFO(node->get_logger(), "ROS topic:%s",scan_topic.c_str());
 
     min_thr = (double)motor_speed - ((double)motor_speed * 0.1);
     max_thr = (double)motor_speed + ((double)motor_speed * 0.1);
@@ -199,8 +196,7 @@ int main(int argc, char **argv)
     unsigned int pub_n = 0;
     unsigned int last_pub_n = 0;
 
-    while (rclcpp::ok())
-    {
+    while (rclcpp::ok()){
       start_scan_time = node->now();
       ret = device.GrabFullScanBlocking(scan_data, 1000);
       end_scan_time = node->now();
@@ -214,21 +210,19 @@ int main(int argc, char **argv)
         time_t now_t = time(NULL);
         if(now_t - last_pub_time > 8){
           double rate = (pub_n - last_pub_n) / (now_t - last_pub_time);
-          std::cout << "lidar pub rate=" <<rate << "hz, data[0].angle=" << scan_data.data[0].angle << std::endl;
+          RCLCPP_INFO(node->get_logger(),"lidar pub rate=%fhz, data[0].angle=%f",rate, scan_data.data[0].angle);
           last_pub_time = now_t;
           last_pub_n = pub_n;
         }
-
       }else{
         n += 1;
         n = n % 1000;
-        std::cout << "error! no data readed! :" << n << std::endl;
+        RCLCPP_ERROR(node->get_logger(),"error! no data readed! :%d",n);
       }
     }
     device.Disconnect();
   }
-
-  std::cout << "publish node end.." << std::endl;
+  RCLCPP_INFO(node->get_logger(),"publish node end..");
   rclcpp::shutdown();
   return 0;
 }

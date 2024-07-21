@@ -21,6 +21,7 @@ setup(
     entry_points={
         "console_scripts": [
             "controller = driver.controller:main",
+            "gk_controller = driver.guokang_controller:main",
             "odom_cal = driver.odomCalculator:main",
         ],
     },

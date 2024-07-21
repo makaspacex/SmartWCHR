@@ -8,8 +8,6 @@ import rclpy
 import serial
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
-import rich
-
 key = 0
 flag = 0
 buff = {}
@@ -163,7 +161,7 @@ class IMUDriverNode(Node):
                     self.get_logger().info(f"\033[32mSerial port {port_name} opened successfully...\033[0m")
                 return wt_imu
             except Exception as e:
-                print(e)
+                self.get_logger().error(e)
                 self.get_logger().info(f"\033[31mSerial port {port_name} opening failure\033[0m")
                 time.sleep(1)
         
@@ -175,8 +173,8 @@ class IMUDriverNode(Node):
             try:
                 buff_count = wt_imu.inWaiting()
             except Exception as e:
-                print("exception:" + str(e))
-                print("imu disconnect")
+                self.get_logger().error("exception:" + str(e))
+                self.get_logger().error("imu disconnect")
                 wt_imu = self.connect_dev(port_name=port_name)
             else:
                 if buff_count <= 0:
@@ -231,7 +229,7 @@ class IMUDriverNode(Node):
         
         if now_time - self.last_print_time > 8:
             rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-            rich.print(f"[cyan]imu pub rate = {rate}hz, linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            self.get_logger().info(f"[cyan]imu pub rate = {rate}hz, linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
             self.last_print_time = time.time()
             self.last_n = self.pub_n
 

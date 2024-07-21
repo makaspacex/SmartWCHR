@@ -45,7 +45,7 @@ import traceback
 import numpy as np
 
 class InfiniteEncoder:
-    def __init__(self,name:str, port:str, wheel_radius:float, slaveaddress=1, baudrate=9600, single_mode=False, wheel_encoder_ratio=1):
+    def __init__(self,name:str, port:str, wheel_radius:float, slaveaddress:int, single_mode=False, wheel_encoder_ratio=1.0):
         
         self.name:str = name
         
@@ -64,8 +64,6 @@ class InfiniteEncoder:
         self.total_delta_move:float = 0
         self.encoder_range:int = 2**31
         
-        self.baudrate = baudrate
-        
         self.single_mode = single_mode
         if single_mode:
             self.encoder_range:int = 2**10
@@ -80,20 +78,21 @@ class InfiniteEncoder:
         类的__init__函数中加上这一个参数
         '''
         self.wheel_encoder_ratio = wheel_encoder_ratio
+
+
         
-        self.ser = None
         # 编码器初始化
         self.last_time = time.time()
         self.instrument = self.init_encoder(self.port)
         
         # 保留历史数据，用于绘图测试
         # self.history = np.array([self._enc_value_raw, self.cur_value_raw, self.delta_move,self.total_delta_move])
-        
+        self.ser = None
         
     def init_encoder(self, port:str) -> minimalmodbus.Instrument :
         
         try:
-            self.ser = serial.Serial(port=port, baudrate=self.baudrate, bytesize=serialutil.EIGHTBITS, parity=serialutil.PARITY_NONE, stopbits=serialutil.STOPBITS_ONE, timeout=1)
+            self.ser = serial.Serial(port=port, baudrate=9600, bytesize=serialutil.EIGHTBITS, parity=serialutil.PARITY_NONE, stopbits=serialutil.STOPBITS_ONE, timeout=1)
         except Exception as e:
             print(f"串口打开失败:{port}, {e}")
             raise e
@@ -152,7 +151,8 @@ class InfiniteEncoder:
         dl = 2
         if self.single_mode:
             dl = 1
-        self._enc_value_raw = self.instrument.read_long(registeraddress=0, number_of_registers=dl, functioncode=3)
+        values = self.instrument.read_registers(registeraddress=0, number_of_registers=dl, functioncode=3)
+        self._enc_value_raw = self._get_value(values=values)
         return self._enc_value_raw
 
     def update_status(self):
@@ -169,9 +169,19 @@ class InfiniteEncoder:
         self.last_value_raw = self.cur_value_raw
         self.last_time = now
         
-        # 计算每个轮子的位移
+        '''
+        修改2
+        根据编码器的角度偏移值，得到轮子的位移
+        需要知道编码器角度变化与轮子角度变化之间的比例关系 
+        最终用到的是dilta_move和total_delta_move两个变量
+        '''
+
         self.delta_move =  diff_val /360  *  2 * math.pi * self.wheel_radius / self.wheel_encoder_ratio
         self.total_delta_move = total_diff_val /360  *  2 * math.pi * self.wheel_radius / self.wheel_encoder_ratio
+
+        # 计算每个轮子的位移
+        # self.delta_move =  diff_val /360  *  2 * math.pi * self.wheel_radius
+        # self.total_delta_move = total_diff_val /360  *  2 * math.pi * self.wheel_radius
         
         # 计算轮子的速度
         self.speed = self.delta_move / self.elapsed
@@ -200,14 +210,12 @@ class InfiniteEncoder:
         _en_str = f"{self._enc_value_raw:10d}"
         if self.single_mode:
             _en_str = f"{self._enc_value_raw:4d}"
-        return f"[{self.name}-->enc_raw:{_en_str} cur_val:{self.cur_value:10.2f} init:{self.init_value:6.2f} totalmove:{self.total_delta_move:8.2f}]"
+        return f"[{self.name}-->enc_raw:{_en_str} cur_val:{self.cur_value:7.2f} init:{self.init_value:6.2f} totalmove:{self.total_delta_move:6.2f}]"
     
 class OdomCalculator(Node):
     def __init__(self):
         super().__init__(node_name='odom_diff')
         self.publisher = self.create_publisher(Odometry, '/odom_diff', 10)
-        self.declare_parameter("robot_name", value="gk01")
-        self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
         
         # 总的累积里程
         self.x = 0.0
@@ -215,40 +223,41 @@ class OdomCalculator(Node):
         self.theta = 0.0
         
         # 机器人参数
-        self.wheel_radius = 0.27        # 轮子半径，单位：米
-        self.wheel_separation = 0.56    # 轮距，单位：米
-        self.single_mode = False        # 是否采用单圈模式
-        left_slaveaddress, right_slaveaddress = 1,1
-        self.wheel_encoder_ratio = 1
-        if self.robot_name == 'gk01':
-            self.wheel_radius = 0.152        # 轮子半径，单位：米
-            self.wheel_separation = 0.6    # 轮距，单位：米
-            self.single_mode = False
-            self.wheel_encoder_ratio = 29.5
-            left_slaveaddress, right_slaveaddress = 1,2
-        
-        self.get_logger().info(f"robot_name is {self.robot_name}")
-        
-        self.baudrate = 9600
-        
-        self.get_logger().info("正在设置左侧编码器")
-        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress = left_slaveaddress, baudrate=self.baudrate, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        '''
+        修改1
+        修改轮子半径、轮距这两个参数
+        直径304mm，半径152mm
+        轮距60cm
+        '''
 
+        self.wheel_radius = 0.152        # 轮子半径，单位：米
+        self.wheel_separation = 0.60    # 轮距，单位：米
+
+
+        # self.wheel_radius = 0.27        # 轮子半径，单位：米
+        # self.wheel_separation = 0.56    # 轮距，单位：米
+        self.encoder_resolution = 1024  # 编码器分辨率（每圈脉冲数）
+        self.encoder_range = 2**31
+        self.single_mode = True
+        
+        # 编码器数值处理类，用于无限计数
+        self.get_logger().info("正在设置左侧编码器")
+        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress=1, wheel_radius=self.wheel_radius,single_mode=self.single_mode, wheel_encoder_ratio=29.5)
+        
         self.get_logger().info("正在设置右侧编码器")
-        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        self.R = InfiniteEncoder(name="右",port="/dev/encoder_left",slaveaddress=2, wheel_radius=self.wheel_radius,  single_mode=self.single_mode, wheel_encoder_ratio=29.5)
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
         
         # 循环更新里程计
         self.create_timer(0.1, self.update_odom)
-    
+        
     def update_odom(self):
         # while rclpy.ok():
         try:
             # TODO 这个地方实际上由于串口延时，耗费时间略有不同
             self.L.update_status()
-            time.sleep(0.02)
             self.R.update_status()
 
             # 计算差值变化
@@ -302,7 +311,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"X:{self.x:8.2f} Y:{self.y:8.2f} theta={self.theta/math.pi:6.2f}pi {self.L}{self.R} rate:{_rate:6.2f}hz")
+                self.get_logger().info(f"X:{self.x:6.2f} Y:{self.y:6.2f} theta={self.theta/math.pi:6.2f}pi {self.L}{self.R} rate:{_rate:6.2f}hz")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             

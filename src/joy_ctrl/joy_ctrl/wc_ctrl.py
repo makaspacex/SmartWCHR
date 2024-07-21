@@ -30,8 +30,8 @@ class JoyTeleop(Node):
         # self.angular_speeds = [0.11,0.13,0.15]
 
         # 对应国康轮椅的速度，把速度增大一些
-        self.x_speeds = [0.15,0.18,0.20]
-        self.angular_speeds = [0.18,0.22,0.24]
+        self.x_speeds = [0.2,0.4,0.6]
+        self.angular_speeds = [0.12,0.16,0.2]
 
 
 

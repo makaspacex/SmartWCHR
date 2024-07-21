@@ -10,7 +10,7 @@ LOG_DIR = $(ROS2_WS)/log
 VALID_TARGETS = all build clean run launch docker up
 OPTS = $(filter-out $(VALID_TARGETS),$(MAKECMDGOALS))
 # BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
-BUILD_CC = colcon build --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
+BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
 RUN_CC = ros2 run
 LAUNCH_CC = ros2 launch
 

@@ -28,6 +28,12 @@ def generate_launch_description():
                 default_value="false",
                 description="Use simulation (Gazebo) clock if true",
             ),
+            DeclareLaunchArgument(
+                "robot_name",
+                default_value="gk01",
+                choices=["gk01", "v1"],
+                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+            ),
             Node(
                 package="robot_state_publisher",
                 executable="robot_state_publisher",

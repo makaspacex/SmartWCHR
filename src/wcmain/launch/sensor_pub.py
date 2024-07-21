@@ -16,21 +16,29 @@ def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
 
-    declare_lidar_type_cmd = DeclareLaunchArgument(
-        "lidar",
-        default_value="sllidar",
-        choices=['lidar','sllidar','lslidar_ros'],
-        description="lidar pacakge name, lidar/sllidar/lslidar_ros",
-    )
+    robot_name = LaunchConfiguration('robot_name')
     return LaunchDescription(
         [
-            declare_lidar_type_cmd,
+            DeclareLaunchArgument(
+                "lidar",
+                default_value="sllidar",
+                choices=["lidar", "sllidar", "lslidar_ros"],
+                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+            ),
+            DeclareLaunchArgument(
+                "robot_name",
+                default_value="gk01",
+                choices=["gk01", "v1"],
+                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+            ),
+            
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
                         get_package_share_directory("driver"), "launch", "driver.py"
-                    )
-                )
+                    ),
+                ),
+                launch_arguments={'robot_name': robot_name}.items()
             ),
             # 条件启动ms200雷达
             IncludeLaunchDescription(
@@ -53,14 +61,16 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
-                )
+                ),
+                condition=LaunchConfigurationEquals("robot_name", "v1")
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
                         get_package_share_directory("wcmodel"), "launch", "wc_base.py"
                     )
-                )
+                ),
+                launch_arguments={'robot_name': robot_name}.items()
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
