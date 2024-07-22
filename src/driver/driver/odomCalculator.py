@@ -215,16 +215,19 @@ class OdomCalculator(Node):
         self.theta = 0.0
         
         # 机器人参数
-        self.wheel_radius = 0.27        # 轮子半径，单位：米
+        self.wheel_radius_l,self.wheel_radius_r  = 0.27, 0.27        # 轮子半径，单位：米
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.single_mode = False        # 是否采用单圈模式
-        left_slaveaddress, right_slaveaddress = 1,1
-        self.wheel_encoder_ratio = 1.0
+        left_slaveaddress, right_slaveaddress = 1,1 # 轮速比
+        self.wheel_encoder_ratio_l,self.wheel_encoder_ratio_r = 1, 1
         if self.robot_name == 'gk01':
-            self.wheel_radius = 0.152        # 轮子半径，单位：米
-            self.wheel_separation = 0.6    # 轮距，单位：米
+            self.wheel_radius_l,self.wheel_radius_r = 0.17109309004899478, 0.17234513274336286 
+            # 轮子半径，单位：米，轮子半径为1是，实际行走距离为10.127时，左轮59.19，右轮58.76
+            # self.wheel_separation = 0.595    # 轮距，单位：米
+            # self.wheel_separation = 0.5831163056596582    # 轮距，单位：米
+            self.wheel_separation = 0.6037277507952563    # 轮距，单位：米
             self.single_mode = False
-            self.wheel_encoder_ratio = 29.5
+            self.wheel_encoder_ratio_l,self.wheel_encoder_ratio_r = 29.498437037037036, 29.49515
             left_slaveaddress, right_slaveaddress = 1,2
         
         self.get_logger().info(f"robot_name is {self.robot_name}")
@@ -232,10 +235,10 @@ class OdomCalculator(Node):
         self.baudrate = 9600
         
         self.get_logger().info("正在设置左侧编码器")
-        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress = left_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress = left_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio_l, wheel_radius=self.wheel_radius_l, single_mode=self.single_mode)
 
         self.get_logger().info("正在设置右侧编码器")
-        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio_r, wheel_radius=self.wheel_radius_r, single_mode=self.single_mode)
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
@@ -262,20 +265,25 @@ class OdomCalculator(Node):
             self.dr = delta_theta / elapsed  # 角速度
             
             # 更新机器人坐标及角度
-            if (delta_s != 0):
-                # calculate distance traveled in x and y
-                x = math.cos( delta_theta ) * delta_s
-                y = - math.sin( delta_theta ) * delta_s
-                # calculate the final position of the robot
-                self.x = self.x + ( math.cos( self.theta ) * x - math.sin( self.theta ) * y )
-                self.y = self.y + ( math.sin( self.theta ) * x + math.cos( self.theta ) * y )
+            delta_x = math.cos( delta_theta ) * delta_s
+            delta_y = - math.sin( delta_theta ) * delta_s
+            
+            # calculate the final position of the robot
+            # self.x += math.cos( self.theta ) * delta_x - math.sin( self.theta ) * delta_y 
+            # self.y += math.sin( self.theta ) * delta_x + math.cos( self.theta ) * delta_y 
+            
+            self.x += delta_x
+            self.y += delta_y
+            
             # 角度
-            # if( delta_theta != 0):
-                # self.theta += (delta_right - delta_left) / self.wheel_separation
-            self.theta = total_delta_theta %  (2 *math.pi)
-            if total_delta_theta < 0:
-                self.theta = (total_delta_theta + 2*math.pi) % ( 2 * math.pi)
-
+            # self.theta += delta_theta
+            self.theta = total_delta_theta
+            
+            # if self.theta > 0:
+            #     self.theta = self.theta % math.pi
+            # else:
+            #     self.theta = self.theta % (- math.pi)
+            
             # 发布里程计数据
             odom_msg = Odometry()
             odom_msg.header.stamp = self.get_clock().now().to_msg()
@@ -302,7 +310,7 @@ class OdomCalculator(Node):
             self.pub_n = self.pub_n + 1
             if now_time - self.last_print_time > 1:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-                self.get_logger().info(f"X:{self.x:8.2f} Y:{self.y:8.2f} theta={self.theta/math.pi:6.2f}pi {self.L}{self.R} rate:{_rate:6.2f}hz")
+                self.get_logger().info(f"X:{self.x:8.2f} Y:{self.y:8.2f} theta={self.theta/math.pi * 180 :6.2f}C separation={self.wheel_separation} {self.L}{self.R} rate:{_rate:6.2f}hz")
                 self.last_print_time = time.time()
                 self.last_n = self.pub_n
             
