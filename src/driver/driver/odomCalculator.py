@@ -45,7 +45,7 @@ import traceback
 import numpy as np
 
 class InfiniteEncoder:
-    def __init__(self,name:str, port:str, wheel_radius:float, slaveaddress=1, baudrate=9600, single_mode=False, wheel_encoder_ratio=1):
+    def __init__(self,name:str, port:str, wheel_radius:float, slaveaddress=1, baudrate=9600, single_mode=False, wheel_encoder_ratio=1.0):
         
         self.name:str = name
         
@@ -219,7 +219,7 @@ class OdomCalculator(Node):
         self.wheel_separation = 0.56    # 轮距，单位：米
         self.single_mode = False        # 是否采用单圈模式
         left_slaveaddress, right_slaveaddress = 1,1
-        self.wheel_encoder_ratio = 1
+        self.wheel_encoder_ratio = 1.0
         if self.robot_name == 'gk01':
             self.wheel_radius = 0.152        # 轮子半径，单位：米
             self.wheel_separation = 0.6    # 轮距，单位：米
@@ -232,10 +232,10 @@ class OdomCalculator(Node):
         self.baudrate = 9600
         
         self.get_logger().info("正在设置左侧编码器")
-        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress = left_slaveaddress, baudrate=self.baudrate, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        self.L = InfiniteEncoder(name="左",port="/dev/encoder_left",slaveaddress = left_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
 
         self.get_logger().info("正在设置右侧编码器")
-        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
+        self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio, wheel_radius=self.wheel_radius, single_mode=self.single_mode)
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()
