@@ -21,11 +21,11 @@ def generate_launch_description():
                 choices=["lidar", "sllidar", "lslidar_ros"],
                 description="lidar pacakge name, lidar/sllidar/lslidar_ros",
             ),
-            DeclareLaunchArgument(
+           DeclareLaunchArgument(
                 "robot_name",
                 default_value="gk01",
                 choices=["gk01", "v1"],
-                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+                description="robot_name, gk01/v1",
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(

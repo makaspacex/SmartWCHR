@@ -19,7 +19,7 @@ def generate_launch_description():
                 "robot_name",
                 default_value="gk01",
                 choices=["gk01", "v1"],
-                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+                description="robot_name, gk01/v1",
             ),
             Node(
                 package="driver",
@@ -50,15 +50,6 @@ def generate_launch_description():
                         "localization.py",
                     )
                 )
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("joy_ctrl"),
-                        "launch",
-                        "joy_ctrl.py",
-                    )
-                )
-            ),
+            )
         ]
     )

@@ -17,6 +17,7 @@ def generate_launch_description():
     package_share_dir = get_package_share_directory(package_name)
 
     robot_name = LaunchConfiguration('robot_name')
+    launch_driver = LaunchConfiguration("launch_driver", default="true")
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -31,14 +32,19 @@ def generate_launch_description():
                 choices=["gk01", "v1"],
                 description="robot_name, gk01/v1",
             ),
-            
+            DeclareLaunchArgument(
+                "launch_driver",
+                default_value="true",
+                description="launch_driver",
+            ),
+            # 手柄控制
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
                         get_package_share_directory("driver"), "launch", "driver.py"
                     ),
                 ),
-                launch_arguments={'robot_name': robot_name}.items()
+                launch_arguments={"robot_name": robot_name,"launch_driver":launch_driver}.items(),
             ),
             # 条件启动ms200雷达
             IncludeLaunchDescription(
