@@ -98,13 +98,13 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         "map",
-        default_value=os.path.join(bringup_dir, "maps", "map_fx.yaml"),
+        default_value=os.path.join(bringup_dir, "maps", "fx_10_gk.yaml"),
         description="Full path to map file to load",
     )
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         "use_sim_time",
-        default_value="true",
+        default_value="false",
         description="Use simulation (Gazebo) clock if true",
     )
 
@@ -234,24 +234,25 @@ def generate_launch_description():
         ],
     )
     # --------------------------------------------- 暂时不用这个 ------------------------------------------
-    robot_urdf = os.path.join(bringup_dir, "urdf", "wheelchair_base.urdf")
-    # robot_urdf = os.path.join(bringup_dir, 'urdf', 'turtlebot3_waffle.urdf')
-    robot_description = ParameterValue(
-        Command(["xacro ", str(robot_urdf)]), value_type=str
-    )
+    # robot_urdf = os.path.join(bringup_dir, "urdf", "wheelchair_base.urdf")
+    # robot_urdf = os.path.join(bringup_dir, "urdf", "gkchair01_base.urdf")
+    # # robot_urdf = os.path.join(bringup_dir, 'urdf', 'turtlebot3_waffle.urdf')
+    # robot_description = ParameterValue(
+    #     Command(["xacro ", str(robot_urdf)]), value_type=str
+    # )
 
-    start_robot_state_publisher_cmd = Node(
-        condition=IfCondition(use_robot_state_pub),
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        namespace=namespace,
-        output="screen",
-        parameters=[
-            {"use_sim_time": use_sim_time, "robot_description": robot_description}
-        ],
-        remappings=remappings,
-    )
+    # start_robot_state_publisher_cmd = Node(
+    #     condition=IfCondition(use_robot_state_pub),
+    #     package="robot_state_publisher",
+    #     executable="robot_state_publisher",
+    #     name="robot_state_publisher",
+    #     namespace=namespace,
+    #     output="screen",
+    #     parameters=[
+    #         {"use_sim_time": use_sim_time, "robot_description": robot_description}
+    #     ],
+    #     remappings=remappings,
+    # )
     # --------------------------------------------- 暂时不用这个 ------------------------------------------
 
     rviz_cmd = IncludeLaunchDescription(

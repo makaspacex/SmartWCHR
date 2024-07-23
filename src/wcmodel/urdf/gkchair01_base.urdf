@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="wheelchair_base" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="gk01" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <!-- ****************** ROBOT CONSTANTS *******************************  -->
   <!-- Define the size of the robot's main chassis in meters -->

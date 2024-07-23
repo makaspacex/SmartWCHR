@@ -251,7 +251,6 @@ class OdomCalculator(Node):
         try:
             # TODO 这个地方实际上由于串口延时，耗费时间略有不同
             self.L.update_status()
-            time.sleep(0.02)
             self.R.update_status()
 
             # 计算差值变化
@@ -269,26 +268,26 @@ class OdomCalculator(Node):
             delta_y = - math.sin( delta_theta ) * delta_s
             
             # calculate the final position of the robot
-            # self.x += math.cos( self.theta ) * delta_x - math.sin( self.theta ) * delta_y 
-            # self.y += math.sin( self.theta ) * delta_x + math.cos( self.theta ) * delta_y 
+            self.x += math.cos( self.theta ) * delta_x - math.sin( self.theta ) * delta_y 
+            self.y += math.sin( self.theta ) * delta_x + math.cos( self.theta ) * delta_y 
             
-            self.x += delta_x
-            self.y += delta_y
+            # self.x += delta_x
+            # self.y += delta_y
             
             # 角度
             # self.theta += delta_theta
             self.theta = total_delta_theta
             
-            # if self.theta > 0:
-            #     self.theta = self.theta % math.pi
-            # else:
-            #     self.theta = self.theta % (- math.pi)
+            if self.theta > 0:
+                self.theta = self.theta % (2 *math.pi)
+            else:
+                self.theta = self.theta % (- 2 * math.pi)
             
             # 发布里程计数据
             odom_msg = Odometry()
             odom_msg.header.stamp = self.get_clock().now().to_msg()
             odom_msg.header.frame_id = 'odom'
-            odom_msg.child_frame_id = 'base_link'
+            odom_msg.child_frame_id = 'base_footprint'
             odom_msg.pose.pose.position.x = self.x
             odom_msg.pose.pose.position.y = self.y
             odom_msg.twist.twist.linear.x = self.dx
@@ -308,7 +307,7 @@ class OdomCalculator(Node):
             
             now_time = time.time()
             self.pub_n = self.pub_n + 1
-            if now_time - self.last_print_time > 1:
+            if now_time - self.last_print_time > 8:
                 _rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
                 self.get_logger().info(f"X:{self.x:8.2f} Y:{self.y:8.2f} theta={self.theta/math.pi * 180 :6.2f}C separation={self.wheel_separation} {self.L}{self.R} rate:{_rate:6.2f}hz")
                 self.last_print_time = time.time()

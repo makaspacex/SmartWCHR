@@ -4,12 +4,14 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import LaunchConfiguration
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
-
+    robot_name = LaunchConfiguration('robot_name')
     return LaunchDescription(
         [
             Node(
@@ -39,6 +41,14 @@ def generate_launch_description():
                 package="cartographer_ros",
                 executable="cartographer_occupancy_grid_node",
                 parameters=[{"use_sim_time": use_sim_time}, {"resolution": 0.05}],
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("wcmodel"), "launch", "wc_base.py"
+                    )
+                ),
+                launch_arguments={'robot_name': robot_name}.items()
             ),
         ]
     )

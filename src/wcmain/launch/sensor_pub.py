@@ -29,7 +29,7 @@ def generate_launch_description():
                 "robot_name",
                 default_value="gk01",
                 choices=["gk01", "v1"],
-                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+                description="robot_name, gk01/v1",
             ),
             
             IncludeLaunchDescription(
@@ -63,14 +63,6 @@ def generate_launch_description():
                     os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
                 ),
                 condition=LaunchConfigurationEquals("robot_name", "v1")
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("wcmodel"), "launch", "wc_base.py"
-                    )
-                ),
-                launch_arguments={'robot_name': robot_name}.items()
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
