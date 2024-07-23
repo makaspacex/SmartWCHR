@@ -9,7 +9,7 @@ class ParticleToPoint(Node):
     def __init__(self):
         super().__init__('particle_to_point')
         qos_profile = QoSProfile(depth=10)
-        qos_profile.reliability = ReliabilityPolicy.BEST_EFFORT
+        qos_profile.reliability = ReliabilityPolicy.RELIABLE
         self.subscription = self.create_subscription(
             ParticleCloud,
             '/particle_cloud',

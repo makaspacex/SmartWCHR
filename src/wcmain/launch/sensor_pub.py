@@ -69,15 +69,6 @@ def generate_launch_description():
                     os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
                 ),
                 condition=LaunchConfigurationEquals("robot_name", "v1")
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("wcmain"),
-                        "launch",
-                        "particle_to_point.py",
-                    )
-                )
-            ),
+            )
         ]
     )

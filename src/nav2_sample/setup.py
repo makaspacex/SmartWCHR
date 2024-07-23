@@ -13,7 +13,6 @@ setup(
         ('share/' + package_name + '/maps', glob.glob('maps/*')),
         ('share/' + package_name + '/params', glob.glob('params/*')),
         ('share/' + package_name + '/rviz', glob.glob('rviz/*')),
-        ('share/' + package_name + '/urdf', glob.glob('urdf/*')),
         ('share/' + package_name + '/worlds', glob.glob('worlds/*')),
         ('share/' + package_name + '/meshes', glob.glob('meshes/*')),
         ('share/' + package_name, ['package.xml']),

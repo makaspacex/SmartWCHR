@@ -20,7 +20,7 @@ from std_msgs.msg import Int32, Bool
 class JoyTeleop(Node):
     def __init__(self,name):
         super().__init__(name)
-        self.Joy_active = False
+        self.joy_active = False
         self.Buzzer_active = False
         self.RGBLight_index = 0
         self.cancel_time = time.time()
@@ -39,7 +39,6 @@ class JoyTeleop(Node):
         
         #create pub
         self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  10)
-        self.pub_JoyState = self.create_publisher(Bool,"JoyState",  10)
         #create sub
         self.sub_Joy = self.create_subscription(Joy,'joy', self.buttonCallback, 10)
         
@@ -50,7 +49,7 @@ class JoyTeleop(Node):
         # 上次换挡的时间
         self.last_swith_gear_time = time.time()
 
-
+        self.last_print_time = time.time()
         
     def buttonCallback(self,joy_data):
         if not isinstance(joy_data, Joy): return
@@ -58,54 +57,73 @@ class JoyTeleop(Node):
         self.user_jetson(joy_data)
         
     def user_jetson(self, joy_data:Joy):
-
-        #lock or unlock joy control
-        if joy_data.buttons[9] == 1: self.nav_lock_toggle()
+        curtime = time.time()
+        
+        # Y is unlock, and X is lock
+        if  1 in joy_data.buttons[3:5] and curtime - self.cancel_time > 0.3:
+            self.joy_active = False
+            if joy_data.buttons[4] == 1:
+                self.joy_active = True
+            if joy_data.buttons[3] == 1:
+                self.joy_active = False
+            
+            if self.joy_active == True:
+                self.get_logger().info("joy control enabled!")
+            else:
+                self.get_logger().info("joy control disabled!")
+            
+            for i in range(3):
+                self.pub_cmdVel.publish(Twist())
+            self.cancel_time = curtime
         
         #linear Gear control
-
-        if joy_data.buttons[8] == 1:
-            curtime = time.time()
-            if curtime - self.last_swith_gear_time > 0.3:
-                self.speed_index = (self.speed_index + 1) % len(self.x_speeds)
-                self.xspeed_limit = self.x_speeds[self.speed_index]
-                self.angular_speed_limit = self.angular_speeds[self.speed_index]
-                self.last_swith_gear_time = curtime
-                self.get_logger().info(f"cur_gear is: {self.speed_index}  {self.xspeed_limit}  {self.angular_speed_limit}")
-                
-
+        if 1 in joy_data.buttons[0:2] and curtime - self.last_swith_gear_time > 0.3:
+            
+            add_sign = 1
+            if joy_data.buttons[0] == 1:
+                add_sign = -1
+            elif joy_data.buttons[1] == 1:
+                add_sign = 1
+            
+            s_index = self.speed_index + add_sign
+            
+            if s_index > len(self.x_speeds)-1:
+                s_index = len(self.x_speeds) -1
+            elif s_index < 0:
+                s_index = 0
+            
+            self.speed_index = s_index
+            
+            self.xspeed_limit = self.x_speeds[self.speed_index]
+            self.angular_speed_limit = self.angular_speeds[self.speed_index]
+            self.last_swith_gear_time = curtime
+            self.get_logger().info(f"cur_gear is: {self.speed_index}  {self.xspeed_limit}  {self.angular_speed_limit}")
+        
+        # 上下按钮为joy_data.axes[7]，左右按钮为joy_data.axes[6]，取值为正负1
+        x_xishu = joy_data.axes[7] if joy_data.axes[7]!=0 else joy_data.axes[1]
+        angle_xishu = joy_data.axes[6] if joy_data.axes[6]!=0 else joy_data.axes[0]
+        
         # joy_data.axes[1]是接收左边操纵杆前后拨动的信号
-        xlinear_speed = self.filter_data(joy_data.axes[1]) * self.xspeed_limit
+        xlinear_speed = self.filter_data(x_xishu) * self.xspeed_limit
 
         # joy_data.axes[0]是接收左边操纵杆左右拨动的信号
-        angular_speed = self.filter_data(joy_data.axes[0]) * self.angular_speed_limit
+        angular_speed = self.filter_data(angle_xishu) * self.angular_speed_limit
 
         twist = Twist()
         twist.linear.x = xlinear_speed
         twist.angular.z = angular_speed
-        if self.Joy_active == True:
+        
+        if self.joy_active == True:
             for i in range(3): self.pub_cmdVel.publish(twist)
-    
+
+        # logging to console 
+        if curtime - self.last_print_time > 1:
+            # self.get_logger().info(f"{xlinear_speed,angular_speed, joy_data.buttons, joy_data.axes}")
+            self.last_print_time = curtime 
+        
     def filter_data(self, value):
         if abs(value) < 0.2: value = 0
         return value
-    
-    def nav_lock_toggle(self):
-        now_time = time.time()
-        if now_time - self.cancel_time > 1:
-            Joy_ctrl = Bool()
-            self.Joy_active = not self.Joy_active
-            if self.Joy_active == True:
-                self.get_logger().info("joy control enabled!")
-                # print("joy control enabled!")
-            else:
-                self.get_logger().info("joy control disabled!")
-                # print("joy control disabled!")
-            Joy_ctrl.data = self.Joy_active
-            for i in range(3):
-                self.pub_JoyState.publish(Joy_ctrl)
-                self.pub_cmdVel.publish(Twist())
-            self.cancel_time = now_time
             
 def main():
     rclpy.init()
