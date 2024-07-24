@@ -18,6 +18,7 @@ def generate_launch_description():
 
     robot_name = LaunchConfiguration('robot_name')
     launch_driver = LaunchConfiguration("launch_driver", default="true")
+    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -37,14 +38,19 @@ def generate_launch_description():
                 default_value="true",
                 description="launch_driver",
             ),
+            DeclareLaunchArgument(
+                "launch_ros_local",
+                default_value="true",
+                description="start robot localization",
+            ),
             # 手柄控制
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
-                        get_package_share_directory("driver"), "launch", "driver.py"
+                        get_package_share_directory("joy_ctrl"), "launch", "joy_ctrl.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name,"launch_driver":launch_driver}.items(),
+                launch_arguments={"robot_name": robot_name,"launch_driver":launch_driver, "launch_ros_local":launch_ros_local}.items(),
             ),
             # 条件启动ms200雷达
             IncludeLaunchDescription(
@@ -64,11 +70,11 @@ def generate_launch_description():
                 ),
                 condition=LaunchConfigurationEquals("lidar", "sllidar"),
             ),
+            # 启动imu
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
-                ),
-                condition=LaunchConfigurationEquals("robot_name", "v1")
+                )
             )
         ]
     )

@@ -139,8 +139,6 @@ class IMUDriverNode(Node):
         self.imu_msg.header.frame_id = frame_id
         # 创建IMU数据发布器
         self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
-        #self.port = self.get_parameter('port')
-        #self.baud_rate = self.get_parameter('baud')
 
         # 启动IMU驱动线程
         self.driver_thread = threading.Thread(target=self.driver_loop, args=(port_name,))
@@ -229,7 +227,7 @@ class IMUDriverNode(Node):
         
         if now_time - self.last_print_time > 8:
             rate = (self.pub_n - self.last_n)/(now_time - self.last_print_time)
-            self.get_logger().info(f"[cyan]imu pub rate = {rate}hz, linear_acceleration={self.imu_msg.linear_acceleration}[/cyan]")
+            self.get_logger().info(f"imu pub rate = {rate}hz, angular_velocity={self.imu_msg.angular_velocity}")
             self.last_print_time = time.time()
             self.last_n = self.pub_n
 

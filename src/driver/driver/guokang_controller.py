@@ -14,9 +14,13 @@ class CmdVelToSerial(Node):
     def __init__(self, portname="/dev/driver", baudrate = 9600):
         super().__init__('cmd_vel_to_serial')
         
+        self.portname = portname
+        self.baudrate = baudrate
+        
         # 串口配置
-        self.get_logger().info(f'opening port {portname}')
-        self.ser = serial.Serial(portname, baudrate, timeout=1)
+        self.ser = None
+        self.connect_dev()
+        
 
         self.subscription = self.create_subscription(
             Twist,
@@ -30,7 +34,6 @@ class CmdVelToSerial(Node):
         self.last_write_time = math.inf
         self.zero_data = "AF 01 00 00 00 00 01 00 00 00 00"
 
-
         # 记录刚刚接收到的几条速度指令
         self.linear_queue = [1.0] * 4
         self.angular_queue = [1.0] * 4
@@ -41,6 +44,16 @@ class CmdVelToSerial(Node):
         # 用来控制打印输出频率的
         self.last_print_time = time.time()
     
+    def connect_dev(self):
+        if hasattr(self,"ser") and self.ser is not None:
+            return 
+        while True:
+            try:
+                self.ser = serial.Serial(self.portname, self.baudrate, timeout=1)
+                break
+            except Exception:
+                self.get_logger().error(f"connect to {self.portname} is failed, tring again....")
+                time.sleep(1)
     
     def get_ser_data(self, v_linear, v_angular):
         def get_sign(hex_str):
@@ -73,30 +86,35 @@ class CmdVelToSerial(Node):
         ser_data = bytes.fromhex(hex_string)
 
         return ser_data
-
-
+        
+    def write_to_ser(self, ser_data):
+        try:
+            self.ser.write(ser_data)
+        except Exception:
+            self.ser = None
+            self.get_logger().error(f"failed write data to {self.portname}")
 
     def listener_callback(self, msg):
         # 保留1s的平均速率，如果等于0，忽略后面的0速度指令
+        self.connect_dev()
+        
         linear_speed = msg.linear.x
         angular_speed = msg.angular.z
 
         self.linear_queue[self.index_queue] = linear_speed
         self.angular_queue[self.index_queue] = angular_speed
         self.index_queue = (self.index_queue + 1) % len(self.angular_queue)
-
         
         if math.isclose(mean(self.linear_queue), 0.0) and math.isclose(mean(self.angular_queue), 0.0):
             return
         
         # 将接收到的速度转化为串口数据
         ser_data = self.get_ser_data(linear_speed, angular_speed)
-        self.ser.write(ser_data)
-        self.isstop = True
+        self.write_to_ser(ser_data=ser_data)
         
         now_time = time.time()
         if now_time - self.last_print_time > 1:
-            self.get_logger().info(f'linear_speed:{linear_speed}   angular_speed:{angular_speed}')
+            self.get_logger().debug(f'linear_speed:{linear_speed}   angular_speed:{angular_speed}')
             self.last_print_time = now_time
 
 def main(args=None):

@@ -14,8 +14,7 @@ def generate_launch_description():
     imu_node = Node(
         package='imu',
         executable='imu',
-        name='imu',
-        remappings=[('/wit/imu', '/imu/data')],
+        name='imu_node',
         parameters=[{'port': '/dev/imu_usb'},
                     {"baud": 9600}],
         output="screen"

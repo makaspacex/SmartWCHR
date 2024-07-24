@@ -12,6 +12,7 @@ from launch.substitutions import LaunchConfiguration, PythonExpression
 def generate_launch_description():
     robot_name = LaunchConfiguration('robot_name')
     lidar = LaunchConfiguration('lidar')
+    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
     
     return LaunchDescription(
         [
@@ -27,13 +28,18 @@ def generate_launch_description():
                 choices=["gk01", "v1"],
                 description="robot_name, gk01/v1",
             ),
+           DeclareLaunchArgument(
+                "launch_ros_local",
+                default_value="true",
+                description="start robot localization",
+            ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
                         get_package_share_directory("wcmain"), "launch", "sensor_pub.py"
                     )
                 ),
-                launch_arguments={'robot_name': robot_name,"lidar":lidar}.items()
+                launch_arguments={'robot_name': robot_name,"lidar":lidar,"launch_ros_local":launch_ros_local}.items()
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(

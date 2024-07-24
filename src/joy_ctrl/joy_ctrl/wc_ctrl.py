@@ -15,17 +15,13 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from actionlib_msgs.msg import GoalID
 from std_msgs.msg import Int32, Bool
-
+from std_msgs.msg import String
 
 class JoyTeleop(Node):
     def __init__(self,name):
         super().__init__(name)
-        self.joy_active = False
-        self.Buzzer_active = False
-        self.RGBLight_index = 0
+        self.joy_active = True
         self.cancel_time = time.time()
-        self.user_name = getpass.getuser()
-
         # self.x_speeds = [0.05,0.07,0.1]
         # self.angular_speeds = [0.11,0.13,0.15]
 
@@ -33,12 +29,11 @@ class JoyTeleop(Node):
         self.x_speeds = [0.2,0.4,0.6, 0.8, 1.0]
         self.angular_speeds = [0.12,0.16,0.2, 0.2, 0.2]
 
-
-
         self.speed_index = 0
         
         #create pub
         self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  10)
+        self.pub_odom2init = self.create_publisher(String,'odom2init',  10)
         #create sub
         self.sub_Joy = self.create_subscription(Joy,'joy', self.buttonCallback, 10)
         
@@ -51,9 +46,15 @@ class JoyTeleop(Node):
 
         self.last_print_time = time.time()
         
+        
+        self.last_init_odom = time.time()
+        
+        
+        
+    
     def buttonCallback(self,joy_data):
-        if not isinstance(joy_data, Joy): return
-        # print(f"joy_data.axes:{joy_data.axes}")
+        if not isinstance(joy_data, Joy): 
+            return
         self.user_jetson(joy_data)
         
     def user_jetson(self, joy_data:Joy):
@@ -66,8 +67,7 @@ class JoyTeleop(Node):
                 self.joy_active = True
             if joy_data.buttons[3] == 1:
                 self.joy_active = False
-            
-            if self.joy_active == True:
+            if self.joy_active:
                 self.get_logger().info("joy control enabled!")
             else:
                 self.get_logger().info("joy control disabled!")
@@ -75,6 +75,14 @@ class JoyTeleop(Node):
             for i in range(3):
                 self.pub_cmdVel.publish(Twist())
             self.cancel_time = curtime
+        
+        if joy_data.buttons[14] == 1 and curtime - self.last_init_odom > 1:
+            msg = String()                                            # 创建一个String类型的消息对象
+            msg.data = 'reset odom to init'                                  # 填充消息对象中的消息数据
+            self.pub_odom2init.publish(msg)
+            self.get_logger().info("send set odom msg") 
+            self.last_init_odom = curtime
+        
         
         #linear Gear control
         if 1 in joy_data.buttons[0:2] and curtime - self.last_swith_gear_time > 0.3:
@@ -100,8 +108,12 @@ class JoyTeleop(Node):
             self.get_logger().info(f"cur_gear is: {self.speed_index}  {self.xspeed_limit}  {self.angular_speed_limit}")
         
         # 上下按钮为joy_data.axes[7]，左右按钮为joy_data.axes[6]，取值为正负1
-        x_xishu = joy_data.axes[7] if joy_data.axes[7]!=0 else joy_data.axes[1]
-        angle_xishu = joy_data.axes[6] if joy_data.axes[6]!=0 else joy_data.axes[0]
+        # x_xishu = joy_data.axes[7] if joy_data.axes[7]!=0 else joy_data.axes[1]
+        # angle_xishu = joy_data.axes[6] if joy_data.axes[6]!=0 else joy_data.axes[0]
+        
+        x_xishu = joy_data.axes[1] if joy_data.axes[1]!=0 else joy_data.axes[7]
+        angle_xishu = joy_data.axes[0] if joy_data.axes[0]!=0 else joy_data.axes[6]
+        
         
         # joy_data.axes[1]是接收左边操纵杆前后拨动的信号
         xlinear_speed = self.filter_data(x_xishu) * self.xspeed_limit
@@ -113,8 +125,9 @@ class JoyTeleop(Node):
         twist.linear.x = xlinear_speed
         twist.angular.z = angular_speed
         
-        if self.joy_active == True:
-            for i in range(3): self.pub_cmdVel.publish(twist)
+        if self.joy_active:
+            for i in range(3): 
+                self.pub_cmdVel.publish(twist)
 
         # logging to console 
         if curtime - self.last_print_time > 1:

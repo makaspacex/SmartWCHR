@@ -5,7 +5,7 @@ ekf_filter_node:
         # computation until it receives at least one message from one of the inputs. It will then run continuously at the
         # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
         # 滤波器产生状态估计的实值频率, 注意 过滤器在从输入之一接收到至少一条消息之前不会开始计算。
-        frequency: 10.0
+        frequency: 30.0
         
         # ekf_localization_node and ukf_localization_node both use a 3D omnidirectional motion model. If this parameter is
         # set to true, no 3D information will be used in your state estimate. Use this if you are operating in a planar
@@ -32,45 +32,28 @@ ekf_filter_node:
         odom_frame: odom                      # Defaults to "odom" if unspecified
         base_link_frame: base_footprint       # Defaults to "base_link" if unspecified
         world_frame: odom                    # Defaults to the value of odom_frame if unspecified
-        # odom0: /odom_diff
-        # odom0_config: [true,  true,  true,
-        #                false, false, false,
-        #                false, false, true,
-        #                false, false, false,
-        #                false, false, false]
-
-        # 这里使用里程计消息的x,y坐标数据，且
         odom0: /odom_diff
-        odom0_config: [true, true, false,
-                       false, false, true,
-                       false,  false,  true,
-                       false, false, false,
-                       false, false, false]
+        odom0_config: [true,  true,  false,        # 位置
+                       false, false, true,         # 角度
+                       false, false, false,        # 速度
+                       false, false, false,        # 角速度
+                       false, false, false]        # 加速度
 
-        # imu0: /imu/data_raw
-        # imu0_config: [false, false, false,
-        #               false,  false,  true,
-        #               true, true, false,
-        #               false, false, false,
-        #               false, false, false]
+        imu0: /imu/data_raw
+        imu0_config: [false, false, false,         # 位置
+                      false, false, true,          # 角度
+                      false, false, false,         # 速度
+                      false, false, true,          # 角速度
+                      false, false, false]         # 加速度
 
-        # # backup odom
-        # odom0: /odom_diff
-        # odom0_config: [true,  true,  true,
-        #             false, false, false,
-        #             false,  false,  true,
-        #             false, false, false,
-        #             false, false, false]
-
-
-        # imu0: /imu/data_raw
-        # imu0_config: [false, false, false,
-        #               true,  true,  true,
-        #               false, false, true,
-        #               false, false, false,
-        #               false, false, false]
-
-
+        imu0_queue_size: 10
+        imu0_nodelay: false
+        imu0_differential: false
+        imu0_relative: false
+        imu0_pose_rejection_threshold: 0.9
+        imu0_twist_rejection_threshold: 0.9
+        imu0_linear_acceleration_rejection_threshold: 0.9
+        
 # 后面的参数文件矩阵含义是我们可以在上面的话题中提供给robot_localization的数据，
 # 矩阵的各个配置值的含义为(X,Y,Z,roll,pitch,yaw,X˙,Y˙,Z˙,roll˙,pitch˙,yaw˙,X¨,Y¨,Z¨)。
 # 由于之前用到的diff_ty.py文件发布出来的数据是带有方向的XYZ速度值，因此需要将X˙,Y˙,Z˙这三个参数对应的矩阵设置为true，

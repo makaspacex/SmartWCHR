@@ -16,6 +16,7 @@ def generate_launch_description():
 
     robot_name = LaunchConfiguration("robot_name")
     launch_driver = LaunchConfiguration("launch_driver", default="true")
+    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
     
     return LaunchDescription(
         [
@@ -30,6 +31,11 @@ def generate_launch_description():
                 default_value="true",
                 description="launch_driver",
             ),
+            DeclareLaunchArgument(
+                "launch_ros_local",
+                default_value="true",
+                description="start robot localization",
+            ),
             Node(
                 package=package_name,
                 executable="wc_ctrl",
@@ -42,7 +48,7 @@ def generate_launch_description():
                         get_package_share_directory("driver"), "launch", "driver.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name}.items(),
+                launch_arguments={"robot_name": robot_name,"launch_ros_local":launch_ros_local}.items(),
                 condition=IfCondition(launch_driver),
             ),
         ]

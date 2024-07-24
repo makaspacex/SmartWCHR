@@ -369,8 +369,12 @@ public:
 
             if (op_result == SL_RESULT_OK) {
                 op_result = drv->ascendScanData(nodes, count);
+                // float angle_min = DEG2RAD(0.0f);
+                // float angle_max = DEG2RAD(360.0f);
                 float angle_min = DEG2RAD(0.0f);
-                float angle_max = DEG2RAD(360.0f);
+                float angle_max = DEG2RAD(180.0f);
+
+
                 // float angle_min = DEG2RAD(359.0f);
                 // float angle_max = DEG2RAD(0.0f);
                 if (op_result == SL_RESULT_OK) {

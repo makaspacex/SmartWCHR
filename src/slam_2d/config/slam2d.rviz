@@ -91,9 +91,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 164
+      Max Intensity: 47
       Min Color: 0; 0; 0
-      Min Intensity: 18
+      Min Intensity: 47
       Name: LaserScan
       Position Transformer: XYZ
       Selectable: true
@@ -170,14 +170,13 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          odom:
+          {}
+        odom:
+          base_footprint:
             base_link:
-              base_footprint:
-                {}
-              imu_link:
-                {}
               laser_link:
-                {}
+                imu_link:
+                  {}
               left_small_wheel_link:
                 {}
               left_wheel_link:
@@ -269,7 +268,7 @@ Visualization Manager:
           Color: 170; 255; 255
           Scale: 0.20000000298023224
           Value: true
-        Value: true
+        Value: false
       Enabled: true
       Keep: 100
       Name: Odometry
@@ -295,7 +294,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -338,16 +337,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 51.8604850769043
+      Distance: 24.08422088623047
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 7.357369899749756
-        Y: 10.34655475616455
-        Z: 0.0045928955078125
+        X: 5.69104528427124
+        Y: -1.257435917854309
+        Z: -0.007013368420302868
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
