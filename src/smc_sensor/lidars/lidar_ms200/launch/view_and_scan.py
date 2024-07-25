@@ -8,13 +8,14 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-
+from pathlib import Path
 
 def generate_launch_description():
+    package_name = Path(__file__).parent.parent.stem
+    package_share_dir = get_package_share_directory(package_name)
+    
     # RViZ2 settings
-    rviz2_config = os.path.join(
-        get_package_share_directory("lidar"), "rviz2", "scan.rviz"
-    )
+    rviz2_config = os.path.join(package_share_dir, "rviz2", "scan.rviz")
     show_robot = LaunchConfiguration("show_robot", default="false")
     return LaunchDescription(
         [
@@ -39,8 +40,7 @@ def generate_launch_description():
                 output="screen",
             ),
             IncludeLaunchDescription(
-                launch_description_source=PythonLaunchDescriptionSource(
-                    [get_package_share_directory("lidar"), "/launch/scan.py"]
+                PythonLaunchDescriptionSource([package_share_dir, "/launch/scan.py"]
                 )
             ),
         ]

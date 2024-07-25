@@ -61,13 +61,9 @@ if(rclcpp_FOUND AND ${COMPILE_METHOD} STREQUAL "COLCON")
   install(TARGETS scan
   DESTINATION lib/${PROJECT_NAME}
   )
-
-  install(DIRECTORY launch rviz2
-  DESTINATION share/${PROJECT_NAME}/
-  )
   
   install(
-    DIRECTORY config launch
+    DIRECTORY launch rviz2
     DESTINATION share/${PROJECT_NAME}
   )  
   ament_package()

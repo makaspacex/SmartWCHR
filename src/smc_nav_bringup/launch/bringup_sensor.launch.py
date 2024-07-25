@@ -24,8 +24,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "lidar",
                 default_value="sllidar",
-                choices=["lidar", "sllidar", "lslidar_ros"],
-                description="lidar pacakge name, lidar/sllidar/lslidar_ros",
+                choices=["lidar_ms200", "sllidar", "lslidar_ros"],
+                description="lidar pacakge name, lidar_ms200/sllidar/lslidar_ros",
             ),
             DeclareLaunchArgument(
                 "robot_name",
@@ -56,10 +56,10 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
-                        get_package_share_directory("lidar"), "launch", "scan.py"
+                        get_package_share_directory("lidar_ms200"), "launch", "scan.py"
                     )
                 ),
-                condition=LaunchConfigurationEquals("lidar", "lidar"),
+                condition=LaunchConfigurationEquals("lidar", "lidar_ms200"),
             ),
             # 条件启动思岚s2雷达
             IncludeLaunchDescription(
