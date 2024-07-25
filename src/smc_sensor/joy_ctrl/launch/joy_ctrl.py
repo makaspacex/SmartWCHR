@@ -13,11 +13,9 @@ from launch.conditions import IfCondition, LaunchConfigurationEquals
 def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
-
-    robot_name = LaunchConfiguration("robot_name")
-    launch_driver = LaunchConfiguration("launch_driver", default="true")
-    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
     
+    robot_name = LaunchConfiguration("robot_name")
+    launch_driver = LaunchConfiguration("launch_driver", default="false")
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -28,27 +26,28 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "launch_driver",
-                default_value="true",
+                default_value="false",
                 description="launch_driver",
             ),
-            DeclareLaunchArgument(
-                "launch_ros_local",
-                default_value="true",
-                description="start robot localization",
-            ),
+            
+            # 启动手柄控制
             Node(
                 package=package_name,
                 executable="wc_ctrl",
                 output="screen",
             ),
+            
+            # 启动手柄服务
             Node(package="joy", executable="joy_node"),
+            
+            # 启动驱动器
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
                         get_package_share_directory("driver"), "launch", "driver.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name,"launch_ros_local":launch_ros_local}.items(),
+                launch_arguments={"robot_name": robot_name}.items(),
                 condition=IfCondition(launch_driver),
             ),
         ]

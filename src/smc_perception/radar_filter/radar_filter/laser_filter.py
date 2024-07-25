@@ -14,21 +14,30 @@ class LaserFilter(Node):
         # 单独声明每个参数
         self.declare_parameter('start_angle', 180)
         self.declare_parameter('end_angle', 70)
+        self.declare_parameter('sub_topic', "scan_s2_raw")
+        self.declare_parameter('pub_topic', "scan_s2_filter")
+        
+        sub_topic = self.get_parameter('sub_topic').get_parameter_value().string_value
+        pub_topic = self.get_parameter('pub_topic').get_parameter_value().string_value
         
         self.subscription = self.create_subscription(
             LaserScan,
-            'scan_s2_raw',
+            sub_topic,
             self.listener_callback,
             10)
+        
         self.publisher = self.create_publisher(
             LaserScan,
-            'scan',
+            pub_topic,
             10)
 
     def listener_callback(self, msg):
         # 从参数服务器获取角度参数
         start_angle_degrees = self.get_parameter('start_angle').get_parameter_value().integer_value
         end_angle_degrees = self.get_parameter('end_angle').get_parameter_value().integer_value
+                
+        # 重新设置时间
+        msg.header.stamp = self.get_clock().now().to_msg()
         
         # 将角度从度转换为弧度
         start_angle_rad = start_angle_degrees / 180.0 * math.pi

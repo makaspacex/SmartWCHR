@@ -241,7 +241,7 @@ class InfiniteEncoder:
         if self.single_mode:
             _en_str = f"{self._enc_value_raw:4d}"
         return f"[{self.name}-->enc_raw:{_en_str} cur_val:{self.cur_value:10.2f} init:{self.init_value:6.2f} totalmove:{self.total_delta_move:6.2f}]"
-    
+
 class OdomCalculator(Node):
     def __init__(self):
         super().__init__(node_name='odom_cal_node')
@@ -281,8 +281,7 @@ class OdomCalculator(Node):
 
         self.get_logger().info("正在设置右侧编码器")
         self.R = InfiniteEncoder(name="右",port="/dev/encoder_right",slaveaddress =right_slaveaddress, baudrate=self.baudrate, wheel_encoder_ratio=self.wheel_encoder_ratio_r, wheel_radius=self.wheel_radius_r, single_mode=self.single_mode)
-        
-        
+                
         
         # 用来控制打印输出频率的
         self.pub_n, self.last_n, self.last_print_time = 0, 0, time.time()

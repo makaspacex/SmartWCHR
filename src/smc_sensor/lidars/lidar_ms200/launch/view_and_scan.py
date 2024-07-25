@@ -16,13 +16,38 @@ def generate_launch_description():
     
     # RViZ2 settings
     rviz2_config = os.path.join(package_share_dir, "rviz2", "scan.rviz")
-    show_robot = LaunchConfiguration("show_robot", default="false")
     return LaunchDescription(
         [
             DeclareLaunchArgument(
                 "show_robot",
-                default_value=show_robot,
+                default_value="true",
                 description="If show robot",
+            ),
+            DeclareLaunchArgument(
+                "start_angle",
+                default_value="0",
+                description="Start angle for the laser filter",
+            ),
+            DeclareLaunchArgument(
+                "end_angle",
+                default_value="200",
+                description="End angle for the laser filter",
+            ),
+            
+            DeclareLaunchArgument(
+                "sub_topic",
+                default_value="scan_ms200_raw",
+                description="subscription topic",
+            ),
+            DeclareLaunchArgument(
+                "pub_topic",
+                default_value="scan_ms200_filter",
+                description="publisher topic",
+            ),
+            DeclareLaunchArgument(
+                "use_fileter",
+                default_value="true",
+                description="if use fileter",
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -30,7 +55,7 @@ def generate_launch_description():
                         get_package_share_directory("wcmodel"), "launch", "wc_base.py"
                     )
                 ),
-                condition=IfCondition(show_robot),
+                condition=IfCondition(LaunchConfiguration("show_robot", default="true")),
             ),
             Node(
                 package="rviz2",
@@ -41,7 +66,14 @@ def generate_launch_description():
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([package_share_dir, "/launch/scan.py"]
-                )
+                ),
+                launch_arguments={
+                    "start_angle": LaunchConfiguration("start_angle"),
+                    "end_angle": LaunchConfiguration("end_angle"),
+                    "sub_topic": LaunchConfiguration("sub_topic"),
+                    "pub_topic": LaunchConfiguration("pub_topic"),
+                  }.items(),
+                condition=IfCondition(LaunchConfiguration("use_fileter")),
             ),
         ]
     )

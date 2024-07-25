@@ -12,9 +12,6 @@ from launch.conditions import IfCondition, LaunchConfigurationEquals
 
 
 def generate_launch_description():
-    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
-    lio = LaunchConfiguration("lio", default="ros_local")
-    
     return launch.LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -22,11 +19,6 @@ def generate_launch_description():
                 default_value="gk01",
                 choices=["gk01", "v1"],
                 description="robot_name, gk01/v1",
-            ),
-            DeclareLaunchArgument(
-                "launch_ros_local",
-                default_value="true",
-                description="start robot localization",
             ),
             Node(
                 package="driver",
@@ -42,15 +34,12 @@ def generate_launch_description():
                 output="screen",
                 condition=LaunchConfigurationEquals("robot_name", "gk01"),
             ),
-            # IncludeLaunchDescription(
-            #     PythonLaunchDescriptionSource(
-            #         os.path.join(
-            #             get_package_share_directory("ros_local"),
-            #             "launch",
-            #             "localization.py",
-            #         )
-            #     ),
-            #     condition=IfCondition(launch_ros_local)
-            # )
+            Node(
+                package="encoder_odom",
+                executable="odom_cal",
+                name="odom_cal_node",
+                output="screen",
+                parameters=[{'robot_name': LaunchConfiguration('robot_name')}]
+            ),
         ]
     )

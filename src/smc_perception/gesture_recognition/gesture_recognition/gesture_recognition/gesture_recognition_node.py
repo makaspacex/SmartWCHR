@@ -4,6 +4,9 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
 import mediapipe as mp
+from std_msgs.msg import Header
+from geometry_msgs.msg import Point
+from my_msgs.msg import HandInfo, HandsInfo
 
 
 class HandDetector:
@@ -83,6 +86,7 @@ class HandDetector:
             bbox = xmin, ymin, boxW, boxH
             cx, cy = bbox[0] + (bbox[2] // 2), \
                      bbox[1] + (bbox[3] // 2)
+            
             bboxInfo = {"id": id, "bbox": bbox,"center": (cx, cy)}
 
             if draw:
@@ -134,6 +138,49 @@ class HandDetector:
                 # print('left')
                 return "Left"
 
+
+    def recognize_gesture(self, fingers):
+        x1, x2, x3, x4, x5 = fingers
+        
+        print(f'{x1} {x2} {x3} {x4} {x5}')
+
+        # TWO
+        if (x2 == 1 and x3 == 1) and (x4 == 0 and x1 == 0):
+            return 2
+        elif (x3 == 1 and x4 == 1 and x5 == 1) and (x2 == 0):  # 比3的手势的时候，大拇指是否竖起的逻辑有点问题，因此没有判断x1
+            return 3
+        elif (x2 == 1 and x3 == 1 and x4 == 1 and x5 == 1) and (x1 == 0):
+            return 4
+        elif x1 == 1 and x2 == 1 and x3 == 1 and x4 == 1 and x5 == 1:
+            return 5
+        elif x2 == 1 and (x1 == 0, x3 == 0, x4 == 0, x5 == 0):
+            return 1
+        elif (x1 and x5) and (x2 == 0 and x3 == 0 and x4 == 0):
+            return 6
+        else:
+            return -1
+
+    
+    def detect_gestures(self, img):
+        hands_info_list = []
+        img = self.findHands(img)
+        if self.results.multi_hand_landmarks:
+            for hand_no, hand_landmarks in enumerate(self.results.multi_hand_landmarks):
+                lmList, bboxInfo = self.findPosition(img, hand_no)
+                if lmList:
+                    fingers = self.fingersUp()
+                    gesture = self.recognize_gesture(fingers)
+                    hand_info = HandInfo(
+                        id=hand_no,
+                        center=Point(x=float(bboxInfo["center"][0]), y=float(bboxInfo["center"][1]), z=0.0),
+                        bbox_width=float(bboxInfo["bbox"][2]),
+                        bbox_height=float(bboxInfo["bbox"][3]),
+                        gesture=int(gesture)
+                    )
+                    hands_info_list.append(hand_info)
+        return hands_info_list
+    
+    '''
     def Gesture_recognition_img(self, img, draw=True):
         img = self.findHands(img, draw=draw)
         lmList, bbox = self.findPosition(img, draw=draw)
@@ -166,6 +213,10 @@ class HandDetector:
             # else:
             #     return None
         return img
+'''
+
+
+
 
 
 
@@ -175,25 +226,40 @@ class GestureRecognitionNode(Node):
         super().__init__('gesture_recognition_node')
         self.subscription = self.create_subscription(
             Image,
-            '/camera/color/image_raw',
+            '/image',
             self.listener_callback,
             10)
-        self.publisher = self.create_publisher(Image, '/gesture_image', 10)
+        # self.publisher = self.create_publisher(Image, '/gesture_image', 10)
+
+        self.hands_info_publisher = self.create_publisher(HandsInfo, '/hands_info', 10)
+
+
         self.bridge = CvBridge()
         self.detector = HandDetector()
-
-
         self.get_logger().info('Gesture recognition node has been started.')
+
+
 
     def listener_callback(self, msg):
         # Convert ROS Image message to OpenCV image
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
+        hands_info_list = self.detector.detect_gestures(cv_image)
+
+        # Create HandsInfo message
+        hands_info_msg = HandsInfo()
+        hands_info_msg.header = msg.header
+        hands_info_msg.hands = hands_info_list
+
+        # Publish the hands info
+        self.hands_info_publisher.publish(hands_info_msg)
+        
+
+        '''
         recognized_image = self.detector.Gesture_recognition_img(cv_image)
-
-
         gesture_image_msg = self.bridge.cv2_to_imgmsg(recognized_image, encoding='bgr8')
         self.publisher.publish(gesture_image_msg)
+        '''
             
 
 

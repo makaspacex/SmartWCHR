@@ -31,6 +31,9 @@ class JoyTeleop(Node):
 
         self.speed_index = 0
         
+        self.xspeed_info = {"min":0.2, "max":1.6, "diff":0.2}
+        self.angular_speed_info = {"min":0.12, "max":0.2, "diff":0.02}
+        
         #create pub
         self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  10)
         self.pub_odom2init = self.create_publisher(String,'odom2init',  10)
@@ -46,10 +49,7 @@ class JoyTeleop(Node):
 
         self.last_print_time = time.time()
         
-        
         self.last_init_odom = time.time()
-        
-        
         
     
     def buttonCallback(self,joy_data):

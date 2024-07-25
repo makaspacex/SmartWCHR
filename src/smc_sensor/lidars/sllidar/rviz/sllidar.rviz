@@ -74,7 +74,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: System Default
-        Value: /scan_raw
+        Value: /scan_s2_raw
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -111,6 +111,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        laser_ms200_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -156,6 +161,8 @@ Visualization Manager:
           Value: true
         laser_link:
           Value: true
+        laser_ms200_link:
+          Value: true
         left_small_wheel_link:
           Value: true
         left_wheel_link:
@@ -172,15 +179,15 @@ Visualization Manager:
       Tree:
         base_footprint:
           base_link:
-            laser_link:
-              imu_link:
-                {}
             left_small_wheel_link:
               {}
             left_wheel_link:
-              {}
+              laser_ms200_link:
+                {}
             right_small_wheel_link:
-              {}
+              laser_link:
+                imu_link:
+                  {}
             right_wheel_link:
               {}
       Update Interval: 0
@@ -246,10 +253,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2403976917266846
+      Pitch: 0.8953977823257446
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.005401372909546
+      Yaw: 2.2854013442993164
     Saved: ~
 Window Geometry:
   Displays:
