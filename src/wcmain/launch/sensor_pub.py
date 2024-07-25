@@ -70,6 +70,15 @@ def generate_launch_description():
                 ),
                 condition=LaunchConfigurationEquals("lidar", "sllidar"),
             ),
+            # 条件启动过滤器
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("radar_filter"), "launch", "laser_filter.launch.py"
+                    )
+                ),
+                condition=LaunchConfigurationEquals("lidar", "sllidar"),
+            ),
             # 启动imu
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
