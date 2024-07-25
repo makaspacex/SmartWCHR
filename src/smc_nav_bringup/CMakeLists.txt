@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rm_nav_bringup)
+project(smc_nav_bringup)
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ${CMAKE_EXPORT_COMPILE_COMMANDS})
