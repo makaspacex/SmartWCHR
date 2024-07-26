@@ -13,7 +13,7 @@ from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotE
 def generate_launch_description():
     # Get the launch directory
     smc_nav_bringup_dir = get_package_share_directory('smc_nav_bringup')
-    pb_rm_simulation_launch_dir = os.path.join(get_package_share_directory('pb_rm_simulation'), 'launch')
+    pb_swc_simulation_launch_dir = os.path.join(get_package_share_directory('pb_swc_simulation'), 'launch')
     navigation2_launch_dir = os.path.join(get_package_share_directory('swc_navigation'), 'launch')
 
     # Create the launch configuration variables
@@ -102,7 +102,7 @@ def generate_launch_description():
 
     # Specify the actions
     start_rm_simulation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(pb_rm_simulation_launch_dir, 'rm_simulation.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(pb_swc_simulation_launch_dir, 'swc_simulation.launch.py')),
         launch_arguments={
             'use_sim_time': use_sim_time,
             'world': world,
