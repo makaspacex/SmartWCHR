@@ -35,21 +35,6 @@ def generate_launch_description():
     # set rviz config file path
     rviz_config_path = str( Path(slam_package_path ) / Path("config/pure2d.rviz"))
 
-    # tf nodes
-    base_footprint_to_base_link = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_footprint_to_base_link',
-        arguments=['0','0','-0.54','0','0','0','base_link','base_footprint']
-    )
-
-    base_link_to_laser_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_link_to_base_laser',
-        arguments=['0','0','0.18','0','0','0',''base_link','laser_link']
-    )
-
     # carto nodes
     cartographer_node = Node(
         package = 'cartographer_ros',
