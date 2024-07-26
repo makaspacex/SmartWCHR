@@ -1,15 +1,15 @@
-[submodule "src/smc_sensor/livox_ros_driver2"]
-	path = src/smc_sensor/livox_ros_driver2
+[submodule "src/swc_sensor/livox_ros_driver2"]
+	path = src/swc_sensor/livox_ros_driver2
 	url = https://gitee.com/SMBU-POLARBEAR/livox_ros_driver2_humble.git
-[submodule "src/smc_localization/fast_lio"]
-	path = src/smc_localization/fast_lio
+[submodule "src/swc_localization/fast_lio"]
+	path = src/swc_localization/fast_lio
 	url = https://github.com/Ericsii/FAST_LIO_ROS2.git
-[submodule "src/smc_localization/point_lio"]
-	path = src/smc_localization/point_lio
+[submodule "src/swc_localization/point_lio"]
+	path = src/swc_localization/point_lio
 	url = https://github.com/LihanChen2004/Point-LIO.git
-[submodule "src/smc_navigation/costmap_converter"]
-	path = src/smc_navigation/costmap_converter
+[submodule "src/swc_navigation/costmap_converter"]
+	path = src/swc_navigation/costmap_converter
 	url = https://github.com/LihanChen2004/costmap_converter.git
-[submodule "src/smc_navigation/teb_local_planner"]
-	path = src/smc_navigation/teb_local_planner
+[submodule "src/swc_navigation/teb_local_planner"]
+	path = src/swc_navigation/teb_local_planner
 	url = https://github.com/rst-tu-dortmund/teb_local_planner.git

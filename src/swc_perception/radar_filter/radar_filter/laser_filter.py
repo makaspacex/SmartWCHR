@@ -31,13 +31,10 @@ class LaserFilter(Node):
             pub_topic,
             10)
 
-    def listener_callback(self, msg):
+    def listener_callback(self, msg:LaserScan):
         # 从参数服务器获取角度参数
         start_angle_degrees = self.get_parameter('start_angle').get_parameter_value().integer_value
         end_angle_degrees = self.get_parameter('end_angle').get_parameter_value().integer_value
-                
-        # 重新设置时间
-        msg.header.stamp = self.get_clock().now().to_msg()
         
         # 将角度从度转换为弧度
         start_angle_rad = start_angle_degrees / 180.0 * math.pi
