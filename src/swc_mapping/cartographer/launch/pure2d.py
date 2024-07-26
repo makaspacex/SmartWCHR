@@ -29,8 +29,8 @@ def generate_launch_description():
     lua_directory = os.path.join(slam_package_path, 'config')
 
     # find wheelchair model launch file
-    wcmodel_package_path = FindPackageShare('wcmodel').find('wcmodel')
-    wheelchair_launch_file = os.path.join(wcmodel_package_path, 'launch', 'wc_base.py')
+    swc_nav_bringup_package_path = FindPackageShare('swc_nav_bringup').find('swc_nav_bringup')
+    wheelchair_launch_file = os.path.join(swc_nav_bringup_package_path, 'launch', 'wc_base.py')
 
     # set rviz config file path
     rviz_config_path = str( Path(slam_package_path ) / Path("config/pure2d.rviz"))
@@ -73,7 +73,7 @@ def generate_launch_description():
         )
 
     # visualization nodes
-    wcmodel_node = IncludeLaunchDescription(
+    swc_nav_bringup_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(wheelchair_launch_file)
         )
 
@@ -88,7 +88,7 @@ def generate_launch_description():
     return LaunchDescription([
         base_footprint_to_base_link,
         base_link_to_laser_tf_node,
-        wcmodel_node,
+        swc_nav_bringup_node,
         rviz_node,
         cartographer_node,
         occupancy_grid_node

@@ -267,7 +267,7 @@ def generate_launch_description():
 
     wc_base_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory("wcmodel"), "launch/wc_base.py")
+            os.path.join(get_package_share_directory("swc_nav_bringup"), "launch/wc_base.py")
         ),
         condition=IfCondition(use_robot_state_pub),
         launch_arguments={

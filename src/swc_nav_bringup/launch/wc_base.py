@@ -16,7 +16,6 @@ def generate_launch_description():
 
     urdf_model_path = os.path.join(package_share_dir, "urdf/wheelchair_base.urdf")
     urdf_model_path = os.path.join(package_share_dir, "urdf/gkchair01_base.urdf")
-    urdf_model_path = "/home/jetson/Desktop/SmartWCHR/src/wcmodel/urdf/gkchair01_base.urdf"
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     robot_description = ParameterValue(

@@ -101,7 +101,7 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
-                        get_package_share_directory("wcmodel"), "launch", "wc_base.py"
+                        get_package_share_directory("swc_nav_bringup"), "launch", "wc_base.py"
                     )
                 ),
                 condition=IfCondition(show_robot),

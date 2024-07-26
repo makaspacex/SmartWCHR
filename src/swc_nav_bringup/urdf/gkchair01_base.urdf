@@ -1,24 +1,24 @@
 <?xml version="1.0"?>
-<robot name="wheelchair_base" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="gk01" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <!-- ****************** ROBOT CONSTANTS *******************************  -->
   <!-- Define the size of the robot's main chassis in meters -->
-  <xacro:property name="base_width" value="0.435" />
-  <xacro:property name="base_length" value="1.0" />
-  <xacro:property name="base_height" value="0.6" />
+  <xacro:property name="base_width" value="0.5" />
+  <xacro:property name="base_length" value="0.86" />
+  <xacro:property name="base_height" value="0.7" />
 
   <!-- Define the shape of the robot's two back wheels in meters -->
-  <xacro:property name="wheel_radius" value="0.27" />
-  <xacro:property name="wheel_width" value="0.08" />
+  <xacro:property name="wheel_radius" value="0.152" />
+  <xacro:property name="wheel_width" value="0.07" />
   <xacro:property name="wheel_ygap" value="${wheel_width/2+0.01}" />
   <xacro:property name="wheel_zoff" value="0.225" />
   <xacro:property name="wheel_xoff" value="0.325" />
 
-  <xacro:property name="s_wheel_radius" value="0.08" />
+  <xacro:property name="s_wheel_radius" value="0.095" />
   <xacro:property name="s_wheel_width" value="0.04" />
   <xacro:property name="s_wheel_ygap" value="${-0.002}" />
   <xacro:property name="s_wheel_zoff" value="${wheel_radius + wheel_zoff-s_wheel_radius}" />
-  <xacro:property name="s_wheel_xoff" value="${wheel_xoff - 0.5}" /> 
+  <xacro:property name="s_wheel_xoff" value="${wheel_xoff - 0.7}" /> 
   
   <!-- Define intertial property macros  -->
   <xacro:macro name="box_inertia" params="m w h d">
@@ -64,7 +64,7 @@
       <visual>
           <origin xyz="0 0 0" rpy="0 0 ${y_reflect * pi/2}" />
           <geometry>
-            <mesh filename="package://wcmodel/meshes/wheel2.STL"
+            <mesh filename="package://swc_nav_bringup/meshes/wheel2.STL"
               scale="${wheel_scale} ${wheel_scale} ${wheel_scale}" />
           </geometry>
           <material name="light_black" />
@@ -96,7 +96,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 ${y_reflect * pi/2}" />
         <geometry>
-          <mesh filename="package://wcmodel/meshes/small_wheel.STL" scale="${s_wheel_scale} ${s_wheel_scale} ${s_wheel_scale}" />
+          <mesh filename="package://swc_nav_bringup/meshes/small_wheel.STL" scale="${s_wheel_scale} ${s_wheel_scale} ${s_wheel_scale}" />
         </geometry>
         <material name="light_black" />
       </visual>
@@ -185,11 +185,12 @@
   <!-- base link -->
   <link name="base_link">
     <visual>
-      <origin xyz="0.0 0.025 0.0" rpy="${pi/2} 0 ${-pi/2}" />
+      <origin xyz="0  0 0.2" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://wcmodel/meshes/robot_base.STL" scale="1.0 1.0 1.0"/>
+        <!-- <mesh filename="package://swc_nav_bringup/meshes/robot_base.STL" scale="1.0 1.0 1.0"/> -->
+        <box size="${base_length} ${base_width}   ${base_height}"/>
       </geometry>
-      <material name="white" />
+      <material name="light_blue" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -200,11 +201,17 @@
     <xacro:box_inertia m="20.0" w="${base_width}" d="${base_length}" h="${base_height}"/>
   </link>
 
+  <xacro:wheel prefix="left_wheel" x_reflect="-1" y_reflect="1" />
+  <xacro:wheel prefix="right_wheel" x_reflect="-1" y_reflect="-1" />
+
+  <xacro:small_wheel prefix="left_small_wheel" x_reflect="-1" y_reflect="1" />
+  <xacro:small_wheel prefix="right_small_wheel" x_reflect="-1" y_reflect="-1"/>
+
   <!-- laser joint -->
   <joint name="laser_joint" type="fixed">
-    <parent link="base_link" />
+    <parent link="right_small_wheel_link" />
     <child link="laser_link" />
-    <origin xyz="-0.25 0.25 0.25" />
+    <origin xyz="0.075 0 ${s_wheel_radius+0.02}" />
   </joint>
 
   <!-- laser link -->
@@ -237,28 +244,24 @@
     <xacro:box_inertia m="0.01" w="0.02" d="0.02" h="0.02"/>
   </link>
 
-  <xacro:wheel prefix="left_wheel" x_reflect="-1" y_reflect="1" />
-  <xacro:wheel prefix="right_wheel" x_reflect="-1" y_reflect="-1" />
 
-  <xacro:small_wheel prefix="left_small_wheel" x_reflect="-1" y_reflect="1" />
-  <xacro:small_wheel prefix="right_small_wheel" x_reflect="-1" y_reflect="-1"/>
-
-  <!-- a rabbit -->
-  <joint name="base_rabbit_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="rabbit_link" />
-    <origin xyz="-0.2 0 -0.08" />
+  <!-- ms200 laser -->
+     <!-- laser joint -->
+  <joint name="laser_ms200_joint" type="fixed">
+    <parent link="left_wheel_link" />
+    <child link="laser_ms200_link" />
+    <origin xyz="0.04 0.01 0.35" />
   </joint>
-  <link name="rabbit_link">
-    <xacro:property name="rabbit_scale" value="3" />
-    <visual>
-      <origin xyz="0 0 0.0" rpy="${pi/2} 0 ${pi/2}" />
-      <geometry>
-        <mesh filename="package://wcmodel/meshes/rabbit.STL" scale="${rabbit_scale} ${rabbit_scale*1.2} ${rabbit_scale}"/>
-      </geometry>
-      <material name="orange" />
-    </visual>
-    <xacro:box_inertia m="40.0" w="0.2" d="0.2" h="0.5"/>
+
+  <link name="laser_ms200_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <cylinder length="0.02" radius="0.02" />
+        </geometry>
+        <material name="black" />
+      </visual>
+      <xacro:cylinder_inertia m="0.02" r="0.02" h="0.02"/>
   </link>
 
 </robot>

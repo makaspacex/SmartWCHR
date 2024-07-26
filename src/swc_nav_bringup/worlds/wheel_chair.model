@@ -34,7 +34,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://wcmodel/meshes/robot_base.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/robot_base.STL</uri>
           </mesh>
         </geometry>
         <material>
@@ -49,7 +49,7 @@
         <geometry>
           <mesh>
             <scale>3 3.6 3</scale>
-            <uri>model://wcmodel/meshes/rabbit.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/rabbit.STL</uri>
           </mesh>
         </geometry>
       </visual>
@@ -244,7 +244,7 @@
         <geometry>
           <mesh>
             <scale>0.839895 0.839895 0.839895</scale>
-            <uri>model://wcmodel/meshes/small_wheel.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/small_wheel.STL</uri>
           </mesh>
         </geometry>
         <material>
@@ -310,7 +310,7 @@
         <geometry>
           <mesh>
             <scale>0.981818 0.981818 0.981818</scale>
-            <uri>model://wcmodel/meshes/wheel2.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/wheel2.STL</uri>
           </mesh>
         </geometry>
         <material>
@@ -378,7 +378,7 @@
         <geometry>
           <mesh>
             <scale>0.839895 0.839895 0.839895</scale>
-            <uri>model://wcmodel/meshes/small_wheel.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/small_wheel.STL</uri>
           </mesh>
         </geometry>
         <material>
@@ -444,7 +444,7 @@
         <geometry>
           <mesh>
             <scale>0.981818 0.981818 0.981818</scale>
-            <uri>model://wcmodel/meshes/wheel2.STL</uri>
+            <uri>model://swc_nav_bringup/meshes/wheel2.STL</uri>
           </mesh>
         </geometry>
         <material>

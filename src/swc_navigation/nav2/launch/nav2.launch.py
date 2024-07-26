@@ -34,9 +34,9 @@ def generate_launch_description():
         output='screen'
         )
 
-    wcmodel_package_path = Path(FindPackageShare('wcmodel').find('wcmodel'))
-    wheelchair_launch_file = str( wcmodel_package_path / Path("launch/wc_base.py"))
-    wcmodel_node = IncludeLaunchDescription(
+    swc_nav_bringup_package_path = Path(FindPackageShare('swc_nav_bringup').find('swc_nav_bringup'))
+    wheelchair_launch_file = str( swc_nav_bringup_package_path / Path("launch/wc_base.py"))
+    swc_nav_bringup_node = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(wheelchair_launch_file)
             )
     
@@ -121,7 +121,7 @@ def generate_launch_description():
     rviz_first_node = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=rviz_node,
-            on_exit=[   wcmodel_node,
+            on_exit=[   swc_nav_bringup_node,
                         map_server_node,
                         amcl_node,
                         planner_server_node,
@@ -136,7 +136,7 @@ def generate_launch_description():
         [
             # rviz_node,
             # rviz_first_node,
-            wcmodel_node,
+            swc_nav_bringup_node,
             map_server_node,
             amcl_node,
             planner_server_node,
