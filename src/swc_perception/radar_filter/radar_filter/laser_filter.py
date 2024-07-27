@@ -4,7 +4,7 @@ from sensor_msgs.msg import LaserScan
 import numpy as np
 import array
 import math
-
+from builtin_interfaces.msg import Time
 
 
 class LaserFilter(Node):
@@ -12,7 +12,7 @@ class LaserFilter(Node):
         super().__init__('laser_filter')
         
         # 单独声明每个参数
-        self.declare_parameter('start_angle', 180)
+        self.declare_parameter('start_angle', 185)
         self.declare_parameter('end_angle', 70)
         self.declare_parameter('sub_topic', "scan_s2_raw")
         self.declare_parameter('pub_topic', "scan_s2_filter")
@@ -31,41 +31,57 @@ class LaserFilter(Node):
             pub_topic,
             10)
 
-    def listener_callback(self, msg:LaserScan):
         # 从参数服务器获取角度参数
-        start_angle_degrees = self.get_parameter('start_angle').get_parameter_value().integer_value
-        end_angle_degrees = self.get_parameter('end_angle').get_parameter_value().integer_value
+        self.start_angle_degrees = self.get_parameter('start_angle').get_parameter_value().integer_value
+        self.end_angle_degrees = self.get_parameter('end_angle').get_parameter_value().integer_value
+
+    def listener_callback(self, msg:LaserScan):
+        # msg.header.stamp = self.get_clock().now().to_msg()
+        filtered_ranges = None
         
         # 将角度从度转换为弧度
-        start_angle_rad = start_angle_degrees / 180.0 * math.pi
-        end_angle_rad = end_angle_degrees / 180.0 * math.pi
+        start_angle_rad = self.start_angle_degrees / 180.0 * math.pi
+        end_angle_rad = self.end_angle_degrees / 180.0 * math.pi
 
         # 计算要保留的角度范围的索引
         start_index = int((start_angle_rad - msg.angle_min) / msg.angle_increment)
         end_index = int((end_angle_rad - msg.angle_min) / msg.angle_increment)
         
         ranges = np.array(msg.ranges)
-
+        
         if end_index > start_index:
             ranges[:start_index] = math.inf
             ranges[end_index:] = math.inf
         else:
-            # 270~90   270~360  0~90 保留    90~270 去掉  
             ranges[end_index:start_index+1] = math.inf   
-            # ranges[start_index:] = math.inf
-            # ranges[:end_index] = math.inf
 
         # 仅保留指定角度范围内的数据
-        msg.ranges = array.array('f', ranges.tolist())
+        filtered_ranges = array.array('f', ranges.tolist())
         
+        filtered_intensities = None
         if msg.intensities:
             intensities = np.array(msg.intensities)
             intensities[:start_index] = -math.inf
             intensities[end_index:] = -math.inf
-            msg.intensities = array.array('f', intensities.tolist())
-       
+            filtered_intensities = array.array('f', intensities.tolist())
+        
+        # 创建新的LaserScan消息对象
+        filtered_msg = LaserScan()
+        filtered_msg.header = msg.header
+        filtered_msg.header.stamp = self.get_clock().now().to_msg()
+        filtered_msg.angle_min = msg.angle_min
+        filtered_msg.angle_max = msg.angle_max
+        filtered_msg.angle_increment = msg.angle_increment
+        filtered_msg.time_increment = msg.time_increment
+        filtered_msg.scan_time = msg.scan_time
+        filtered_msg.range_min = msg.range_min
+        filtered_msg.range_max = msg.range_max
+        filtered_msg.ranges = filtered_ranges
+        filtered_msg.intensities = filtered_intensities
+
         # 发布过滤后的数据
-        self.publisher.publish(msg)
+        self.publisher.publish(filtered_msg)
+        
 
 def main(args=None):
     rclpy.init(args=args)

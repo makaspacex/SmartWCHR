@@ -217,6 +217,7 @@ def generate_launch_description():
             Node(
                 package='fast_lio',
                 executable='fastlio_mapping',
+                name='laserMapping_fast_lio',
                 parameters=[
                     fastlio_mid360_params,
                     {use_sim_time: use_sim_time}
@@ -237,7 +238,7 @@ def generate_launch_description():
             Node(
                 package='point_lio',
                 executable='pointlio_mapping',
-                name='laserMapping',
+                name='laserMapping_point_lio',
                 output='screen',
                 parameters=[
                     pointlio_mid360_params,

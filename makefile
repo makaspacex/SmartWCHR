@@ -10,13 +10,13 @@ LOG_DIR = $(ROS2_WS)/log
 VALID_TARGETS = all build clean run launch docker up
 OPTS = $(filter-out $(VALID_TARGETS),$(MAKECMDGOALS))
 # BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
-BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 4
+BUILD_CC = colcon build --symlink-install --base-paths $(SRC_DIR) --build-base $(BUILD_DIR) --install-base $(INSTALL_DIR) --parallel-workers 8
 RUN_CC = ros2 run
 LAUNCH_CC = ros2 launch
 
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
-WHEEL_PACKAGES = driver joy_ctrl imu lidar_ms200 ros_local sllidar wcmain  wcmodel
-DC_PACKAGES = gesture_recognition nav2_sample slam_2d wcmain
+WHEEL_PACKAGES = fast_lio point_lio ros_local cartographer driver encoder imu joy_ctrl  lidar_ms200  sllidar radar_filter livox_ros_driver2 
+DC_PACKAGES = swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner gesture_recognition_msgs gesture_recognition  imu_complementary_filter lidars_sync_fusion linefit_ground_segmentation linefit_ground_segmentation_ros pointcloud_to_laserscan livox_laser_simulation_RO2 pb_swc_simulation
 
 WC_NAME = wc
 DC_NAME = dc

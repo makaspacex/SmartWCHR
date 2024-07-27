@@ -9,6 +9,7 @@ from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+import math
 
 def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
@@ -69,6 +70,27 @@ def generate_launch_description():
                 ],
             ),
             # 启用过滤器
+            # Node(
+            #     package="laser_filters",
+            #     executable="scan_to_scan_filter_chain",
+            #     name='laser_ms200_filter',
+            #     output='screen',
+            #     parameters=[
+            #         {  
+            #             "filter1": {
+            #                 "name": "angle",
+            #                 "type": "laser_filters/LaserScanAngularBoundsFilter",
+            #                 "params": {
+            #                     "lower_angle": 0/180 * math.pi, 
+            #                     "upper_angle": 180/180*math.pi
+            #                 },
+            #             },
+            #         }
+            #     ],
+            #     remappings=[("/scan",LaunchConfiguration("sub_topic")),("/scan_filtered",LaunchConfiguration("pub_topic"))]
+            # ),
+
+            # 启用过滤器
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
@@ -78,10 +100,10 @@ def generate_launch_description():
                     )
                 ),
                 launch_arguments={
-                    "start_angle": LaunchConfiguration("start_angle"),
-                    "end_angle": LaunchConfiguration("end_angle"),
-                    "sub_topic": LaunchConfiguration("sub_topic"),
-                    "pub_topic": LaunchConfiguration("pub_topic"),
+                    "start_angle": "0",
+                    "end_angle": "200",
+                    "sub_topic": "scan_ms200_raw",
+                    "pub_topic": "scan_ms200_filter",
                   }.items(),
                 condition=IfCondition(LaunchConfiguration("use_fileter")),
             )

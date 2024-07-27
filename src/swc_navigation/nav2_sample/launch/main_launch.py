@@ -37,8 +37,7 @@ def generate_launch_description():
     # Get the launch directory
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
-    bringup_dir = package_share_dir
-    launch_dir = os.path.join(bringup_dir, "launch")
+    package_launch_dir = os.path.join(package_share_dir, "launch")
 
     # Create the launch configuration variables
     slam = LaunchConfiguration("slam")
@@ -67,11 +66,7 @@ def generate_launch_description():
         "Y": LaunchConfiguration("yaw", default="0.00"),
     }
     robot_name = LaunchConfiguration("robot_name")
-    robot_urdf = LaunchConfiguration("robot_urdf")
     robot_sdf = LaunchConfiguration("robot_sdf")
-
-    # opts = get_opts()
-    # robot_urdf = opts.robot_urdf
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -98,7 +93,7 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         "map",
-        default_value=os.path.join(bringup_dir, "maps", "fx_10_gk.yaml"),
+        default_value=os.path.join(package_share_dir, "maps", "fx_10_gk.yaml"),
         description="Full path to map file to load",
     )
 
@@ -110,7 +105,7 @@ def generate_launch_description():
 
     declare_params_file_cmd = DeclareLaunchArgument(
         "params_file",
-        default_value=os.path.join(bringup_dir, "params", "nav2_params.yaml"),
+        default_value=os.path.join(package_share_dir, "params", "nav2_params.yaml"),
         description="Full path to the ROS2 parameters file to use for all launched nodes",
     )
 
@@ -134,7 +129,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         "rviz_config_file",
-        default_value=os.path.join(bringup_dir, "rviz", "nav2_default_view.rviz"),
+        default_value=os.path.join(package_share_dir, "rviz", "nav2_default_view.rviz"),
         description="Full path to the RVIZ config file to use",
     )
 
@@ -165,7 +160,7 @@ def generate_launch_description():
         # default_value=os.path.join(get_package_share_directory('turtlebot3_gazebo'),
         # worlds/turtlebot3_worlds/waffle.model')
         # default_value=os.path.join(bringup_dir, 'worlds', 'world_only.model'),
-        default_value=os.path.join(bringup_dir, "worlds", "fx_floor10.world"),
+        default_value=os.path.join(package_share_dir, "worlds", "fx_floor10.world"),
         description="Full path to world model file to load",
     )
 
@@ -173,15 +168,10 @@ def generate_launch_description():
         "robot_name", default_value="wheelchair_base", description="name of the robot"
     )
 
-    declare_robot_urdf_cmd = DeclareLaunchArgument(
-        "robot_urdf",
-        default_value=os.path.join(bringup_dir, "urdf", "wheelchair_base.urdf"),
-        description="path of robot urdf",
-    )
 
     declare_robot_sdf_cmd = DeclareLaunchArgument(
         "robot_sdf",
-        default_value=os.path.join(bringup_dir, "worlds", "wheel_chair.model"),
+        default_value=os.path.join(package_share_dir, "worlds", "wheel_chair.model"),
         description="Full path to robot sdf file to spawn the robot in gazebo",
     )
 
@@ -196,14 +186,14 @@ def generate_launch_description():
             "libgazebo_ros_factory.so",
             world,
         ],
-        cwd=[launch_dir],
+        cwd=[package_launch_dir],
         output="screen",
     )
 
     start_gazebo_client_cmd = ExecuteProcess(
         condition=IfCondition(PythonExpression([use_simulator, " and not ", headless])),
         cmd=["gzclient"],
-        cwd=[launch_dir],
+        cwd=[package_launch_dir],
         output="screen",
     )
 
@@ -233,30 +223,9 @@ def generate_launch_description():
             pose["Y"],
         ],
     )
-    # --------------------------------------------- 暂时不用这个 ------------------------------------------
-    # robot_urdf = os.path.join(bringup_dir, "urdf", "wheelchair_base.urdf")
-    # robot_urdf = os.path.join(bringup_dir, "urdf", "gkchair01_base.urdf")
-    # # robot_urdf = os.path.join(bringup_dir, 'urdf', 'turtlebot3_waffle.urdf')
-    # robot_description = ParameterValue(
-    #     Command(["xacro ", str(robot_urdf)]), value_type=str
-    # )
-
-    # start_robot_state_publisher_cmd = Node(
-    #     condition=IfCondition(use_robot_state_pub),
-    #     package="robot_state_publisher",
-    #     executable="robot_state_publisher",
-    #     name="robot_state_publisher",
-    #     namespace=namespace,
-    #     output="screen",
-    #     parameters=[
-    #         {"use_sim_time": use_sim_time, "robot_description": robot_description}
-    #     ],
-    #     remappings=remappings,
-    # )
-    # --------------------------------------------- 暂时不用这个 ------------------------------------------
 
     rviz_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, "rviz_launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(package_launch_dir, "rviz_launch.py")),
         condition=IfCondition(use_rviz),
         launch_arguments={
             "namespace": namespace,
@@ -278,7 +247,7 @@ def generate_launch_description():
     )
 
     bringup_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, "bringup_launch.py")),
+        PythonLaunchDescriptionSource(os.path.join(package_launch_dir, "bringup_launch.py")),
         launch_arguments={
             "namespace": namespace,
             "use_namespace": use_namespace,
@@ -291,16 +260,27 @@ def generate_launch_description():
             "use_respawn": use_respawn,
         }.items(),
     )
-
+    
     # 如果不是使用模拟，那么就启用所有的真实传感器
     sensor_pub_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory("wcmain"), "launch", "sensor_pub.py"
+                get_package_share_directory("swc_nav_bringup"), "launch", "bringup_sensor.launch.py"
             )
         ),
         condition=UnlessCondition(use_simulator)
     )
+    
+    # 启用定位
+    ros_loc_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("ros_local"), "launch", "localization.py"
+            )
+        ),
+        condition=UnlessCondition(use_simulator)
+    )
+    
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -321,7 +301,6 @@ def generate_launch_description():
     ld.add_action(declare_simulator_cmd)
     ld.add_action(declare_world_cmd)
     ld.add_action(declare_robot_name_cmd)
-    ld.add_action(declare_robot_urdf_cmd)
     ld.add_action(declare_robot_sdf_cmd)
     ld.add_action(declare_use_respawn_cmd)
 
@@ -334,6 +313,7 @@ def generate_launch_description():
     # ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(wc_base_cmd)
     ld.add_action(sensor_pub_cmd)
+    ld.add_action(ros_loc_cmd)
     ld.add_action(rviz_cmd)
     ld.add_action(bringup_cmd)
 

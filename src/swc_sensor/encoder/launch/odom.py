@@ -21,21 +21,7 @@ def generate_launch_description():
                 description="robot_name, gk01/v1",
             ),
             Node(
-                package="driver",
-                executable="controller",
-                name="driver_control",
-                output="screen",
-                condition=LaunchConfigurationEquals("robot_name", "v1"),
-            ),
-            Node(
-                package="driver",
-                executable="gk_controller",
-                name="gk_controller",
-                output="screen",
-                condition=LaunchConfigurationEquals("robot_name", "gk01"),
-            ),
-            Node(
-                package="encoder_odom",
+                package="encoder",
                 executable="odom_cal",
                 name="odom_cal_node",
                 output="screen",

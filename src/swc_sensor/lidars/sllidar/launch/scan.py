@@ -15,6 +15,8 @@ from launch.actions import IncludeLaunchDescription
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution
+import math
 
 
 def generate_launch_description():
@@ -25,7 +27,7 @@ def generate_launch_description():
     )  # for s2 is 1000000
     frame_id = LaunchConfiguration("frame_id", default="laser_link")
     inverted = LaunchConfiguration("inverted", default="false")
-    angle_compensate = LaunchConfiguration("angle_compensate", default="true")
+    angle_compensate = LaunchConfiguration("angle_compensate", default="false")
     scan_mode = LaunchConfiguration("scan_mode", default="DenseBoost")
 
     return LaunchDescription(
@@ -67,7 +69,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "start_angle",
-                default_value="180",
+                default_value="185",
                 description="Start angle for the laser filter",
             ),
             DeclareLaunchArgument(
@@ -108,6 +110,30 @@ def generate_launch_description():
                 output="screen",
             ),
             # 启用过滤器
+            # Node(
+            #     package="laser_filters",
+            #     executable="scan_to_scan_filter_chain",
+            #     name="laser_s2_filter",
+            #     output="screen",
+            #     parameters=[
+            #         {
+            #             "filter1": {
+            #                 "name": "angle",
+            #                 "type": "laser_filters/LaserScanAngularBoundsFilter",
+            #                 "params": {
+            #                     "lower_angle": -80 / 180 * math.pi,
+            #                     "upper_angle": 0 / 180 * math.pi,
+            #                 },
+            #             },
+            #         }
+            #     ],
+            #     remappings=[
+            #         ("/scan", "/scan_s2_raw"),
+            #         ("/scan_filtered", "/scan_s2_filter"),
+            #     ],
+            # ),
+            
+            # 启用过滤器
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(
@@ -117,10 +143,10 @@ def generate_launch_description():
                     )
                 ),
                 launch_arguments={
-                    "start_angle": LaunchConfiguration("start_angle"),
-                    "end_angle": LaunchConfiguration("end_angle"),
-                    "sub_topic": LaunchConfiguration("sub_topic"),
-                    "pub_topic": LaunchConfiguration("pub_topic"),
+                    "start_angle": "210",
+                    "end_angle": "70",
+                    "sub_topic": "scan_s2_raw",
+                    "pub_topic": "scan_s2_filter",
                 }.items(),
                 condition=IfCondition(LaunchConfiguration("use_fileter")),
             ),
