@@ -77,7 +77,7 @@
       </collision>
       <xacro:cylinder_inertia m="5.5" r="${wheel_radius}" h="${wheel_width}" />
     </link>
-    <joint name="${prefix}_joint" type="continuous">
+    <joint name="${prefix}_joint" type="fixed">
       <parent link="base_link" />
       <child link="${prefix}_link" />
       <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}"  rpy="0 0 0" />
@@ -109,7 +109,7 @@
       <xacro:cylinder_inertia m="1.5" r="${s_wheel_radius}" h="${s_wheel_width}" />
     </link>
 
-    <joint name="${prefix}_joint" type="revolute">
+    <joint name="${prefix}_joint" type="fixed">
       <parent link="base_link" />
       <child link="${prefix}_link" />
       <origin xyz="${x_reflect*s_wheel_xoff} ${y_reflect*(base_width/2+s_wheel_ygap)} ${-s_wheel_zoff}"

@@ -26,9 +26,9 @@ def generate_launch_description():
 
     ################################ robot_description parameters start ###############################
     launch_params = yaml.safe_load(open(os.path.join(
-    get_package_share_directory(package_name), 'config', 'reality', 'measurement_params_real.yaml')))
+    get_package_share_directory(package_name), 'config', 'reality', 'measurement_params_real_gk01.yaml')))
     robot_description = Command(['xacro ', os.path.join(
-    get_package_share_directory(package_name), 'urdf', 'sentry_robot_real.xacro'),
+    get_package_share_directory(package_name), 'urdf', 'gkchair01_base.urdf'),
     ' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
     ################################# robot_description parameters end ################################
 
@@ -192,24 +192,32 @@ def generate_launch_description():
         }],
         name='pointcloud_to_laserscan'
     )
+    
+    bringup_pcl_filter_node = Node(
+        package='pcl_filter', 
+        executable='pcl_filter_node',
+        name="pcl_filter_node"
+    )
 
     bringup_LIO_group = GroupAction([
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            # Copy from the 'livox_joint' in 'sentry_robot.xacro'.
-            arguments=[
-                # Useless arguments, provided by LIO in publish_odometry() function
-                # '--x', '0.0',
-                # '--y', '0.0',
-                # '--z', '0.0',
-                # '--roll', '0.0',
-                # '--pitch', '0.0',
-                # '--yaw', '0.0',
-                '--frame-id', 'odom',
-                '--child-frame-id', 'lidar_odom'
-            ],
-        ),
+        
+        # maka edit: dont use this static_transform_publisher
+        # Node(
+        #     package="tf2_ros",
+        #     executable="static_transform_publisher",
+        #     # Copy from the 'livox_joint' in 'sentry_robot.xacro'.
+        #     arguments=[
+        #         # Useless arguments, provided by LIO in publish_odometry() function
+        #         # '--x', '0.0',
+        #         # '--y', '0.0',
+        #         # '--z', '0.0',
+        #         # '--roll', '0.0',
+        #         # '--pitch', '0.0',
+        #         # '--yaw', '0.0',
+        #         '--frame-id', 'odom',
+        #         '--child-frame-id', 'lidar_odom'
+        #     ],
+        # ),
 
         GroupAction(
             condition = LaunchConfigurationEquals('lio', 'fastlio'),
@@ -364,6 +372,7 @@ def generate_launch_description():
     ld.add_action(bringup_imu_complementary_filter_node)
     ld.add_action(bringup_linefit_ground_segmentation_node)
     ld.add_action(bringup_pointcloud_to_laserscan_node)
+    ld.add_action(bringup_pcl_filter_node)
     ld.add_action(bringup_LIO_group)
     ld.add_action(start_localization_group)
     ld.add_action(bringup_fake_vel_transform_node)

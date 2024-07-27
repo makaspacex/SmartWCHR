@@ -6,8 +6,11 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Tree1
-      Splitter Ratio: 0.5833333134651184
-    Tree Height: 462
+        - /LaserScan1/Topic1
+        - /base_link_fake1
+        - /LaserScan2
+      Splitter Ratio: 0.47887325286865234
+    Tree Height: 520
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -61,16 +64,36 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        dummy:
+        imu_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        imu_link:
+          Value: true
+        laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        laser_ms200_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_small_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -79,22 +102,13 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        wheel_1:
+          Value: true
+        right_small_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheel_2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_4:
+        right_wheel_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -112,15 +126,21 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: true
         base_link:
           Value: true
         base_link_fake:
           Value: true
-        dummy:
-          Value: true
         imu_link:
           Value: true
-        lidar_odom:
+        laser_link:
+          Value: true
+        laser_ms200_link:
+          Value: true
+        left_small_wheel_link:
+          Value: true
+        left_wheel_link:
           Value: true
         livox_frame:
           Value: true
@@ -128,13 +148,9 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        wheel_1:
+        right_small_wheel_link:
           Value: true
-        wheel_2:
-          Value: true
-        wheel_3:
-          Value: true
-        wheel_4:
+        right_wheel_link:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -142,24 +158,29 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
+        base_footprint:
+          base_link:
+            base_link_fake:
+              {}
+            laser_link:
+              imu_link:
+                {}
+            laser_ms200_link:
+              {}
+            left_small_wheel_link:
+              {}
+            left_wheel_link:
+              {}
+            livox_frame:
+              {}
+            right_small_wheel_link:
+              {}
+            right_wheel_link:
+              {}
         map:
-          odom:
-            lidar_odom:
-              base_link:
-                base_link_fake:
-                  {}
-                imu_link:
-                  {}
-                livox_frame:
-                  {}
-                wheel_1:
-                  {}
-                wheel_2:
-                  {}
-                wheel_3:
-                  {}
-                wheel_4:
-                  {}
+          {}
+        odom:
+          {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -581,16 +602,50 @@ Visualization Manager:
         Value: /teb_markers
       Value: true
     - Class: rviz_default_plugins/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.5
       Name: base_link_fake
       Radius: 0.07999999821186066
       Reference Frame: base_link_fake
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: -999999
+      Min Color: 0; 0; 0
+      Min Intensity: -999999
+      Name: LaserScan
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /scan_s2_filter
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -625,41 +680,41 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 14.485743522644043
+      Distance: 9.629140853881836
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 3.056168556213379
-        Y: 0.4070683419704437
-        Z: 0.4124468266963959
+        X: 0.5494264364242554
+        Y: -0.9260862469673157
+        Z: 0.5210233330726624
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.1997965574264526
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.1423678398132324
+      Yaw: 2.8323662281036377
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 932
+  Height: 1016
   Hide Left Dock: false
   Hide Right Dock: false
   Navigation 2:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001560000034afc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000438000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000020b000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e00200032010000024e000001390000013900fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000000000010000010f0000034afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000034a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000004ad0000034a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001f3000003a2fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000438000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b00000243000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e002000320100000284000001590000012300fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000000000010000010f0000034afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000034a000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000541000003a200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Tool Properties:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1545
-  X: 1585
-  Y: 228
+  Width: 1850
+  X: 70
+  Y: 27

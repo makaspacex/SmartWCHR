@@ -1,0 +1,51 @@
+### ekf config file ###
+ekf_filter_node:
+    ros__parameters:
+        # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
+        # computation until it receives at least one message from one of the inputs. It will then run continuously at the
+        # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
+        # 滤波器产生状态估计的实值频率, 注意 过滤器在从输入之一接收到至少一条消息之前不会开始计算。
+        frequency: 30.0
+        
+        # ekf_localization_node and ukf_localization_node both use a 3D omnidirectional motion model. If this parameter is
+        # set to true, no 3D information will be used in your state estimate. Use this if you are operating in a planar
+        # environment and want to ignore the effect of small variations in the ground plane that might otherwise be detected
+        # by, for example, an IMU. Defaults to false if unspecified.
+        two_d_mode: true
+
+        # Whether to publish the acceleration state. Defaults to false if unspecified.
+        publish_acceleration: false
+
+        # Whether to broadcast the transformation over the /tf topic. Defaults to true if unspecified.
+        publish_tf: true
+        
+        # 1. Set the map_frame, odom_frame, and base_link frames to the appropriate frame names for your system.
+        #     1a. If your system does not have a map_frame, just remove it, and make sure "world_frame" is set to the value of odom_frame.
+        # 2. If you are fusing continuous position data such as wheel encoder odometry, visual odometry, or IMU data, set "world_frame" 
+        #    to your odom_frame value. This is the default behavior for robot_localization's state estimation nodes.
+        # 3. If you are fusing global absolute position data that is subject to discrete jumps (e.g., GPS or position updates from landmark 
+        #    observations) then:
+        #     3a. Set your "world_frame" to your map_frame value
+        #     3b. MAKE SURE something else is generating the odom->base_link transform. Note that this can even be another state estimation node 
+        #         from robot_localization! However, that instance should *not* fuse the global data.
+        # map_frame: map                        # Defaults to "map" if unspecified
+        odom_frame: odom                      # Defaults to "odom" if unspecified
+        base_link_frame: base_footprint       # Defaults to "base_link" if unspecified
+        world_frame: odom                    # Defaults to the value of odom_frame if unspecified
+        odom0: /odom_diff
+        odom0_config: [true,  true,  false,        # 位置
+                       false, false, true,         # 角度
+                       false, false, false,        # 速度
+                       false, false, false,        # 角速度
+                       false, false, false]        # 加速度
+
+# 后面的参数文件矩阵含义是我们可以在上面的话题中提供给robot_localization的数据，
+# 矩阵的各个配置值的含义为(X,Y,Z,roll,pitch,yaw,X˙,Y˙,Z˙,roll˙,pitch˙,yaw˙,X¨,Y¨,Z¨)。
+# 由于之前用到的diff_ty.py文件发布出来的数据是带有方向的XYZ速度值，因此需要将X˙,Y˙,Z˙这三个参数对应的矩阵设置为true，
+# 上面的话题odom0: /odom_diff是指robotlocalization需要订阅的话题名字，我们里程计数据是由diff_ty.py发布的odom_diff话题，因此在这里改为对应话题名字即可。
+# 同理，对于IMU数据，我IMU驱动底层写的话题发布名字为imu_data，因此，我们也将其订阅的imu话题名字改为imu_data即可。而我们在这里只用到了IMU的roll pitch yaw三轴数据，因此是将第二排的三个参数改为true即可。
+
+# 而上面的4个frame不需要进行修改，因为我们需要建立的就是map, odom, base_link三个系之间的关系。
+# 其他注释可以跟着官方给出的注释并结合自己的实际情况来进行修改即可。
+
+# 我们在进行完以上步骤之后，robot_localization就可以输出融合后的数据了，但是需要注意的一点是，robot_localization输出的话题叫做/odometry/filtered

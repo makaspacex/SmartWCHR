@@ -74,14 +74,14 @@ def generate_launch_description():
                 launch_arguments={"robot_name": robot_name}.items(),
             ),
             
-            # 启动ms200雷达
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("lidar_ms200"), "launch", "scan.py"
-                    )
-                ),
-            ),
+            # # 启动ms200雷达
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(
+            #         os.path.join(
+            #             get_package_share_directory("lidar_ms200"), "launch", "scan.py"
+            #         )
+            #     ),
+            # ),
             
             # 启动思岚s2雷达
             IncludeLaunchDescription(
