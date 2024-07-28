@@ -78,16 +78,6 @@ def generate_launch_description():
                 description="End angle for the laser filter",
             ),
             DeclareLaunchArgument(
-                "sub_topic",
-                default_value="scan_s2_raw",
-                description="subscription topic",
-            ),
-            DeclareLaunchArgument(
-                "pub_topic",
-                default_value="scan_s2_filter",
-                description="publisher topic",
-            ),
-            DeclareLaunchArgument(
                 "use_fileter",
                 default_value="true",
                 description="if use fileter",
@@ -95,7 +85,7 @@ def generate_launch_description():
             Node(
                 package="sllidar",
                 executable="sllidar_node",
-                name="sllidar_node",
+                name="lidar_s2",
                 parameters=[
                     {
                         "channel_type": channel_type,
@@ -134,21 +124,19 @@ def generate_launch_description():
             # ),
             
             # 启用过滤器
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("radar_filter"),
-                        "launch",
-                        "laser_filter.launch.py",
-                    )
-                ),
-                launch_arguments={
-                    "start_angle": "210",
-                    "end_angle": "70",
-                    "sub_topic": "scan_s2_raw",
-                    "pub_topic": "scan_s2_filter",
-                }.items(),
-                condition=IfCondition(LaunchConfiguration("use_fileter")),
-            ),
+            Node(
+                package="radar_filter",
+                executable="radar_filter",
+                name="laser_filter_s2",
+                parameters=[{
+                    "start_angle": 210,
+                    "end_angle": 70,
+                    }],
+                output="screen",
+                 remappings=[
+                    ("/scan_raw", "/scan_s2_raw"),
+                    ("/scan_filter", "/scan_s2_filter"),
+                ],
+            )
         ]
     )

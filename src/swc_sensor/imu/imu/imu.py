@@ -138,7 +138,7 @@ class IMUDriverNode(Node):
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = frame_id
         # 创建IMU数据发布器
-        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw_cmp10a', 10)
 
         # 启动IMU驱动线程
         self.driver_thread = threading.Thread(target=self.driver_loop, args=(port_name,))

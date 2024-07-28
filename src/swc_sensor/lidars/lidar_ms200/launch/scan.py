@@ -34,17 +34,6 @@ def generate_launch_description():
                 default_value="200",
                 description="End angle for the laser filter",
             ),
-            
-            DeclareLaunchArgument(
-                "sub_topic",
-                default_value="scan_ms200_raw",
-                description="subscription topic",
-            ),
-            DeclareLaunchArgument(
-                "pub_topic",
-                default_value="scan_ms200_filter",
-                description="publisher topic",
-            ),
             DeclareLaunchArgument(
                 "use_fileter",
                 default_value="true",
@@ -53,7 +42,7 @@ def generate_launch_description():
             Node(
                 package=package_name,
                 executable="scan",
-                name="lidar",
+                name="lidar_ms200",
                 output="screen",
                 parameters=[
                     {"device_model": "MS200"},
@@ -89,23 +78,20 @@ def generate_launch_description():
             #     ],
             #     remappings=[("/scan",LaunchConfiguration("sub_topic")),("/scan_filtered",LaunchConfiguration("pub_topic"))]
             # ),
-
             # 启用过滤器
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(
-                        get_package_share_directory("radar_filter"),
-                        "launch",
-                        "laser_filter.launch.py",
-                    )
-                ),
-                launch_arguments={
-                    "start_angle": "0",
-                    "end_angle": "200",
-                    "sub_topic": "scan_ms200_raw",
-                    "pub_topic": "scan_ms200_filter",
-                  }.items(),
-                condition=IfCondition(LaunchConfiguration("use_fileter")),
+            Node(
+                package="radar_filter",
+                executable="radar_filter",
+                name="laser_filter_ms200",
+                parameters=[{
+                    "start_angle": 0,
+                    "end_angle": 200,
+                    }],
+                output="screen",
+                 remappings=[
+                    ("/scan_raw", "/scan_ms200_raw"),
+                    ("/scan_filter", "/scan_ms200_filter"),
+                ],
             )
         ]
     )

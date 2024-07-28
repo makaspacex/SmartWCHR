@@ -32,7 +32,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("scan", "scan"),
-                    ("imu/data_raw", "imu"),
+                    ("imu/data_raw_cmp10a", "imu"),
                 ],
                 parameters=[{"use_sim_time": use_sim_time}],
                 output="screen",

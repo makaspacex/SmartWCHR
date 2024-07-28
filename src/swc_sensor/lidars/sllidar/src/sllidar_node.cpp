@@ -266,6 +266,16 @@ class SLlidarNode : public rclcpp::Node
         }
 
         pub->publish(*scan_msg);
+
+        time_t now_t = time(NULL);
+        this->pub_n += 1;
+        if(now_t - this->last_pub_time > 8){
+          double rate = (this->pub_n - this->last_pub_n) / (now_t - this->last_pub_time);
+          RCLCPP_INFO(this->get_logger(),"sllidar pub rate=%fhz, scan_msg->ranges[0]=%f",rate, scan_msg->ranges[0]);
+          this->last_pub_time = now_t;
+          this->last_pub_n = this->pub_n;
+        }
+
     }
 public:    
     int work_loop()
@@ -484,6 +494,9 @@ public:
     std::string scan_mode;
     float scan_frequency;
 
+    unsigned int pub_n = 0;
+    unsigned int last_pub_n = 0;
+    time_t last_pub_time = time(NULL);
 
     float angle_min_;
     float angle_max_;

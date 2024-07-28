@@ -21,7 +21,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "laser_filter=radar_filter.laser_filter:main"
+            "radar_filter=radar_filter.laser_filter:main"
         ],
     },
 )

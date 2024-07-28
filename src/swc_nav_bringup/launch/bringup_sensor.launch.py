@@ -17,7 +17,8 @@ def generate_launch_description():
     package_share_dir = get_package_share_directory(package_name)
     
     robot_name = LaunchConfiguration('robot_name')
-    launch_ros_local = LaunchConfiguration("launch_ros_local", default="true")
+    launch_ros_local = LaunchConfiguration("launch_ros_local")
+    launch_encoder = LaunchConfiguration("launch_encoder")
     
     return LaunchDescription(
         [
@@ -35,15 +36,19 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "launch_driver",
-                default_value="true",
+                default_value="false",
                 description="launch_driver",
             ),
             DeclareLaunchArgument(
                 "launch_ros_local",
-                default_value="true",
+                default_value="false",
                 description="start robot localization",
             ),
-            
+            DeclareLaunchArgument(
+                "launch_encoder",
+                default_value="false",
+                description="start encoder sensor",
+            ),
             # 启用手柄控制
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -53,7 +58,6 @@ def generate_launch_description():
                 ),
                 launch_arguments={"robot_name": robot_name}.items(),
             ),
-            
             # 启动编码器
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -62,8 +66,8 @@ def generate_launch_description():
                     ),
                 ),
                 launch_arguments={"robot_name": robot_name}.items(),
+                condition=IfCondition(launch_encoder)
             ),
-            
             # 启动驱动器
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -73,15 +77,14 @@ def generate_launch_description():
                 ),
                 launch_arguments={"robot_name": robot_name}.items(),
             ),
-            
-            # # 启动ms200雷达
-            # IncludeLaunchDescription(
-            #     PythonLaunchDescriptionSource(
-            #         os.path.join(
-            #             get_package_share_directory("lidar_ms200"), "launch", "scan.py"
-            #         )
-            #     ),
-            # ),
+            # 启动ms200雷达
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("lidar_ms200"), "launch", "scan.py"
+                    )
+                ),
+            ),
             
             # 启动思岚s2雷达
             IncludeLaunchDescription(

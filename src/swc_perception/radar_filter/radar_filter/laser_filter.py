@@ -14,21 +14,16 @@ class LaserFilter(Node):
         # 单独声明每个参数
         self.declare_parameter('start_angle', 185)
         self.declare_parameter('end_angle', 70)
-        self.declare_parameter('sub_topic', "scan_s2_raw")
-        self.declare_parameter('pub_topic', "scan_s2_filter")
-        
-        sub_topic = self.get_parameter('sub_topic').get_parameter_value().string_value
-        pub_topic = self.get_parameter('pub_topic').get_parameter_value().string_value
         
         self.subscription = self.create_subscription(
             LaserScan,
-            sub_topic,
+            "scan_raw",
             self.listener_callback,
             10)
         
         self.publisher = self.create_publisher(
             LaserScan,
-            pub_topic,
+            "scan_filter",
             10)
 
         # 从参数服务器获取角度参数

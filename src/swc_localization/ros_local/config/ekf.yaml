@@ -39,7 +39,7 @@ ekf_filter_node:
                        false, false, false,        # 角速度
                        false, false, false]        # 加速度
 
-        # imu0: /imu/data_raw
+        # imu0: /imu/data_raw_cmp10a
         # imu0_config: [false, false, false,         # 位置
         #               false, false, true,          # 角度
         #               false, false, false,         # 速度
