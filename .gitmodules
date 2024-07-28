@@ -1,12 +1,3 @@
-[submodule "src/swc_sensor/livox_ros_driver2"]
-	path = src/swc_sensor/livox_ros_driver2
-	url = https://gitee.com/SMBU-POLARBEAR/livox_ros_driver2_humble.git
-[submodule "src/swc_localization/fast_lio"]
-	path = src/swc_localization/fast_lio
-	url = https://github.com/Ericsii/FAST_LIO_ROS2.git
-[submodule "src/swc_localization/point_lio"]
-	path = src/swc_localization/point_lio
-	url = https://github.com/LihanChen2004/Point-LIO.git
 [submodule "src/swc_navigation/costmap_converter"]
 	path = src/swc_navigation/costmap_converter
 	url = https://github.com/LihanChen2004/costmap_converter.git
