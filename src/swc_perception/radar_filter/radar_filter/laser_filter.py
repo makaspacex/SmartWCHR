@@ -6,6 +6,9 @@ import array
 import math
 from builtin_interfaces.msg import Time
 
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
+
 
 class LaserFilter(Node):
     def __init__(self):
@@ -19,12 +22,12 @@ class LaserFilter(Node):
             LaserScan,
             "scan_raw",
             self.listener_callback,
-            10)
+            qos_profile_sensor_data)
         
         self.publisher = self.create_publisher(
             LaserScan,
             "scan_filter",
-            10)
+            qos_profile_sensor_data)
 
         # 从参数服务器获取角度参数
         self.start_angle_degrees = self.get_parameter('start_angle').get_parameter_value().integer_value
@@ -63,7 +66,6 @@ class LaserFilter(Node):
         # 创建新的LaserScan消息对象
         filtered_msg = LaserScan()
         filtered_msg.header = msg.header
-        filtered_msg.header.stamp = self.get_clock().now().to_msg()
         filtered_msg.angle_min = msg.angle_min
         filtered_msg.angle_max = msg.angle_max
         filtered_msg.angle_increment = msg.angle_increment

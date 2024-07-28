@@ -64,7 +64,7 @@ void FakeVelTransform::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr
 {
   try {
     geometry_msgs::msg::TransformStamped transform_stamped;
-    transform_stamped = tf2_buffer_->lookupTransform("odom", "base_link", tf2::TimePointZero);
+    transform_stamped = tf2_buffer_->lookupTransform("odom", "base_footprint", tf2::TimePointZero);
     base_link_angle_ = tf2::getYaw(transform_stamped.transform.rotation);
 
     double angle_diff = -current_angle_;
@@ -76,7 +76,7 @@ void FakeVelTransform::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr
 
     cmd_vel_chassis_pub_->publish(aft_tf_vel);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_INFO(this->get_logger(), "Could not transform odom to base_link: %s", ex.what());
+    RCLCPP_INFO(this->get_logger(), "Could not transform odom to base_footprint: %s", ex.what());
   }
 }
 

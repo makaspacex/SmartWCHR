@@ -50,6 +50,8 @@ from dataclasses import dataclass
 from threading import Lock
 from copy import deepcopy
 import threading
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
 
 
 @dataclass
@@ -245,8 +247,8 @@ class InfiniteEncoder:
 class OdomCalculator(Node):
     def __init__(self):
         super().__init__(node_name='odom_cal_node')
-        self.publisher = self.create_publisher(Odometry, '/odom_diff', 10)
-        self.sub_odom2init = self.create_subscription(String, '/odom2init', self.reset_odom, 10)
+        self.publisher = self.create_publisher(Odometry, '/odom_diff', qos_profile_sensor_data)
+        self.sub_odom2init = self.create_subscription(String, '/odom2init', self.reset_odom, qos_profile_sensor_data)
         
         self.declare_parameter("robot_name", value="gk01")
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value

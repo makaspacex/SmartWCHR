@@ -8,7 +8,8 @@ import serial
 import math
 import time
 from statistics import mean
-
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
 
 class CmdVelToSerial(Node):
     def __init__(self, portname="/dev/driver", baudrate = 9600):
@@ -26,9 +27,9 @@ class CmdVelToSerial(Node):
             Twist,
             'cmd_vel',
             self.listener_callback,
-            10
+            qos_profile_sensor_data
         )
-        self.subscription  # prevent unused variable warning
+        # self.subscription  # prevent unused variable warning
         # self.ser_write_timer_ = self.create_timer(0.1, self.timerCallback)
 
         self.last_write_time = math.inf

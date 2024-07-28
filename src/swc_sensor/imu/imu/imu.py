@@ -8,6 +8,11 @@ import rclpy
 import serial
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data
+
+
+
 key = 0
 flag = 0
 buff = {}
@@ -138,7 +143,7 @@ class IMUDriverNode(Node):
         self.imu_msg = Imu()
         self.imu_msg.header.frame_id = frame_id
         # 创建IMU数据发布器
-        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw_cmp10a', 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw_cmp10a', qos_profile_sensor_data)
 
         # 启动IMU驱动线程
         self.driver_thread = threading.Thread(target=self.driver_loop, args=(port_name,))

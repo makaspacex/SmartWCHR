@@ -143,7 +143,7 @@ int main(int argc, char **argv)
   node->get_parameter("frame_id", frame_id);
   node->get_parameter("scan_topic", scan_topic);
 
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher = node->create_publisher<sensor_msgs::msg::LaserScan>(scan_topic, 10);
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher = node->create_publisher<sensor_msgs::msg::LaserScan>(scan_topic, rclcpp::SensorDataQoS());
 
   OrdlidarDriver device(type, model);
   bool ret = false;
