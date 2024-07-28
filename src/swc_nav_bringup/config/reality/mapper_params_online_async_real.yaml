@@ -12,8 +12,8 @@ slam_toolbox:
     # ROS Parameters
     odom_frame: odom 
     map_frame: map
-    base_frame: base_link 
-    scan_topic: /scan
+    base_frame: base_footprint 
+    scan_topic: /scan_s2_filter
     mode: mapping #localization
 
     # if you'd like to immediately start continuing a map at a given pose

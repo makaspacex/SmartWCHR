@@ -54,7 +54,7 @@ def generate_launch_description():
 
     ################################### navigation2 parameters start ##################################
     nav2_map_dir = PathJoinSubstitution([package_share_dir, 'map', world]), ".yaml"
-    nav2_params_file_dir = os.path.join(package_share_dir, 'config', 'reality', 'nav2_params_real.yaml')
+    nav2_params_file_dir = os.path.join(package_share_dir, 'config', 'reality', 'nav2_params_real_gk01.yaml')
     ################################### navigation2 parameters end ####################################
 
     ################################ icp_registration parameters start ################################
