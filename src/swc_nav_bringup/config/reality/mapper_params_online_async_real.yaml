@@ -13,7 +13,8 @@ slam_toolbox:
     odom_frame: odom 
     map_frame: map
     base_frame: base_footprint 
-    scan_topic: /scan_s2_filter
+    # scan_topic: /scan_s2_filter # 来自雷达的过滤器
+    scan_topic: /scan # 来自 mid360的点云转scan
     mode: mapping #localization
 
     # if you'd like to immediately start continuing a map at a given pose

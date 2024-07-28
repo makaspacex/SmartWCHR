@@ -58,7 +58,7 @@ class SLlidarNode : public rclcpp::Node
     SLlidarNode()
     : Node("sllidar_node")
     {
-      scan_pub = this->create_publisher<sensor_msgs::msg::LaserScan>("scan_s2_raw", rclcpp::SensorDataQoS());
+      scan_pub = this->create_publisher<sensor_msgs::msg::LaserScan>("scan_s2_raw", 1);
     }
 
   private:    

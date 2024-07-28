@@ -200,25 +200,7 @@ def generate_launch_description():
     )
 
     bringup_LIO_group = GroupAction([
-        
-        # maka edit: dont use this static_transform_publisher
-        # Node(
-        #     package="tf2_ros",
-        #     executable="static_transform_publisher",
-        #     # Copy from the 'livox_joint' in 'sentry_robot.xacro'.
-        #     arguments=[
-        #         # Useless arguments, provided by LIO in publish_odometry() function
-        #         # '--x', '0.0',
-        #         # '--y', '0.0',
-        #         # '--z', '0.0',
-        #         # '--roll', '0.0',
-        #         # '--pitch', '0.0',
-        #         # '--yaw', '0.0',
-        #         '--frame-id', 'odom',
-        #         '--child-frame-id', 'lidar_odom'
-        #     ],
-        # ),
-
+      
         GroupAction(
             condition = LaunchConfigurationEquals('lio', 'fastlio'),
             actions=[
@@ -340,7 +322,7 @@ def generate_launch_description():
         condition = LaunchConfigurationEquals('mode', 'mapping'),
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
-        name='slam_toolbox',
+        name='slam_toolbox_mapping',
         parameters=[
             slam_toolbox_mapping_file_dir,
             {'use_sim_time': use_sim_time,}

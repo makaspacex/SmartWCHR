@@ -31,7 +31,7 @@ FakeVelTransform::FakeVelTransform(const rclcpp::NodeOptions & options)
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
     CMD_VEL_TOPIC, 1, std::bind(&FakeVelTransform::cmdVelCallback, this, std::placeholders::_1));
   cmd_vel_chassis_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
-    AFTER_TF_CMD_VEL, rclcpp::QoS(rclcpp::KeepLast(1)));
+    AFTER_TF_CMD_VEL, 1);
   local_pose_sub_ = this->create_subscription<nav_msgs::msg::Path>(
     TRAJECTORY_TOPIC, 1,
     std::bind(&FakeVelTransform::localPoseCallback, this, std::placeholders::_1));

@@ -29,12 +29,12 @@ void PointCloudNode::run(){
 
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     get_parameter("lidar_topic").as_string(),
-    rclcpp::SensorDataQoS(),
+    1,
     std::bind(&PointCloudNode::pointcloud_callback,shared_from_this(),std::placeholders::_1)
   );
   pointcloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
     get_parameter("pointcloud_output_topic").as_string(),
-    rclcpp::SensorDataQoS()
+    1
   );
   // laser_pub_ = create_publisher<sensor_msgs::msg::LaserScan>(
   //   get_parameter("scan_topic").as_string(),
@@ -67,9 +67,9 @@ void PointCloudNode::pointcloud_callback(sensor_msgs::msg::PointCloud2::SharedPt
   condition->addComparison(pcl::FieldComparison<pcl::PointXYZI>::ConstPtr(
     new pcl::FieldComparison<pcl::PointXYZI>("x", pcl::ComparisonOps::LT, -1)));
   condition->addComparison(pcl::FieldComparison<pcl::PointXYZI>::ConstPtr(
-    new pcl::FieldComparison<pcl::PointXYZI>("y", pcl::ComparisonOps::GT, 0.13)));
+    new pcl::FieldComparison<pcl::PointXYZI>("y", pcl::ComparisonOps::GT, 0.15)));
   condition->addComparison(pcl::FieldComparison<pcl::PointXYZI>::ConstPtr(
-    new pcl::FieldComparison<pcl::PointXYZI>("y", pcl::ComparisonOps::LT, -0.5)));
+    new pcl::FieldComparison<pcl::PointXYZI>("y", pcl::ComparisonOps::LT, -0.8)));
   
   condrem.setCondition(condition);
   condrem.setInputCloud(cloud.makeShared());

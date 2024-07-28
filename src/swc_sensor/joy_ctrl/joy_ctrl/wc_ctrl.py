@@ -38,10 +38,10 @@ class JoyTeleop(Node):
         self.angular_speed_info = {"min":0.12, "max":0.2, "diff":0.02}
         
         #create pub
-        self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  qos_profile_sensor_data)
-        self.pub_odom2init = self.create_publisher(String,'odom2init',  qos_profile_sensor_data)
+        self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  1)
+        self.pub_odom2init = self.create_publisher(String,'odom2init',  1)
         #create sub
-        self.sub_Joy = self.create_subscription(Joy,'joy', self.buttonCallback, qos_profile_sensor_data)
+        self.sub_Joy = self.create_subscription(Joy,'joy', self.buttonCallback, 1)
         
         #declare parameter and get the value
         self.xspeed_limit = self.x_speeds[self.speed_index]

@@ -11,6 +11,8 @@ from statistics import mean
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
 
+from datetime import datetime
+
 class CmdVelToSerial(Node):
     def __init__(self, portname="/dev/driver", baudrate = 9600):
         super().__init__('cmd_vel_to_serial')
@@ -44,6 +46,8 @@ class CmdVelToSerial(Node):
         
         # 用来控制打印输出频率的
         self.last_print_time = time.time()
+        
+        self.log_f = open('/home/jetson/Desktop/SmartWCHR/cmd_log.txt', 'a+')
     
     def connect_dev(self):
         if hasattr(self,"ser") and self.ser is not None:
@@ -102,12 +106,25 @@ class CmdVelToSerial(Node):
         linear_speed = msg.linear.x
         angular_speed = msg.angular.z
 
+       
+
         self.linear_queue[self.index_queue] = linear_speed
         self.angular_queue[self.index_queue] = angular_speed
         self.index_queue = (self.index_queue + 1) % len(self.angular_queue)
+
         
         if math.isclose(mean(self.linear_queue), 0.0) and math.isclose(mean(self.angular_queue), 0.0):
             return
+        
+        # 写入一些内容到文件中
+        # time = time.time()
+        # 获取当前时间的时间戳
+        timestamp = time.time()
+        # 将时间戳转换为datetime对象
+        datetime_obj = datetime.fromtimestamp(timestamp)
+        self.log_f.write(f'{datetime_obj}\t{msg.linear}\t{msg.angular}\n')
+        self.log_f.flush()
+    
         
         # 将接收到的速度转化为串口数据
         ser_data = self.get_ser_data(linear_speed, angular_speed)
