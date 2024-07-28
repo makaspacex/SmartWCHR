@@ -557,7 +557,7 @@ void publish_frame_body(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::Shared
     sensor_msgs::msg::PointCloud2 laserCloudmsg;
     pcl::toROSMsg(*laserCloudIMUBody, laserCloudmsg);
     laserCloudmsg.header.stamp = get_ros_time(lidar_end_time);
-    laserCloudmsg.header.frame_id = "base_footprint";
+    laserCloudmsg.header.frame_id = "livox_frame";
     pubLaserCloudFull_body->publish(laserCloudmsg);
     publish_count -= PUBFRAME_PERIOD;
 }
@@ -625,7 +625,8 @@ void set_posestamp(T & out)
     
 }
 
-void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped, std::unique_ptr<tf2_ros::TransformBroadcaster> & tf_br)
+// void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped, std::unique_ptr<tf2_ros::TransformBroadcaster> & tf_br)
+void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped)
 {
     odomAftMapped.header.frame_id = "odom";
     odomAftMapped.child_frame_id = "base_footprint";
@@ -644,18 +645,19 @@ void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPt
         odomAftMapped.pose.covariance[i*6 + 5] = P(k, 2);
     }
 
-    geometry_msgs::msg::TransformStamped trans;
-    trans.header.frame_id = "odom";
-    trans.header.stamp = odomAftMapped.header.stamp;
-    trans.child_frame_id = "base_footprint";
-    trans.transform.translation.x = odomAftMapped.pose.pose.position.x;
-    trans.transform.translation.y = odomAftMapped.pose.pose.position.y;
-    trans.transform.translation.z = odomAftMapped.pose.pose.position.z;
-    trans.transform.rotation.w = odomAftMapped.pose.pose.orientation.w;
-    trans.transform.rotation.x = odomAftMapped.pose.pose.orientation.x;
-    trans.transform.rotation.y = odomAftMapped.pose.pose.orientation.y;
-    trans.transform.rotation.z = odomAftMapped.pose.pose.orientation.z;
-    tf_br->sendTransform(trans);
+    // geometry_msgs::msg::TransformStamped trans;
+    // trans.header.frame_id = "odom";
+    // trans.header.stamp = odomAftMapped.header.stamp;
+    // trans.child_frame_id = "base_footprint";
+    // trans.transform.translation.x = odomAftMapped.pose.pose.position.x;
+    // trans.transform.translation.y = odomAftMapped.pose.pose.position.y;
+    // // trans.transform.translation.z = odomAftMapped.pose.pose.position.z;
+    // trans.transform.translation.z = 0;
+    // trans.transform.rotation.w = odomAftMapped.pose.pose.orientation.w;
+    // trans.transform.rotation.x = odomAftMapped.pose.pose.orientation.x;
+    // trans.transform.rotation.y = odomAftMapped.pose.pose.orientation.y;
+    // trans.transform.rotation.z = odomAftMapped.pose.pose.orientation.z;
+    // tf_br->sendTransform(trans);
 }
 
 void publish_path(rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubPath)
@@ -933,7 +935,7 @@ public:
         pubLaserCloudMap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/Laser_map", 20);
         pubOdomAftMapped_ = this->create_publisher<nav_msgs::msg::Odometry>("/Odometry", 20);
         pubPath_ = this->create_publisher<nav_msgs::msg::Path>("/path", 20);
-        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        // tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         //------------------------------------------------------------------------------------------------------
         auto period_ms = std::chrono::milliseconds(static_cast<int64_t>(1000.0 / 100.0));
@@ -1061,7 +1063,8 @@ private:
             double t_update_end = omp_get_wtime();
 
             /******* Publish odometry *******/
-            publish_odometry(pubOdomAftMapped_, tf_broadcaster_);
+            // publish_odometry(pubOdomAftMapped_, tf_broadcaster_);
+            publish_odometry(pubOdomAftMapped_);
 
             /*** add the feature points to map kdtree ***/
             t3 = omp_get_wtime();
@@ -1139,7 +1142,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcl_pc_;
     rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr sub_pcl_livox_;
 
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    // std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::TimerBase::SharedPtr map_pub_timer_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr map_save_srv_;

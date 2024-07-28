@@ -2,7 +2,6 @@ import launch_ros
 import launch
 import os
 
-
 def generate_launch_description():
     pkg_share = launch_ros.substitutions.FindPackageShare(package="ros_local").find(
         "ros_local"

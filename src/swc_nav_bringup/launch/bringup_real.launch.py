@@ -317,6 +317,15 @@ def generate_launch_description():
             'spin_speed': 0.0 # rad/s
         }]
     )
+    
+    bringup_robot_localization_node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node",
+        output="screen",
+        remappings=[("/odometry/filtered", "/odom")],
+        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml')],
+    )
 
     start_mapping = Node(
         condition = LaunchConfigurationEquals('mode', 'mapping'),
@@ -349,15 +358,19 @@ def generate_launch_description():
     ld.add_action(declare_localization_cmd)
     ld.add_action(declare_LIO_cmd)
     
-    ld.add_action(start_robot_state_publisher_cmd)
-    ld.add_action(start_livox_ros_driver2_node)
-    ld.add_action(bringup_imu_complementary_filter_node)
-    ld.add_action(bringup_linefit_ground_segmentation_node)
-    ld.add_action(bringup_pointcloud_to_laserscan_node)
-    ld.add_action(bringup_pcl_filter_node)
+    
+    # 放到sensor里面了
+    # ld.add_action(start_robot_state_publisher_cmd)
+    # ld.add_action(start_livox_ros_driver2_node)
+    # ld.add_action(bringup_imu_complementary_filter_node)
+    # ld.add_action(bringup_linefit_ground_segmentation_node)
+    # ld.add_action(bringup_pcl_filter_node)
+    # ld.add_action(bringup_pointcloud_to_laserscan_node)
+    # ld.add_action(bringup_fake_vel_transform_node)
+    
     ld.add_action(bringup_LIO_group)
+    ld.add_action(bringup_robot_localization_node)
     ld.add_action(start_localization_group)
-    ld.add_action(bringup_fake_vel_transform_node)
     ld.add_action(start_mapping)
     ld.add_action(start_navigation2)
 

@@ -11,7 +11,7 @@ amcl:
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
     do_beamskip: false
-    global_frame_id: "map"
+    global_frame_id: "odom"
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
     laser_max_range: 100.0
@@ -20,7 +20,7 @@ amcl:
     max_beams: 60
     max_particles: 2000
     min_particles: 500
-    odom_frame_id: "map"
+    odom_frame_id: "odom"
     pf_err: 0.05
     pf_z: 0.99
     recovery_alpha_fast: 0.0
@@ -50,9 +50,9 @@ amcl_rclcpp_node:
 bt_navigator:
   ros__parameters:
     use_sim_time: False
-    global_frame: map
-    robot_base_frame: base_link
-    odom_topic: /Odometry
+    global_frame: odom
+    robot_base_frame: base_footprint
+    odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
     plugin_lib_names:
@@ -91,18 +91,17 @@ bt_navigator:
 controller_server:
   ros__parameters:
     use_sim_time: False
-    controller_frequency: 10.0
+    controller_frequency: 20.0
     min_x_velocity_threshold: 0.1
     min_y_velocity_threshold: 0.0
-    min_theta_velocity_threshold: 0.12
+    min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.6
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
-    # controller_plugins: ["FollowPath"]
-    controller_plugins: [FollowPath]
+    controller_plugins: ["FollowPath"]
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
+      required_movement_radius: 0.3
       movement_time_allowance: 10.0
     general_goal_checker:
       stateful: True
@@ -142,8 +141,8 @@ controller_server:
       #*******************************************************************************
       max_vel_x: 0.8                        #最大平移速度
       max_vel_x_backwards: 0.6              #最大后退速度
-      max_vel_theta: 0.16                    #最大转向角速度
-      acc_lim_x: 0.4                        #最大平移加速度
+      max_vel_theta: 0.26                    #最大转向角速度
+      acc_lim_x: 0.8                        #最大平移加速度
       acc_lim_theta: 6.0                      #最大角加速度
       is_footprint_dynamic: False           #如果为真，在检查轨迹可行性之前更新足迹
       use_proportional_saturation: False    #如果为true，则按比例减少所有扭曲分量（线性x和y以及角度z）（如果任何扭曲分量超过其相应的界限），而不是单独饱和每个扭曲分量
@@ -152,15 +151,15 @@ controller_server:
       #*******************************************************************************
       # Robot/Carlike 此部分参数仅适用于类似汽车的机器人（如差速驱动机器人）
       #*******************************************************************************
-      min_turning_radius: 0.0             #机器人的最小转弯半径。对于差速驱动机器人，此值为0
+      min_turning_radius: 0.4             #机器人的最小转弯半径。对于差速驱动机器人，此值为0
       wheelbase: 0.7                      #驱动轮轴与转向轮轴之间的距离。后轮驱动机器人此值可能为负数。
       cmd_angle_instead_rotvel: False     #是否用转向角代替控制指令消息中的旋转速度（需要结合轴距参数使用）
 
       #*******************************************************************************
       # Robot/Omni 此部分参数仅适用于全方位移动机器人
       #*******************************************************************************
-      # max_vel_y: 0.0
-      # acc_lim_y: 0.0
+      max_vel_y: 0.0
+      acc_lim_y: 0.0
 
       #*******************************************************************************
       # GoalTolerance 目标容差
@@ -253,14 +252,13 @@ controller_server:
       oscillation_omega_eps: 0.1                #(0,1)内的 normalized 角速度的平均值，判断机器人是否运动异常
       oscillation_recovery_min_duration: 10.0   #在这个时间内，是否再次发生FailureDetector检测的振荡
       oscillation_filter_duration: 10.0         #failure_detector_中buffer容器的大小为oscillation_filter_duration * controller_frequency
-    # DWB parameters
 
 local_costmap:
   local_costmap:
     ros__parameters:
       update_frequency: 20.0
       publish_frequency: 10.0
-      global_frame: odom
+      global_frame: map
       robot_base_frame: base_footprint
       use_sim_time: False
       rolling_window: true
@@ -300,8 +298,8 @@ local_costmap:
           data_type: "LaserScan"
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.6
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.3
       always_send_full_costmap: true
 
 global_costmap:
@@ -402,11 +400,11 @@ recoveries_server:
       plugin: "nav2_recoveries/BackUp"
     global_frame: odom
     robot_base_frame: base_footprint
-    transform_timeout: 2
+    transform_timeout: 0.1
     use_sim_time: False
     simulate_ahead_time: 1.0
-    max_rotational_vel: 0.2
-    min_rotational_vel: 0.12
+    max_rotational_vel: 0.26
+    min_rotational_vel: 0.0
     rotational_acc_lim: 0.12
 
 map_server:
@@ -423,7 +421,7 @@ velocity_smoother:
     min_velocity: [-0.8, 0.0, -0.4]
     max_accel: [0.4, 0.0, 0.2]
     max_decel: [-0.4, 0.0, -0.2]
-    odom_topic: "/Odometry"
+    odom_topic: "/odom"
     odom_duration: 0.4
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 2.0
