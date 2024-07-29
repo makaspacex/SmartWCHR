@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ccf_person_identification</name>
+  <version>0.0.0</version>
+  <description>Package for person identification using CCF</description>
+  <license>TODO</license>
+
+  <maintainer email="your_email@example.com">Your Name</maintainer>
+  
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>dlib</build_depend>
+  
+  <depend>opencv</depend>
+  <depend>eigen3</depend>
+  <depend>rclcpp</depend>
+  <depend>cv_bridge</depend>
+
+  <exec_depend>dlib</exec_depend>
+  
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
