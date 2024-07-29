@@ -28,6 +28,9 @@ frames_*
 /cfg/cpp/
 /cfg/*.py
 
+*.mp4
+yolov3.weights
+
 # Ignore generated docs
 *.dox
 *.wikidoc
