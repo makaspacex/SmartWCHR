@@ -40,15 +40,15 @@ def generate_launch_description():
             # 启动手柄服务
             Node(package="joy", executable="joy_node"),
             
-            # # 启动驱动器
-            # IncludeLaunchDescription(
-            #     PythonLaunchDescriptionSource(
-            #         os.path.join(
-            #             get_package_share_directory("driver"), "launch", "driver.py"
-            #         ),
-            #     ),
-            #     launch_arguments={"robot_name": robot_name}.items(),
-            #     condition=IfCondition(launch_driver),
-            # ),
+            # 启动驱动器
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("driver"), "launch", "driver.py"
+                    ),
+                ),
+                launch_arguments={"robot_name": robot_name}.items(),
+                condition=IfCondition(launch_driver),
+            ),
         ]
     )
