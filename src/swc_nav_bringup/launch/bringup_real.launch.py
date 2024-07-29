@@ -7,7 +7,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction, TimerAction
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command, TextSubstitution, PythonExpression
 from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition
 from pathlib import Path
 
@@ -45,25 +45,25 @@ def generate_launch_description():
     pointlio_mid360_params = os.path.join(package_share_dir, 'config', 'reality', 'pointlio_mid360_real.yaml')
     pointlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'pointlio.rviz')
     #################################### POINT_LIO parameters end #####################################
-
+    
     ################################## slam_toolbox parameters start ##################################
-    slam_toolbox_map_dir = PathJoinSubstitution([package_share_dir, 'map', world])
-    slam_toolbox_localization_file_dir = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_localization_real.yaml')
-    slam_toolbox_mapping_file_dir = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_online_async_real.yaml')
+    slam_toolbox_map_file = PathJoinSubstitution([package_share_dir, 'map', world])
+    slam_toolbox_localization_file = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_localization_real.yaml')
+    slam_toolbox_mapping_file = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_online_async_real.yaml')
     ################################### slam_toolbox parameters end ###################################
 
     ################################### navigation2 parameters start ##################################
-    nav2_map_dir = PathJoinSubstitution([package_share_dir, 'map', world]), ".yaml"
-    nav2_params_file_dir = os.path.join(package_share_dir, 'config', 'reality', 'nav2_params_real_gk01.yaml')
+    nav2_map_name = PathJoinSubstitution([package_share_dir, 'map',world]), ".yaml"
+    nav2_params_file = os.path.join(package_share_dir, 'config', 'reality', 'nav2_params_real_gk01.yaml')
     ################################### navigation2 parameters end ####################################
 
     ################################ icp_registration parameters start ################################
-    icp_pcd_dir = PathJoinSubstitution([package_share_dir, 'PCD', world]), ".pcd"
-    icp_registration_params_dir = os.path.join(package_share_dir, 'config', 'simulation', 'icp_registration_sim.yaml')
+    icp_pcd_file = PathJoinSubstitution([package_share_dir, 'PCD', world]), ".pcd"
+    icp_registration_params_file = os.path.join(package_share_dir, 'config', 'simulation', 'icp_registration_sim.yaml')
     ################################# icp_registration parameters end #################################
 
     ############################# pointcloud_downsampling parameters start ############################
-    pointcloud_downsampling_config_dir = os.path.join(package_share_dir, 'config', 'reality', 'pointcloud_downsampling_real.yaml')
+    pointcloud_downsampling_config_file = os.path.join(package_share_dir, 'config', 'reality', 'pointcloud_downsampling_real.yaml')
     ############################# pointcloud_downsampling parameters start ############################
 
     ####################### Livox_ros_driver2 parameters start #######################
@@ -261,11 +261,11 @@ def generate_launch_description():
                 condition = LaunchConfigurationEquals('localization', 'slam_toolbox'),
                 package='slam_toolbox',
                 executable='localization_slam_toolbox_node',
-                name='slam_toolbox',
+                name='localization_slam_toolbox_node',
                 parameters=[
-                    slam_toolbox_localization_file_dir,
+                    slam_toolbox_localization_file,
                     {'use_sim_time': use_sim_time,
-                    'map_file_name': slam_toolbox_map_dir,
+                    'map_file_name': slam_toolbox_map_file,
                     'map_start_pose': [0.0, 0.0, 0.0]}
                 ],
             ),
@@ -275,8 +275,8 @@ def generate_launch_description():
                 condition = LaunchConfigurationEquals('localization', 'amcl'),
                 launch_arguments = {
                     'use_sim_time': use_sim_time,
-                    'params_file': nav2_params_file_dir,
-                    'map': nav2_map_dir}.items()
+                    'params_file': nav2_params_file,
+                    'map': nav2_map_name}.items()
             ),
 
             TimerAction(
@@ -288,9 +288,9 @@ def generate_launch_description():
                         executable='icp_registration_node',
                         output='screen',
                         parameters=[
-                            icp_registration_params_dir,
+                            icp_registration_params_file,
                             {'use_sim_time': use_sim_time,
-                                'pcd_path': icp_pcd_dir}
+                                'pcd_path': icp_pcd_file}
                         ],
                         # arguments=['--ros-args', '--log-level', ['icp_registration:=', 'DEBUG']]
                     )
@@ -302,8 +302,8 @@ def generate_launch_description():
                 condition = LaunchConfigurationNotEquals('localization', 'slam_toolbox'),
                 launch_arguments={
                     'use_sim_time': use_sim_time,
-                    'map': nav2_map_dir,
-                    'params_file': nav2_params_file_dir,
+                    'map': nav2_map_name,
+                    'params_file': nav2_params_file,
                     'container_name': 'nav2_container'}.items())
         ]
     )
@@ -331,9 +331,9 @@ def generate_launch_description():
         condition = LaunchConfigurationEquals('mode', 'mapping'),
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
-        name='slam_toolbox_mapping',
+        name='async_slam_toolbox_node',
         parameters=[
-            slam_toolbox_mapping_file_dir,
+            slam_toolbox_mapping_file,
             {'use_sim_time': use_sim_time,}
         ],
     )
@@ -342,8 +342,8 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(navigation2_launch_dir, 'bringup_swc_navigation.py')),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'map': nav2_map_dir,
-            'params_file': nav2_params_file_dir,
+            'map': nav2_map_name,
+            'params_file': nav2_params_file,
             'nav_rviz': use_nav_rviz}.items()
     )
 

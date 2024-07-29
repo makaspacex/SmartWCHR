@@ -47,7 +47,7 @@ class CmdVelToSerial(Node):
         # 用来控制打印输出频率的
         self.last_print_time = time.time()
         
-        self.log_f = open('/home/jetson/Desktop/SmartWCHR/cmd_log.txt', 'a+')
+        # self.log_f = open('/home/jetson/Desktop/SmartWCHR/runtime/cmd_log.txt', 'a+')
     
     def connect_dev(self):
         if hasattr(self,"ser") and self.ser is not None:
@@ -116,14 +116,14 @@ class CmdVelToSerial(Node):
         if math.isclose(mean(self.linear_queue), 0.0) and math.isclose(mean(self.angular_queue), 0.0):
             return
         
-        # 写入一些内容到文件中
-        # time = time.time()
-        # 获取当前时间的时间戳
-        timestamp = time.time()
-        # 将时间戳转换为datetime对象
-        datetime_obj = datetime.fromtimestamp(timestamp)
-        self.log_f.write(f'{datetime_obj}\t{msg.linear}\t{msg.angular}\n')
-        self.log_f.flush()
+        # # 写入一些内容到文件中
+        # # time = time.time()
+        # # 获取当前时间的时间戳
+        # timestamp = time.time()
+        # # 将时间戳转换为datetime对象
+        # datetime_obj = datetime.fromtimestamp(timestamp)
+        # self.log_f.write(f'{datetime_obj}\t{msg.linear}\t{msg.angular}\n')
+        # self.log_f.flush()
     
         
         # 将接收到的速度转化为串口数据

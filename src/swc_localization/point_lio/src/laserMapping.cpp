@@ -273,10 +273,9 @@ template <typename T> void set_posestamp(T &out) {
   }
 }
 
-void publish_odometry(
-    const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr
-        &pubOdomAftMapped,
-    std::shared_ptr<tf2_ros::TransformBroadcaster> &tf_br) {
+// void publish_odometry( const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr &pubOdomAftMapped, std::shared_ptr<tf2_ros::TransformBroadcaster> &tf_br) 
+void publish_odometry( const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr &pubOdomAftMapped) 
+{
   odomAftMapped.header.frame_id = "odom";
   odomAftMapped.child_frame_id = "base_footprint";
   if (publish_odometry_without_downsample) {
@@ -410,7 +409,7 @@ int main(int argc, char **argv) {
   auto pubPath = nh->create_publisher<nav_msgs::msg::Path>("/path", 1000);
   auto plane_pub = nh->create_publisher<visualization_msgs::msg::Marker>(
       "/planner_normal", 1000);
-  auto tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(nh);
+  // auto tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(nh);
   //------------------------------------------------------------------------------------------------------
   signal(SIGINT, SigHandle);
   rclcpp::Rate rate(500);
@@ -717,7 +716,8 @@ int main(int argc, char **argv) {
             if (publish_odometry_without_downsample) {
               /******* Publish odometry *******/
 
-              publish_odometry(pubOdomAftMapped, tf_broadcaster);
+              // publish_odometry(pubOdomAftMapped, tf_broadcaster);
+              publish_odometry(pubOdomAftMapped);
               if (runtime_pos_log) {
                 euler_cur = SO3ToEuler(kf_output.x_.rot);
                 fout_out << setw(20)
@@ -1025,7 +1025,8 @@ int main(int argc, char **argv) {
       //                     (euler_cur(0), euler_cur(1), euler_cur(2));
       /******* Publish odometry downsample *******/
       if (!publish_odometry_without_downsample) {
-        publish_odometry(pubOdomAftMapped, tf_broadcaster);
+        // publish_odometry(pubOdomAftMapped, tf_broadcaster);
+        publish_odometry(pubOdomAftMapped);
       }
 
       /*** add the feature points to map ***/

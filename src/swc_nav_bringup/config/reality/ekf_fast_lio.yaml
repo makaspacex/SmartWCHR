@@ -6,14 +6,49 @@ ekf_filter_node:
     debug: false
     publish_tf: true
 
-    # map_frame: map
+    map_frame: map
     odom_frame: odom
     base_link_frame: base_footprint # the frame id used by the turtlebot's diff drive plugin
     world_frame: odom
+
+    predict_to_current_time: false # 关闭在没有新的传感器数据输入时的位置预测功能。
+    
     odom0: /Odometry
-    odom0_config: [true,  true,  false,        # 位置
-                    false, false, true,         # 角度
-                    false, false, false,        # 速度
-                    false, false, false,        # 角速度
-                    false, false, false]        # 加速度
+    odom0_config: [true, true, false,
+                  false, false, true,
+                  false,  false,  false,
+                  false, false, false,
+                  false, false, false]
     odom0_queue_size: 10
+    odom0_differential: false
+    odom0_relative: false
+    # odom0_timeout: 0.1  # 0.1秒后没有新的odom消息，将不考虑odom数据
+    
+    # imu0: /livox/imu
+    # imu0_config: [false, false, false,
+    #               false,  false,  false,
+    #               false, false, false,
+    #               true,  true,  true,
+    #               true, true,  true]
+    # imu0_differential: false  # If using a real robot you might want to set this to true, since usually absolute measurements from real imu's are not very accurate
+    # imu0_relative: false
+    # imu0_queue_size: 10
+    # imu0_remove_gravitational_acceleration: true
+
+    use_control: false
+
+    process_noise_covariance: [1e-3, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    1e-3,  0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    1e-3,  0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.3,   0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.3,   0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.01,  0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.5,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.5,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.1,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.3,   0.0,    0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.3,   0.0,    0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.3,   0.0,    0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.3,   0.0,    0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.3,   0.0,
+                              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.3]

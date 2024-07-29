@@ -57,7 +57,7 @@ def generate_launch_description():
         condition=UnlessCondition(use_namespace),
         package='rviz2',
         executable='rviz2',
-        arguments=['-d', rviz_config_file],
+        arguments=['-d', rviz_config_file,'--ros-args', '--log-level', 'WARN'],
         output='screen')
 
     namespaced_rviz_config_file = ReplaceString(
@@ -69,7 +69,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         namespace=namespace,
-        arguments=['-d', namespaced_rviz_config_file],
+        arguments=['--ros-args', '--log-level', 'WARN', '--display-config', namespaced_rviz_config_file],
         output='screen',
         remappings=[('/map', 'map'),
                     ('/tf', 'tf'),
