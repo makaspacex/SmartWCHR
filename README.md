@@ -16,6 +16,23 @@ to be finished
 to be finished
 
 ## Build and Run
+###  Livox SDK2
+```
+git clone https://github.com/Livox-SDK/Livox-SDK2.git
+cd ./Livox-SDK2/
+mkdir build
+cd build
+cmake .. && make -j
+sudo make install
+```
+
+```
+sudo apt install libeigen3-dev libpcl-dev 
+
+cd swc_simulation
+
+rosdepc install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+```
 
 We utilize the Make system to build, run, and debug this project. Please first clone the repository:
 ```bash
