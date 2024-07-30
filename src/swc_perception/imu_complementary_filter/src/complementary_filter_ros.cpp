@@ -43,7 +43,7 @@ namespace imu_tools {
 
 ComplementaryFilterROS::ComplementaryFilterROS()
     : Node("ComplementaryFilterROS"),
-      tf_broadcaster_(this),
+    //   tf_broadcaster_(this),
       initialized_filter_(false)
 {
     RCLCPP_INFO(this->get_logger(), "Starting ComplementaryFilterROS");
@@ -278,28 +278,28 @@ void ComplementaryFilterROS::publish(ImuMsg::ConstSharedPtr imu_msg_raw)
         }
     }
 
-    if (publish_tf_)
-    {
-        // Create and publish the ROS tf.
-        geometry_msgs::msg::TransformStamped transform;
-        transform.header.stamp = imu_msg_raw->header.stamp;
-        transform.transform.rotation.x = q1;
-        transform.transform.rotation.y = q2;
-        transform.transform.rotation.z = q3;
-        transform.transform.rotation.w = q0;
+    // if (publish_tf_)
+    // {
+    //     // Create and publish the ROS tf.
+    //     geometry_msgs::msg::TransformStamped transform;
+    //     transform.header.stamp = imu_msg_raw->header.stamp;
+    //     transform.transform.rotation.x = q1;
+    //     transform.transform.rotation.y = q2;
+    //     transform.transform.rotation.z = q3;
+    //     transform.transform.rotation.w = q0;
 
-        if (reverse_tf_)
-        {
-            transform.header.frame_id = imu_msg_raw->header.frame_id;
-            transform.child_frame_id = fixed_frame_;
-            tf_broadcaster_.sendTransform(transform);
-        } else
-        {
-            transform.child_frame_id = imu_msg_raw->header.frame_id;
-            transform.header.frame_id = fixed_frame_;
-            tf_broadcaster_.sendTransform(transform);
-        }
-    }
+    //     if (reverse_tf_)
+    //     {
+    //         transform.header.frame_id = imu_msg_raw->header.frame_id;
+    //         transform.child_frame_id = fixed_frame_;
+    //         tf_broadcaster_.sendTransform(transform);
+    //     } else
+    //     {
+    //         transform.child_frame_id = imu_msg_raw->header.frame_id;
+    //         transform.header.frame_id = fixed_frame_;
+    //         tf_broadcaster_.sendTransform(transform);
+    //     }
+    // }
 }
 
 }  // namespace imu_tools
