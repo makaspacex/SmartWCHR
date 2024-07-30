@@ -9,10 +9,14 @@ from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition
+from pathlib import Path
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
+    package_name = Path(__file__).parent.parent.stem
+    package_share_dir = get_package_share_directory(package_name)
+    
     # Get the launch directory
-    smc_nav_bringup_dir = get_package_share_directory('smc_nav_bringup')
     pb_swc_simulation_launch_dir = os.path.join(get_package_share_directory('pb_swc_simulation'), 'launch')
     navigation2_launch_dir = os.path.join(get_package_share_directory('swc_navigation'), 'launch')
 
@@ -24,44 +28,44 @@ def generate_launch_description():
 
     ################################ robot_description parameters start ###############################
     launch_params = yaml.safe_load(open(os.path.join(
-    get_package_share_directory('smc_nav_bringup'), 'config', 'simulation', 'measurement_params_sim.yaml')))
-    robot_description = Command(['xacro ', os.path.join(
-    get_package_share_directory('smc_nav_bringup'), 'urdf', 'sentry_robot_sim.xacro'),
-    ' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
+    get_package_share_directory(package_name), 'config', 'simulation', 'measurement_params_sim.yaml')))
+    urdf_model_path = os.path.join(get_package_share_directory(package_name), 'urdf', 'gkchair01_base_sim.urdf')
+    # robot_description = ParameterValue(Command(["xacro ", str(urdf_model_path)]), value_type=str)
+    robot_description = ParameterValue(Command(['xacro ', urdf_model_path,' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']]), value_type=str)
     ################################# robot_description parameters end ################################
 
     ########################## linefit_ground_segementation parameters start ##########################
-    segmentation_params = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'segmentation_sim.yaml')
+    segmentation_params = os.path.join(package_share_dir, 'config', 'simulation', 'segmentation_sim.yaml')
     ########################## linefit_ground_segementation parameters end ############################
 
     #################################### FAST_LIO parameters start ####################################
-    fastlio_mid360_params = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'fastlio_mid360_sim.yaml')
-    fastlio_rviz_cfg_dir = os.path.join(smc_nav_bringup_dir, 'rviz', 'fastlio.rviz')
+    fastlio_mid360_params = os.path.join(package_share_dir, 'config', 'simulation', 'fastlio_mid360_sim.yaml')
+    fastlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'fastlio.rviz')
     ##################################### FAST_LIO parameters end #####################################
 
     ################################### POINT_LIO parameters start ####################################
-    pointlio_mid360_params = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'pointlio_mid360_sim.yaml')
-    pointlio_rviz_cfg_dir = os.path.join(smc_nav_bringup_dir, 'rviz', 'pointlio.rviz')
+    pointlio_mid360_params = os.path.join(package_share_dir, 'config', 'simulation', 'pointlio_mid360_sim.yaml')
+    pointlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'pointlio.rviz')
     #################################### POINT_LIO parameters end #####################################
 
     ################################## slam_toolbox parameters start ##################################
-    slam_toolbox_map_dir = PathJoinSubstitution([smc_nav_bringup_dir, 'map', world])
-    slam_toolbox_localization_file_dir = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'mapper_params_localization_sim.yaml')
-    slam_toolbox_mapping_file_dir = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'mapper_params_online_async_sim.yaml')
+    slam_toolbox_map_dir = PathJoinSubstitution([package_share_dir, 'map', world])
+    slam_toolbox_localization_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'mapper_params_localization_sim.yaml')
+    slam_toolbox_mapping_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'mapper_params_online_async_sim.yaml')
     ################################### slam_toolbox parameters end ###################################
 
     ################################### navigation2 parameters start ##################################
-    nav2_map_dir = PathJoinSubstitution([smc_nav_bringup_dir, 'map', world]), ".yaml"
-    nav2_params_file_dir = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'nav2_params_sim.yaml')
+    nav2_map_dir = PathJoinSubstitution([package_share_dir, 'map', world]), ".yaml"
+    nav2_params_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'nav2_params_sim.yaml')
     ################################### navigation2 parameters end ####################################
 
     ################################ icp_registration parameters start ################################
-    icp_pcd_dir = PathJoinSubstitution([smc_nav_bringup_dir, 'PCD', world]), ".pcd"
-    icp_registration_params_dir = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'icp_registration_sim.yaml')
+    icp_pcd_dir = PathJoinSubstitution([package_share_dir, 'PCD', world]), ".pcd"
+    icp_registration_params_dir = os.path.join(package_share_dir, 'config', 'simulation', 'icp_registration_sim.yaml')
     ################################# icp_registration parameters end #################################
 
     ############################# pointcloud_downsampling parameters start ############################
-    pointcloud_downsampling_config_dir = os.path.join(smc_nav_bringup_dir, 'config', 'simulation', 'pointcloud_downsampling_sim.yaml')
+    pointcloud_downsampling_config_dir = os.path.join(package_share_dir, 'config', 'simulation', 'pointcloud_downsampling_sim.yaml')
     ############################# pointcloud_downsampling parameters start ############################
 
     # Declare launch options
@@ -99,7 +103,7 @@ def generate_launch_description():
         'lio',
         default_value='fast_lio',
         description='Choose lio alogrithm: fastlio or pointlio')
-
+    print("1"*20)
     # Specify the actions
     start_rm_simulation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pb_swc_simulation_launch_dir, 'swc_simulation.launch.py')),
@@ -109,7 +113,7 @@ def generate_launch_description():
             'robot_description': robot_description,
             'rviz': 'False'}.items()
     )
-
+    print("2"*20)
     bringup_imu_complementary_filter_node = Node(
         package='imu_complementary_filter',
         executable='complementary_filter_node',
@@ -156,29 +160,13 @@ def generate_launch_description():
     )
 
     bringup_LIO_group = GroupAction([
-        # maka edit: dont use this static_transform_publisher
-        # Node(
-        #     package="tf2_ros",
-        #     executable="static_transform_publisher",
-        #     arguments=[
-        #         # Useless arguments, provided by LIO in publish_odometry() function
-        #         # '--x', '0.0',
-        #         # '--y', '0.0',
-        #         # '--z', '0.0',
-        #         # '--roll', '0.0',
-        #         # '--pitch', '0.0',
-        #         # '--yaw', '0.0',
-        #         '--frame-id', 'odom',
-        #         '--child-frame-id', 'lidar_odom'
-        #     ],
-        # ),
-
         GroupAction(
             condition = LaunchConfigurationEquals('lio', 'fastlio'),
             actions=[
             Node(
                 package='fast_lio',
                 executable='fastlio_mapping',
+                name="fastlio_mapping",
                 parameters=[
                     fastlio_mid360_params,
                     {use_sim_time: use_sim_time}
@@ -188,7 +176,7 @@ def generate_launch_description():
             Node(
                 package='rviz2',
                 executable='rviz2',
-                arguments=['-d', fastlio_rviz_cfg_dir],
+                arguments=['-d', fastlio_rviz_cfg_dir,'--ros-args', '--log-level', 'WARN'],
                 condition = IfCondition(use_lio_rviz),
             ),
         ]),
@@ -199,7 +187,7 @@ def generate_launch_description():
             Node(
                 package='point_lio',
                 executable='pointlio_mapping',
-                name='laserMapping',
+                name='pointlio_mapping',
                 output='screen',
                 parameters=[
                     pointlio_mid360_params,
@@ -219,7 +207,7 @@ def generate_launch_description():
             Node(
                 package='rviz2',
                 executable='rviz2',
-                arguments=['-d', pointlio_rviz_cfg_dir],
+                arguments=['-d', pointlio_rviz_cfg_dir,'--ros-args', '--log-level', 'WARN'],
                 condition = IfCondition(use_lio_rviz),
             )
         ])
@@ -287,12 +275,20 @@ def generate_launch_description():
             'spin_speed': 5.0 # rad/s
         }]
     )
+    bringup_robot_localization_node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node",
+        output="screen",
+        remappings=[("/odometry/filtered", "/odom")],
+        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml'),{'use_sim_time': use_sim_time}],
+    )
 
     start_mapping = Node(
         condition = LaunchConfigurationEquals('mode', 'mapping'),
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
-        name='slam_toolbox',
+        name='async_slam_toolbox_node',
         parameters=[
             slam_toolbox_mapping_file_dir,
             {'use_sim_time': use_sim_time,}
@@ -320,13 +316,15 @@ def generate_launch_description():
     ld.add_action(declare_LIO_cmd)
 
     ld.add_action(start_rm_simulation)
-    ld.add_action(bringup_imu_complementary_filter_node)
-    ld.add_action(bringup_linefit_ground_segmentation_node)
-    ld.add_action(bringup_pointcloud_to_laserscan_node)
-    ld.add_action(bringup_LIO_group)
-    ld.add_action(start_localization_group)
-    ld.add_action(bringup_fake_vel_transform_node)
-    ld.add_action(start_mapping)
-    ld.add_action(start_navigation2)
+    # ld.add_action(bringup_imu_complementary_filter_node)
+    # ld.add_action(bringup_linefit_ground_segmentation_node)
+    # ld.add_action(bringup_pointcloud_to_laserscan_node)
+    # ld.add_action(bringup_fake_vel_transform_node)
+
+    # ld.add_action(bringup_LIO_group)
+    # ld.add_action(bringup_robot_localization_node)
+    # ld.add_action(start_localization_group)
+    # ld.add_action(start_mapping)
+    # ld.add_action(start_navigation2)
 
     return ld

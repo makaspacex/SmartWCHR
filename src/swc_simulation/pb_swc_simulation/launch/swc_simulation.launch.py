@@ -157,11 +157,12 @@ def generate_launch_description():
     ld.add_action(declare_world_cmd)
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_robot_description_cmd)
-    ld.add_action(gazebo_client_launch)
+    
     ld.add_action(start_joint_state_publisher_cmd)
     ld.add_action(start_robot_state_publisher_cmd)
-    ld.add_action(bringup_RMUL_cmd_group) # type: ignore
-    ld.add_action(bringup_RMUC_cmd_group) # type: ignore
+    # ld.add_action(gazebo_client_launch)
+    # ld.add_action(bringup_RMUL_cmd_group) # type: ignore
+    # ld.add_action(bringup_RMUC_cmd_group) # type: ignore
 
     # Uncomment this line if you want to start RViz
     ld.add_action(start_rviz_cmd)

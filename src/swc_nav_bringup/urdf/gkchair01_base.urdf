@@ -11,8 +11,9 @@
   <xacro:property name="wheel_radius" value="0.152" />
   <xacro:property name="wheel_width" value="0.07" />
   <xacro:property name="wheel_ygap" value="${wheel_width/2+0.01}" />
-  <xacro:property name="wheel_zoff" value="0.225" />
+  <xacro:property name="wheel_zoff" value="0.125" />
   <xacro:property name="wheel_xoff" value="0.325" />
+  <!-- <xacro:property name="wheel_joint_type" value="continuous" /> -->
 
   <xacro:property name="s_wheel_radius" value="0.095" />
   <xacro:property name="s_wheel_width" value="0.04" />
@@ -20,6 +21,11 @@
   <xacro:property name="s_wheel_zoff" value="${wheel_radius + wheel_zoff-s_wheel_radius}" />
   <xacro:property name="s_wheel_xoff" value="${wheel_xoff - 0.7}" /> 
   
+  <!-- base_link to livox_frame -->
+  <!-- 仅仅是为了兼容 -->
+  <xacro:arg name="xyz" default="0.12 0.0 0.175" />
+  <xacro:arg name="rpy" default="0 0 0" />
+
   <!-- Define intertial property macros  -->
   <xacro:macro name="box_inertia" params="m w h d">
     <inertial>
@@ -77,7 +83,7 @@
       </collision>
       <xacro:cylinder_inertia m="5.5" r="${wheel_radius}" h="${wheel_width}" />
     </link>
-    <joint name="${prefix}_joint" type="fixed">
+    <joint name="${prefix}_joint" type="continuous">
       <parent link="base_link" />
       <child link="${prefix}_link" />
       <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}"  rpy="0 0 0" />

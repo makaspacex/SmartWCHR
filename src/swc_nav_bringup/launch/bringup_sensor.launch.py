@@ -7,11 +7,12 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.conditions import IfCondition, LaunchConfigurationEquals
+from launch.conditions import IfCondition, LaunchConfigurationEquals, UnlessCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
 from pathlib import Path
 from launch.substitutions import  Command
+
 
 def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
@@ -54,7 +55,8 @@ def generate_launch_description():
         executable='livox_ros_driver2_node',
         name='livox_lidar_publisher',
         output='screen',
-        parameters=livox_ros2_params
+        parameters=livox_ros2_params,
+        condition=UnlessCondition(use_sim_time),
     )
 
     bringup_imu_complementary_filter_node = Node(
@@ -132,18 +134,20 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'robot_description': robot_description
         }],
-        output='screen'
+        output='screen',
+        condition=UnlessCondition(use_sim_time),
     )
-    
-    bringup_robot_localization_node = Node(
-        package="robot_localization",
-        executable="ekf_node",
-        name="ekf_filter_node",
-        output="screen",
-        remappings=[("/odometry/filtered", "/odom")],
-        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml')],
+    start_joint_state_publisher_cmd = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'robot_description': robot_description
+        }],
+        output='screen',
+        condition=UnlessCondition(use_sim_time),
     )
-     
     
     return LaunchDescription(
         [
@@ -182,6 +186,7 @@ def generate_launch_description():
                     ),
                 ),
                 launch_arguments={"robot_name": robot_name}.items(),
+                condition=UnlessCondition(use_sim_time),
             ),
             # 启动编码器
             IncludeLaunchDescription(
@@ -201,6 +206,7 @@ def generate_launch_description():
                     ),
                 ),
                 launch_arguments={"robot_name": robot_name}.items(),
+                condition=UnlessCondition(use_sim_time),
             ),
             # 启动ms200雷达
             IncludeLaunchDescription(
@@ -209,6 +215,7 @@ def generate_launch_description():
                         get_package_share_directory("lidar_ms200"), "launch", "scan.py"
                     )
                 ),
+                condition=UnlessCondition(use_sim_time),
             ),
             # 启动思岚s2雷达
             IncludeLaunchDescription(
@@ -217,16 +224,19 @@ def generate_launch_description():
                         get_package_share_directory("sllidar"), "launch", "scan.py"
                     )
                 ),
+                condition=UnlessCondition(use_sim_time),
             ),
             
             # 启动imu
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
-                )
+                ),
+                condition=UnlessCondition(use_sim_time),
             ),
             
             # 启动robot_state_publisher
+            start_joint_state_publisher_cmd,
             start_robot_state_publisher_cmd,
             
             # 启动mid360
@@ -245,6 +255,6 @@ def generate_launch_description():
             bringup_pointcloud_to_laserscan_node,
             
             # 虚拟的base_link
-            bringup_fake_vel_transform_node
+            # bringup_fake_vel_transform_node
         ]
     )

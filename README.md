@@ -27,8 +27,7 @@ sudo make install
 ```
 
 ```
-sudo apt install libeigen3-dev libpcl-dev 
-
+sudo apt install libeigen3-dev libpcl-dev  ros-humble-rmw-cyclonedds-cpp
 cd swc_simulation
 
 rosdepc install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
