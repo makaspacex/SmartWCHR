@@ -127,7 +127,7 @@ def generate_launch_description():
     
     ################################ robot_description parameters start ###############################
     launch_params = yaml.safe_load(open(os.path.join(package_share_dir, 'config', 'reality', 'measurement_params_real_gk01.yaml')))
-    robot_description = Command(['xacro ', os.path.join(package_share_dir, 'urdf', 'gkchair01_base_sim.urdf'),' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
+    robot_description = Command(['xacro ', os.path.join(package_share_dir, 'urdf', 'gkchair01_base.urdf'),' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
     ################################# robot_description parameters end ################################
     start_robot_state_publisher_cmd = Node(
         package='robot_state_publisher',

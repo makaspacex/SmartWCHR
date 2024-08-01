@@ -181,6 +181,13 @@
   <!-- ************************************************************************************************************************** -->
 
   <link name="base_footprint" />
+  
+  <joint name="drive_footprint_joint" type="fixed">
+    <parent link="base_footprint" />
+    <child link="drive_footprint" />
+    <origin xyz="${-wheel_xoff} 0 0" rpy="0 0 0" />
+  </joint>
+  <link name="drive_footprint" />
 
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint" />

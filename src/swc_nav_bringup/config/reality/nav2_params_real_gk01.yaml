@@ -6,7 +6,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "base_footprint"
+    base_frame_id: "drive_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -43,7 +43,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: False
     global_frame: map
-    robot_base_frame: base_link
+    robot_base_frame: drive_footprint
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -111,7 +111,7 @@ bt_navigator_navigate_to_pose_rclcpp_node:
 controller_server:
   ros__parameters:
     use_sim_time: False
-    controller_frequency: 20.0
+    controller_frequency: 3.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -135,24 +135,24 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 1.0
     
     FollowPath:
       plugin: teb_local_planner::TebLocalPlannerROS
       # https://github.com/rst-tu-dortmund/teb_local_planner/tree/ros2-master
       
       # 1、机器人配置参数
-      acc_lim_x: 0.2 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
+      acc_lim_x: 0.4 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
       acc_lim_theta: 0.2 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
-      max_vel_x: 0.2 # double, default:0.4 机器人的最大平移速度（米/秒）
-      max_vel_x_backwards: 0.2 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
-      max_vel_theta: 0.2 # double, default:0.3 机器人的最大角速度（弧度/秒）
+      max_vel_x: 0.4 # double, default:0.4 机器人的最大平移速度（米/秒）
+      max_vel_x_backwards: 0.4 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
+      max_vel_theta: 0.3 # double, default:0.3 机器人的最大角速度（弧度/秒）
       # 以下参数仅与车载机器人相关：
       min_turning_radius: 0.0 # double, default:0.0 # 汽车机器人的最小转弯半径（对于差速驱动机器人设置为零）。
       wheelbase: -0.7 # double, default:1.0 
       # 后轴与前轴之间的距离。对于后轮机器人，该值可能为负（仅当 cmd_angle_instead_rotvel 被设定为 true ）。
-      cmd_angle_instead_rotvel: true 
+      cmd_angle_instead_rotvel: false
       # bool, default:false 将命令速度消息中的旋转速度替换为相应的转向角 [-pi/2,pi/2]。
       # 请注意，根据应用改变偏航率的语义并不是可取的。在这里，它仅符合舞台模拟器所需的输入。 
       # ackermann_msgs中的数据类型更合适，但 move_base 不支持。本地规划器本身并不打算发送命令。
@@ -172,15 +172,15 @@ controller_server:
       is_footprint_dynamic: false # bool, default:false 如果为真，则在检查轨迹可行性之前更新足迹
 
       # 2、目标容差参数
-      xy_goal_tolerance: 0.2 # double, default:0.2
+      xy_goal_tolerance: 0.35 # double, default:0.2
       # 允许到目标位置的最终欧氏距离（以米为单位）
-      yaw_goal_tolerance: 0.2 # double, default:0.2 允许的最终方向误差（以弧度为单位）
-      free_goal_vel: false # bool, default:false 去除目标速度约束，使机器人能够以最大速度到达目标
+      yaw_goal_tolerance: 1.0 # double, default:0.2 允许的最终方向误差（以弧度为单位）
+      free_goal_vel: true # bool, default:false 去除目标速度约束，使机器人能够以最大速度到达目标
 
       # 3、轨迹配置参数
-      dt_ref: 0.3 # double, default:0.3
+      dt_ref: 0.5 # double, default:0.3
       # 轨迹所需的时间分辨率（轨迹未固定为 dt_ref 因为时间分辨率是优化的一部分，但如果违反dt_ref +-dt_hysteresis，轨迹将在迭代之间调整大小。
-      dt_hysteresis: 0.1 # double, default:0.1 根据当前时间分辨率自动调整大小的滞后，通常约为。 10%的 dt_ref 被推荐
+      dt_hysteresis: 0.05 # double, default:0.1 根据当前时间分辨率自动调整大小的滞后，通常约为。 10%的 dt_ref 被推荐
       min_samples: 3 # int, default:3 最小样本数（应始终大于 2）
       global_plan_overwrite_orientation: true # bool, default:true 覆盖全局规划器提供的局部子目标的方向（因为它们通常仅提供 2D 路径）
       global_plan_viapoint_sep: -0.1 
@@ -194,7 +194,7 @@ controller_server:
       shrink_horizon_backup: true # bool, default:true 允许规划者在自动检测到问题（例如不可行）的情况下暂时缩小范围（50%）。另请参阅参数 shrink_horizon_min_duration 。
 
       # 4、障碍物参数
-      min_obstacle_dist: 0.5 # double, default:0.5
+      min_obstacle_dist: 1.0 # double, default:0.5
       # 与障碍物的最小期望距离（以米为单位）
       include_costmap_obstacles: true # bool, default:true 指定是否应考虑本地成本图的障碍。每个被标记为障碍物的单元格都被视为点障碍物。因此，不要选择非常小的代价图分辨率，因为它会增加计算时间。在未来的版本中，这种情况将得到解决，并为动态障碍提供额外的 api。
       costmap_obstacles_behind_robot_dist: 1.0 # double, default:1.0 限制机器人后面规划时考虑的占用的本地成本图障碍（指定距离以米为单位）。
@@ -219,10 +219,10 @@ controller_server:
       weight_acc_lim_x: 1.0 # double, default:1.0 满足最大允许平移加速度的优化权重
       weight_acc_lim_theta: 1.0 # double, default:1.0 满足最大允许角加速度的优化权重
       weight_kinematics_nh: 1000.0 # double, default:1000.0 满足非完整运动学的优化权重（该参数必须很高，因为运动学方程构成等式约束，即使值为 1000 也不意味着由于“原始”成本值与其他成本相比较小而导致矩阵条件不好） 。
-      weight_kinematics_forward_drive: 1.0 # double, default:1.0 用于迫使机器人仅选择前进方向（正平移速度）的优化权重。较小的重量（例如 1.0）仍然允许向后行驶。 1000 左右的值几乎可以防止向后行驶（但不能保证）。
+      weight_kinematics_forward_drive: 1000.0 # double, default:1.0 用于迫使机器人仅选择前进方向（正平移速度）的优化权重。较小的重量（例如 1.0）仍然允许向后行驶。 1000 左右的值几乎可以防止向后行驶（但不能保证）。
       weight_kinematics_turning_radius: 1.0 # double, default:1.0 用于执行最小转弯半径的优化权重（仅适用于车载机器人）。
       weight_optimaltime: 1.0 # double, default:1.0 用于收缩相对于转换/执行时间的轨迹的优化权重
-      weight_obstacle: 50.0 # double, default:50.0 优化重量以保持与障碍物的最小距离
+      weight_obstacle: 100.0 # double, default:50.0 优化重量以保持与障碍物的最小距离
       weight_viapoint: 1.0 # double, default:1.0 用于最小化到过点（或参考路径）的距离的优化权重。 0.4版本新增
       weight_inflation: 0.1 # double, default:0.1 通货膨胀惩罚的优化权重（应该很小）。
 
@@ -249,8 +249,8 @@ controller_server:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
-      publish_frequency: 2.0
+      update_frequency: 10.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: base_link
       use_sim_time: False
@@ -259,7 +259,7 @@ local_costmap:
       height: 12
       resolution: 0.05
       footprint: "[[0.6, 0.4], [0.6, -0.4], [-0.6, -0.4], [-0.6, 0.4]]" 
-      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200","voxel2d_layer_mid360", "inflation_layer"]
+      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200", "inflation_layer"]
       voxel2d_layer_s2:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -431,7 +431,7 @@ behavior_server:
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: odom
-    robot_base_frame: base_link
+    robot_base_frame: drive_footprint
     transform_tolerance: 0.1
     use_sim_time: False
     simulate_ahead_time: 2.0
