@@ -33,6 +33,10 @@ class PersonTrackerNode(Node):
         
         self.persons_publisher = self.create_publisher(PersonsInfo, '/persons_info', 10)
 
+    
+
+
+
     def image_callback(self, msg):
         # 将 ROS 图像消息转换为 OpenCV 图像
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -62,7 +66,11 @@ class PersonTrackerNode(Node):
                 min_y = min(min_y, y)
                 max_x = max(max_x, x)
                 max_y = max(max_y, y)
-                keypoints.append(Point(x=float(x), y=float(y), z=0.0))
+                if landmark.visibility > 0.5:
+                    keypoints.append(Point(x=float(x), y=float(y), z=0.0))
+                else:
+                    keypoints.append(Point(x=float(-1), y=float(-1), z=0.0))
+
 
             detections.append([min_x, min_y, max_x, max_y])
             keypoints_list.append(keypoints)

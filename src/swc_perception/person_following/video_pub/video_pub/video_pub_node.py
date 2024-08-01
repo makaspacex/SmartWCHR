@@ -27,7 +27,7 @@ class VideoPublisherNode(Node):
             return
         
         # 创建一个定时器，每隔一段时间发布一帧图像
-        timer_period = 0.03  # 设置为每秒发布10帧（根据视频帧率调整）
+        timer_period = 0.05  # 设置为每秒发布20帧（根据视频帧率调整）
         self.timer = self.create_timer(timer_period, self.timer_callback)
     
     def timer_callback(self):
