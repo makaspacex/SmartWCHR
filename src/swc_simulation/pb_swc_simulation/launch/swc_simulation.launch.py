@@ -158,11 +158,12 @@ def generate_launch_description():
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_robot_description_cmd)
     
+    # 如果没有时间源，joint_state将无法获取有效的时间，导致TF变换未发布。
+    ld.add_action(gazebo_client_launch) 
     ld.add_action(start_joint_state_publisher_cmd)
     ld.add_action(start_robot_state_publisher_cmd)
-    # ld.add_action(gazebo_client_launch)
-    # ld.add_action(bringup_RMUL_cmd_group) # type: ignore
-    # ld.add_action(bringup_RMUC_cmd_group) # type: ignore
+    ld.add_action(bringup_RMUL_cmd_group) # type: ignore
+    ld.add_action(bringup_RMUC_cmd_group) # type: ignore
 
     # Uncomment this line if you want to start RViz
     ld.add_action(start_rviz_cmd)

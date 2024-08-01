@@ -29,6 +29,7 @@ def generate_launch_description():
     inverted = LaunchConfiguration("inverted", default="false")
     angle_compensate = LaunchConfiguration("angle_compensate", default="false")
     scan_mode = LaunchConfiguration("scan_mode", default="DenseBoost")
+    use_sim_time = LaunchConfiguration('use_sim_time',default="false")
 
     return LaunchDescription(
         [
@@ -82,12 +83,18 @@ def generate_launch_description():
                 default_value="true",
                 description="if use fileter",
             ),
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="false",
+                description="if use_sim_time",
+            ),
             Node(
                 package="sllidar",
                 executable="sllidar_node",
                 name="lidar_s2",
                 parameters=[
                     {
+                        "use_sim_time":use_sim_time,
                         "channel_type": channel_type,
                         "serial_port": serial_port,
                         "serial_baudrate": serial_baudrate,
@@ -129,6 +136,7 @@ def generate_launch_description():
                 executable="radar_filter",
                 name="laser_filter_s2",
                 parameters=[{
+                    "use_sim_time":use_sim_time,
                     "start_angle": 210,
                     "end_angle": 70,
                     }],

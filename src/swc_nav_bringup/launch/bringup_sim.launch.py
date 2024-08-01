@@ -30,8 +30,8 @@ def generate_launch_description():
     launch_params = yaml.safe_load(open(os.path.join(
     get_package_share_directory(package_name), 'config', 'simulation', 'measurement_params_sim.yaml')))
     urdf_model_path = os.path.join(get_package_share_directory(package_name), 'urdf', 'gkchair01_base_sim.urdf')
-    # robot_description = ParameterValue(Command(["xacro ", str(urdf_model_path)]), value_type=str)
-    robot_description = ParameterValue(Command(['xacro ', urdf_model_path,' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']]), value_type=str)
+    robot_description =Command(["xacro ", str(urdf_model_path)])
+    # robot_description = Command(['xacro ', urdf_model_path,' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
     ################################# robot_description parameters end ################################
 
     ########################## linefit_ground_segementation parameters start ##########################
@@ -103,9 +103,8 @@ def generate_launch_description():
         'lio',
         default_value='fast_lio',
         description='Choose lio alogrithm: fastlio or pointlio')
-    print("1"*20)
     # Specify the actions
-    start_rm_simulation = IncludeLaunchDescription(
+    start_swc_simulation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pb_swc_simulation_launch_dir, 'swc_simulation.launch.py')),
         launch_arguments={
             'use_sim_time': use_sim_time,
@@ -113,7 +112,6 @@ def generate_launch_description():
             'robot_description': robot_description,
             'rviz': 'False'}.items()
     )
-    print("2"*20)
     bringup_imu_complementary_filter_node = Node(
         package='imu_complementary_filter',
         executable='complementary_filter_node',
@@ -315,16 +313,16 @@ def generate_launch_description():
     ld.add_action(declare_localization_cmd)
     ld.add_action(declare_LIO_cmd)
 
-    ld.add_action(start_rm_simulation)
+    ld.add_action(start_swc_simulation)
     # ld.add_action(bringup_imu_complementary_filter_node)
     # ld.add_action(bringup_linefit_ground_segmentation_node)
     # ld.add_action(bringup_pointcloud_to_laserscan_node)
     # ld.add_action(bringup_fake_vel_transform_node)
-
-    # ld.add_action(bringup_LIO_group)
-    # ld.add_action(bringup_robot_localization_node)
-    # ld.add_action(start_localization_group)
-    # ld.add_action(start_mapping)
-    # ld.add_action(start_navigation2)
+    
+    ld.add_action(bringup_LIO_group)
+    ld.add_action(bringup_robot_localization_node)
+    ld.add_action(start_localization_group)
+    ld.add_action(start_mapping)
+    ld.add_action(start_navigation2)
 
     return ld

@@ -37,6 +37,7 @@ def generate_launch_description():
     user_config_path = os.path.join(cur_config_path, "reality", "MID360_config.json")
 
     livox_ros2_params = [
+        {"use_sim_time": use_sim_time},
         {"xfer_format": xfer_format},
         {"multi_topic": multi_topic},
         {"data_src": data_src},
@@ -65,6 +66,8 @@ def generate_launch_description():
         name='complementary_filter_gain_node',
         output='screen',
         parameters=[
+            {'use_sim_time': use_sim_time},
+            {'publish_tf': False},
             {'do_bias_estimation': True},
             {'do_adaptive_gain': True},
             {'use_mag': False},
@@ -80,19 +83,22 @@ def generate_launch_description():
         package='linefit_ground_segmentation_ros',
         executable='ground_segmentation_node',
         output='screen',
-        parameters=[segmentation_params]
+        parameters=[segmentation_params,{"use_sim_time":use_sim_time}]
     )
+    
     bringup_pcl_filter_node = Node(
         package='pcl_filter', 
         executable='pcl_filter_node',
-        name="pcl_filter_node"
+        name="pcl_filter_node",
+        parameters=[{"use_sim_time":use_sim_time,"lidar_topic":"/livox/lidar/pointcloud","pointcloud_output_topic":"/pcl_filter"}]
     )
-     
+    
     bringup_pointcloud_to_laserscan_node = Node(
         package='pointcloud_to_laserscan', executable='pointcloud_to_laserscan_node',
         remappings=[('cloud_in',  ['/segmentation/obstacle']),
                     ('scan',  ['/scan'])],
         parameters=[{
+            "use_sim_time":use_sim_time,
             'target_frame': 'livox_frame',
             'transform_tolerance': 0.01,
             'min_height': -1.0,
@@ -120,11 +126,8 @@ def generate_launch_description():
     )
     
     ################################ robot_description parameters start ###############################
-    launch_params = yaml.safe_load(open(os.path.join(
-    get_package_share_directory(package_name), 'config', 'reality', 'measurement_params_real_gk01.yaml')))
-    robot_description = Command(['xacro ', os.path.join(
-    get_package_share_directory(package_name), 'urdf', 'gkchair01_base.urdf'),
-    ' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
+    launch_params = yaml.safe_load(open(os.path.join(package_share_dir, 'config', 'reality', 'measurement_params_real_gk01.yaml')))
+    robot_description = Command(['xacro ', os.path.join(package_share_dir, 'urdf', 'gkchair01_base_sim.urdf'),' xyz:=', launch_params['base_link2livox_frame']['xyz'], ' rpy:=', launch_params['base_link2livox_frame']['rpy']])
     ################################# robot_description parameters end ################################
     start_robot_state_publisher_cmd = Node(
         package='robot_state_publisher',
@@ -132,6 +135,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         parameters=[{
             'use_sim_time': use_sim_time,
+            "use_gui": False,
             'robot_description': robot_description
         }],
         output='screen',
@@ -143,6 +147,7 @@ def generate_launch_description():
         name='joint_state_publisher',
         parameters=[{
             'use_sim_time': use_sim_time,
+            "use_gui": False,
             'robot_description': robot_description
         }],
         output='screen',
@@ -178,6 +183,11 @@ def generate_launch_description():
                 default_value="false",
                 description="start encoder sensor",
             ),
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="false",
+                description="if use_sim_time",
+            ),
             # 启用手柄控制
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -185,7 +195,7 @@ def generate_launch_description():
                         get_package_share_directory("joy_ctrl"), "launch", "joy_ctrl.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name}.items(),
+                launch_arguments={'use_sim_time': use_sim_time,"robot_name": robot_name}.items(),
                 condition=UnlessCondition(use_sim_time),
             ),
             # 启动编码器
@@ -195,7 +205,7 @@ def generate_launch_description():
                         get_package_share_directory("encoder"), "launch", "odom.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name}.items(),
+                launch_arguments={'use_sim_time': use_sim_time,"robot_name": robot_name}.items(),
                 condition=IfCondition(launch_encoder),
             ),
             # 启动驱动器
@@ -205,7 +215,7 @@ def generate_launch_description():
                         get_package_share_directory("driver"), "launch", "driver.py"
                     ),
                 ),
-                launch_arguments={"robot_name": robot_name}.items(),
+                launch_arguments={'use_sim_time': use_sim_time,"robot_name": robot_name}.items(),
                 condition=UnlessCondition(use_sim_time),
             ),
             # 启动ms200雷达
@@ -215,7 +225,24 @@ def generate_launch_description():
                         get_package_share_directory("lidar_ms200"), "launch", "scan.py"
                     )
                 ),
+                launch_arguments={'use_sim_time': use_sim_time}.items(),
                 condition=UnlessCondition(use_sim_time),
+            ),
+            Node(
+                package="radar_filter",
+                executable="radar_filter",
+                name="laser_filter_ms200",
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    "start_angle": 0,
+                    "end_angle": 200,
+                    }],
+                output="screen",
+                 remappings=[
+                    ("/scan_raw", "/scan_ms200_raw"),
+                    ("/scan_filter", "/scan_ms200_filter"),
+                ],
+                condition=IfCondition(use_sim_time),
             ),
             # 启动思岚s2雷达
             IncludeLaunchDescription(
@@ -226,7 +253,22 @@ def generate_launch_description():
                 ),
                 condition=UnlessCondition(use_sim_time),
             ),
-            
+            Node(
+                package="radar_filter",
+                executable="radar_filter",
+                name="laser_filter_s2",
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    "start_angle": 210,
+                    "end_angle": 70,
+                    }],
+                output="screen",
+                 remappings=[
+                    ("/scan_raw", "/scan_s2_raw"),
+                    ("/scan_filter", "/scan_s2_filter"),
+                ],
+                condition=IfCondition(use_sim_time),
+            ),
             # 启动imu
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(

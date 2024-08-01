@@ -85,8 +85,8 @@ void FakeVelTransform::publishTransform()
 {
   geometry_msgs::msg::TransformStamped t;
   t.header.stamp = get_clock()->now();
-  t.header.frame_id = "base_link";
-  t.child_frame_id = "base_link_fake";
+  t.header.frame_id = "base_footprint";
+  t.child_frame_id = "base_footprint_fake";
   tf2::Quaternion q;
   q.setRPY(0, 0, current_angle_);
   t.transform.rotation = tf2::toMsg(q);
