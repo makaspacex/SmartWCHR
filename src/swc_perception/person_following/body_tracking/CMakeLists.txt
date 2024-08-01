@@ -110,18 +110,4 @@ install(TARGETS
   ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY
-${PROJECT_SOURCE_DIR}/launch/
-DESTINATION share/${PROJECT_NAME}/launch)
-
-
-
-# install(FILES
-#   ${PROJECT_SOURCE_DIR}/README.md
-#   DESTINATION lib/${PROJECT_NAME})
-
-# install(DIRECTORY
-#   ${PROJECT_SOURCE_DIR}/images/
-#   DESTINATION lib/${PROJECT_NAME}/images)
-
 ament_package()
