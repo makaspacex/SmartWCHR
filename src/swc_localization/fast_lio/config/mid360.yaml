@@ -37,6 +37,7 @@
                             0., 0., 1.]
 
         publish:
+            tf_en: true                 # true: publish odom->base_footprint transform
             path_en: true                # true: publish Path
             effect_map_en: false         # true: publish Effects
             map_en: true                 # true: publish Map cloud

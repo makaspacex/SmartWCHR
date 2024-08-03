@@ -73,7 +73,7 @@ double kdtree_incremental_time = 0.0, kdtree_search_time = 0.0, kdtree_delete_ti
 double T1[MAXN], s_plot[MAXN], s_plot2[MAXN], s_plot3[MAXN], s_plot4[MAXN], s_plot5[MAXN], s_plot6[MAXN], s_plot7[MAXN], s_plot8[MAXN], s_plot9[MAXN], s_plot10[MAXN], s_plot11[MAXN];
 double match_time = 0, solve_time = 0, solve_const_H_time = 0;
 int    kdtree_size_st = 0, kdtree_size_end = 0, add_point_size = 0, kdtree_delete_counter = 0;
-bool   runtime_pos_log = false, pcd_save_en = false, time_sync_en = false, extrinsic_est_en = true, path_en = true;
+bool   runtime_pos_log = false, pcd_save_en = false, time_sync_en = false, extrinsic_est_en = true, tf_en = true, path_en = true;
 /**************************/
 
 float res_last[100000] = {0.0};
@@ -625,8 +625,7 @@ void set_posestamp(T & out)
     
 }
 
-// void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped, std::unique_ptr<tf2_ros::TransformBroadcaster> & tf_br)
-void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped)
+void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped, std::unique_ptr<tf2_ros::TransformBroadcaster> & tf_br)
 {
     odomAftMapped.header.frame_id = "odom";
     odomAftMapped.child_frame_id = "base_footprint";
@@ -644,20 +643,22 @@ void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPt
         odomAftMapped.pose.covariance[i*6 + 4] = P(k, 1);
         odomAftMapped.pose.covariance[i*6 + 5] = P(k, 2);
     }
+    if(tf_en){
 
-    // geometry_msgs::msg::TransformStamped trans;
-    // trans.header.frame_id = "odom";
-    // trans.header.stamp = odomAftMapped.header.stamp;
-    // trans.child_frame_id = "base_footprint";
-    // trans.transform.translation.x = odomAftMapped.pose.pose.position.x;
-    // trans.transform.translation.y = odomAftMapped.pose.pose.position.y;
-    // // trans.transform.translation.z = odomAftMapped.pose.pose.position.z;
-    // trans.transform.translation.z = 0;
-    // trans.transform.rotation.w = odomAftMapped.pose.pose.orientation.w;
-    // trans.transform.rotation.x = odomAftMapped.pose.pose.orientation.x;
-    // trans.transform.rotation.y = odomAftMapped.pose.pose.orientation.y;
-    // trans.transform.rotation.z = odomAftMapped.pose.pose.orientation.z;
-    // tf_br->sendTransform(trans);
+    geometry_msgs::msg::TransformStamped trans;
+    trans.header.frame_id = "odom";
+    trans.header.stamp = odomAftMapped.header.stamp;
+    trans.child_frame_id = "base_footprint";
+    trans.transform.translation.x = odomAftMapped.pose.pose.position.x;
+    trans.transform.translation.y = odomAftMapped.pose.pose.position.y;
+    // trans.transform.translation.z = odomAftMapped.pose.pose.position.z;
+    trans.transform.translation.z = 0;
+    trans.transform.rotation.w = odomAftMapped.pose.pose.orientation.w;
+    trans.transform.rotation.x = odomAftMapped.pose.pose.orientation.x;
+    trans.transform.rotation.y = odomAftMapped.pose.pose.orientation.y;
+    trans.transform.rotation.z = odomAftMapped.pose.pose.orientation.z;
+    tf_br->sendTransform(trans);
+    }
 }
 
 void publish_path(rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubPath)
@@ -800,6 +801,7 @@ class LaserMappingNode : public rclcpp::Node
 public:
     LaserMappingNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions()) : Node("laser_mapping", options)
     {
+        this->declare_parameter<bool>("publish.tf_en", false);
         this->declare_parameter<bool>("publish.path_en", true);
         this->declare_parameter<bool>("publish.effect_map_en", false);
         this->declare_parameter<bool>("publish.map_en", false);
@@ -836,6 +838,7 @@ public:
         this->declare_parameter<vector<double>>("mapping.extrinsic_T", vector<double>());
         this->declare_parameter<vector<double>>("mapping.extrinsic_R", vector<double>());
 
+        this->get_parameter_or<bool>("publish.tf_en", tf_en, true);
         this->get_parameter_or<bool>("publish.path_en", path_en, true);
         this->get_parameter_or<bool>("publish.effect_map_en", effect_pub_en, false);
         this->get_parameter_or<bool>("publish.map_en", map_pub_en, false);
@@ -935,7 +938,7 @@ public:
         pubLaserCloudMap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/Laser_map", 20);
         pubOdomAftMapped_ = this->create_publisher<nav_msgs::msg::Odometry>("/Odometry", 20);
         pubPath_ = this->create_publisher<nav_msgs::msg::Path>("/path", 20);
-        // tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         //------------------------------------------------------------------------------------------------------
         auto period_ms = std::chrono::milliseconds(static_cast<int64_t>(1000.0 / 100.0));
@@ -1063,8 +1066,7 @@ private:
             double t_update_end = omp_get_wtime();
 
             /******* Publish odometry *******/
-            // publish_odometry(pubOdomAftMapped_, tf_broadcaster_);
-            publish_odometry(pubOdomAftMapped_);
+            publish_odometry(pubOdomAftMapped_, tf_broadcaster_);
 
             /*** add the feature points to map kdtree ***/
             t3 = omp_get_wtime();
@@ -1142,7 +1144,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcl_pc_;
     rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr sub_pcl_livox_;
 
-    // std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::TimerBase::SharedPtr map_pub_timer_;
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr map_save_srv_;

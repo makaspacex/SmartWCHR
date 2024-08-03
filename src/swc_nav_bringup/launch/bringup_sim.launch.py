@@ -165,6 +165,7 @@ def generate_launch_description():
                 package='fast_lio',
                 executable='fastlio_mapping',
                 name="fastlio_mapping",
+                remappings=[("/Odometry", "/odom")],
                 parameters=[
                     fastlio_mid360_params,
                     {use_sim_time: use_sim_time}
@@ -320,7 +321,7 @@ def generate_launch_description():
     # ld.add_action(bringup_fake_vel_transform_node)
     
     ld.add_action(bringup_LIO_group)
-    ld.add_action(bringup_robot_localization_node)
+    # ld.add_action(bringup_robot_localization_node)
     ld.add_action(start_localization_group)
     ld.add_action(start_mapping)
     ld.add_action(start_navigation2)

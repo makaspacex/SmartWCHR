@@ -6,7 +6,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "base_footprint"
+    base_frame_id: "drive_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -43,7 +43,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: map
-    robot_base_frame: base_link
+    robot_base_frame: drive_footprint
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -108,10 +108,26 @@ bt_navigator_navigate_to_pose_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: True
+    smoothing_frequency: 10.0
+    scale_velocities: False
+    feedback: "OPEN_LOOP"
+    max_velocity: [0.40, 0.0, 0.40]
+    min_velocity: [-0.40, 0.0, -0.40]
+    max_accel: [2.5, 0.0, 3.2]
+    max_decel: [-2.5, 0.0, -3.2]
+    odom_topic: "odom"
+    odom_duration: 0.1
+    deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0
+
 controller_server:
   ros__parameters:
     use_sim_time: True
-    controller_frequency: 20.0
+    controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -135,34 +151,35 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.31415926
     
     FollowPath:
       plugin: teb_local_planner::TebLocalPlannerROS
       # https://github.com/rst-tu-dortmund/teb_local_planner/tree/ros2-master
       
       # 1、机器人配置参数
-      acc_lim_x: 0.2 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
-      acc_lim_theta: 0.2 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
-      max_vel_x: 0.2 # double, default:0.4 机器人的最大平移速度（米/秒）
-      max_vel_x_backwards: 0.2 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
-      max_vel_theta: 0.2 # double, default:0.3 机器人的最大角速度（弧度/秒）
+      acc_lim_x: 2.0 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
+      acc_lim_theta: 0.3 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
+      max_vel_x: 0.4 # double, default:0.4 机器人的最大平移速度（米/秒）
+      max_vel_y: 0.0
+      max_vel_x_backwards: 0.4 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
+      max_vel_theta: 0.3 # double, default:0.3 机器人的最大角速度（弧度/秒）
       # 以下参数仅与车载机器人相关：
       min_turning_radius: 0.0 # double, default:0.0 # 汽车机器人的最小转弯半径（对于差速驱动机器人设置为零）。
       wheelbase: -0.7 # double, default:1.0 
       # 后轴与前轴之间的距离。对于后轮机器人，该值可能为负（仅当 cmd_angle_instead_rotvel 被设定为 true ）。
-      cmd_angle_instead_rotvel: true 
+      cmd_angle_instead_rotvel: false
       # bool, default:false 将命令速度消息中的旋转速度替换为相应的转向角 [-pi/2,pi/2]。
       # 请注意，根据应用改变偏航率的语义并不是可取的。在这里，它仅符合舞台模拟器所需的输入。 
       # ackermann_msgs中的数据类型更合适，但 move_base 不支持。本地规划器本身并不打算发送命令。
 
       # 以下参数与用于优化的足迹模型相关（请参阅教程避障和机器人足迹模型）。 0.3版本新增
       footprint_model:
-        type: "point" # string, default:"point" # 指定用于优化的机器人足迹模型类型。不同的类型有“点”、“圆”、“线”、“双圆”和“多边形”。模型的类型显着影响所需的计算时间。
+        type: "line" # string, default:"point" # 指定用于优化的机器人足迹模型类型。不同的类型有“点”、“圆”、“线”、“双圆”和“多边形”。模型的类型显着影响所需的计算时间。
         radius: 0.2 # double, default:0.2 此参数仅与“圆形”类型相关。它包含圆的半径。圆的中心位于机器人的旋转轴处。
-        line_start: [-0.3, 0.0] #(double[2], default: [-0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的起始坐标。
-        line_end: [0.3, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
+        line_start: [0.0, 0.0] #(double[2], default: [-0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的起始坐标。
+        line_end: [0.7, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
         front_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了前圆的中心沿机器人的 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
         front_radius: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它包含前圆的半径。
         rear_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了后圆的中心沿着机器人的负 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
@@ -172,22 +189,22 @@ controller_server:
       is_footprint_dynamic: false # bool, default:false 如果为真，则在检查轨迹可行性之前更新足迹
 
       # 2、目标容差参数
-      xy_goal_tolerance: 0.2 # double, default:0.2
+      xy_goal_tolerance: 0.35 # double, default:0.2
       # 允许到目标位置的最终欧氏距离（以米为单位）
-      yaw_goal_tolerance: 0.2 # double, default:0.2 允许的最终方向误差（以弧度为单位）
-      free_goal_vel: false # bool, default:false 去除目标速度约束，使机器人能够以最大速度到达目标
+      yaw_goal_tolerance: 0.31415926 # double, default:0.2 允许的最终方向误差（以弧度为单位）
+      free_goal_vel: true # bool, default:false 去除目标速度约束，使机器人能够以最大速度到达目标
 
       # 3、轨迹配置参数
-      dt_ref: 0.3 # double, default:0.3
+      dt_ref: 0.5 # double, default:0.3
       # 轨迹所需的时间分辨率（轨迹未固定为 dt_ref 因为时间分辨率是优化的一部分，但如果违反dt_ref +-dt_hysteresis，轨迹将在迭代之间调整大小。
-      dt_hysteresis: 0.1 # double, default:0.1 根据当前时间分辨率自动调整大小的滞后，通常约为。 10%的 dt_ref 被推荐
+      dt_hysteresis: 0.05 # double, default:0.1 根据当前时间分辨率自动调整大小的滞后，通常约为。 10%的 dt_ref 被推荐
       min_samples: 3 # int, default:3 最小样本数（应始终大于 2）
       global_plan_overwrite_orientation: true # bool, default:true 覆盖全局规划器提供的局部子目标的方向（因为它们通常仅提供 2D 路径）
       global_plan_viapoint_sep: -0.1 
       # (double, default: -0.1 (disabled)) # 如果为正，则从全局计划中提取途经点（路径跟踪模式）。
       # 该值确定参考路径的分辨率（沿全局规划的每两个连续经由点之间的最小间隔，如果为负值：禁用）。
       # 参考参数 weight_viapoint 用于调整强度。 0.4版本新增
-      max_global_plan_lookahead_dist: 3.0 # double, default:3.0 指定考虑优化的全局计划子集的最大长度（累积欧几里德距离）。实际长度由本地成本图大小和该最大界限的逻辑与确定。设置为零或负数以停用此限制。
+      max_global_plan_lookahead_dist: -1.0 # double, default:3.0 指定考虑优化的全局计划子集的最大长度（累积欧几里德距离）。实际长度由本地成本图大小和该最大界限的逻辑与确定。设置为零或负数以停用此限制。
       force_reinit_new_goal_dist: 1.0 # double, default:1.0 如果之前的目标更新后的间隔超过指定值（以米为单位），则重新初始化轨迹（跳过热启动）
       feasibility_check_no_poses: 4 # int, default:4 指定每个采样间隔应检查预测计划上的哪个位姿的可行性。
       publish_feedback: false # bool, default:false 发布包含完整轨迹和活动障碍物列表的规划器反馈（应仅在评估或调试时启用）。请参阅上面的出版商列表。
@@ -201,8 +218,8 @@ controller_server:
       obstacle_poses_affected: 30 
       # int, default:30 每个障碍物位置都附加到轨迹上最近的姿势以保持距离。还可以考虑其他邻居。
       # 请注意，该参数可能会在未来版本中删除，因为障碍物关联策略已在kinetic+中进行了修改。参见参数说明 legacy_obstacle_association 。
-      # ~<name>/inflation_dist (double, default: pre kinetic: 0.0, kinetic+: 0.6)
-      # 障碍物周围具有非零惩罚成本的缓冲区（应大于 min_obstacle_dist 以便生效）。另请参阅重量 weight_inflation 。
+      inflation_dist: 0.51 # (double, default: pre kinetic: 0.0, kinetic+: 0.6)
+      # 障碍物周围具有非零惩罚成本的缓冲区（应大于 min_obstacle_dist 以便生效）。另请参阅权重 weight_inflation 。
 
       # 仅当需要costmap_converter插件时，以下参数才相关（请参阅教程）：
       costmap_converter_plugin: "" # string, default:""
@@ -219,15 +236,16 @@ controller_server:
       weight_acc_lim_x: 1.0 # double, default:1.0 满足最大允许平移加速度的优化权重
       weight_acc_lim_theta: 1.0 # double, default:1.0 满足最大允许角加速度的优化权重
       weight_kinematics_nh: 1000.0 # double, default:1000.0 满足非完整运动学的优化权重（该参数必须很高，因为运动学方程构成等式约束，即使值为 1000 也不意味着由于“原始”成本值与其他成本相比较小而导致矩阵条件不好） 。
-      weight_kinematics_forward_drive: 1.0 # double, default:1.0 用于迫使机器人仅选择前进方向（正平移速度）的优化权重。较小的重量（例如 1.0）仍然允许向后行驶。 1000 左右的值几乎可以防止向后行驶（但不能保证）。
+      weight_kinematics_forward_drive: 1000.0 # double, default:1.0 用于迫使机器人仅选择前进方向（正平移速度）的优化权重。较小的权重（例如 1.0）仍然允许向后行驶。 1000 左右的值几乎可以防止向后行驶（但不能保证）。
       weight_kinematics_turning_radius: 1.0 # double, default:1.0 用于执行最小转弯半径的优化权重（仅适用于车载机器人）。
       weight_optimaltime: 1.0 # double, default:1.0 用于收缩相对于转换/执行时间的轨迹的优化权重
-      weight_obstacle: 50.0 # double, default:50.0 优化重量以保持与障碍物的最小距离
+      weight_obstacle: 50.0 # double, default:50.0 优化权重以保持与障碍物的最小距离
       weight_viapoint: 1.0 # double, default:1.0 用于最小化到过点（或参考路径）的距离的优化权重。 0.4版本新增
       weight_inflation: 0.1 # double, default:0.1 通货膨胀惩罚的优化权重（应该很小）。
 
       # 6、Parallel Planning in distinctive Topologies 独特拓扑中的并行规划
-      enable_homotopy_class_planning: true # bool, default:true # 在独特的拓扑中激活并行规划（需要更多的 CPU 资源，因为同时优化多个轨迹）
+      #    Homotopy Class Planner
+      enable_homotopy_class_planning: false # bool, default:true # 在独特的拓扑中激活并行规划（需要更多的 CPU 资源，因为同时优化多个轨迹）
       enable_multithreading: true # bool, default:true 激活多线程以便在不同线程中规划每个轨迹
       max_number_classes: 4 # int, default:4 指定考虑的独特轨迹的最大数量（限制计算量）
       selection_cost_hysteresis: 1.0 # double, default:1.0 指定新候选者必须具有多少轨迹成本才能被选择（如果 new_cost < old_cost*factor 则选择）。
@@ -246,21 +264,50 @@ controller_server:
       odom_topic: "odom" # string, default:"odom" 里程计消息的主题名称，由机器人驱动程序或模拟器提供。
       map_frame: "map" # string, default:"odom" 全局规划框架（如果是静态地图，该参数通常必须更改为“/map”。
 
+      # 参数来自于源码文件，官网中没有这些参数的介绍
+      # teb_autosize: 1.0
+      # max_samples: 500
+      # allow_init_with_backwards_motion: False
+      # global_plan_prune_distance: 1.0
+      # exact_arc_length: False
+      # dynamic_obstacle_inflation_dist: 0.6
+      # include_dynamic_obstacles: True
+      # optimization_activate: True
+      # optimization_verbose: False
+      # obstacle_cost_exponent: 4.0
+      # weight_shortest_path: 0.0
+      # weight_dynamic_obstacle: 10.0
+      # weight_dynamic_obstacle_inflation: 0.2
+      # weight_adapt_factor: 2.0
+      # selection_prefer_initial_plan: 1.0
+      # roadmap_graph_area_length_scale: 1.0
+      # switching_blocking_period: 0.0
+      # delete_detours_backwards: True
+      # max_ratio_detours_duration_best_duration: 3.0
+      # visualize_with_time_as_z_axis_scale: 0.0
+      # shrink_horizon_min_duration: 10.0
+      # oscillation_recovery: True
+      # oscillation_v_eps: 0.1
+      # oscillation_omega_eps: 0.1
+      # oscillation_recovery_min_duration: 10.0
+      # oscillation_filter_duration: 10.0
+
 
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
-      publish_frequency: 2.0
-      global_frame: odom
-      robot_base_frame: base_link
+      update_frequency: 20.0
+      publish_frequency: 10.0
+      global_frame: map
+      robot_base_frame: drive_footprint
       use_sim_time: True
       rolling_window: true
-      width: 8
-      height: 12
-      resolution: 0.05
-      footprint: "[[0.6, 0.32], [0.6, -0.32], [-0.6, -0.32], [-0.6, 0.32]]" 
-      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200","voxel2d_layer_mid360", "inflation_layer"]
+      width: 10
+      height: 10
+      resolution: 0.02
+      # robot_radius: 0.8
+      footprint: "[[1.0, 0.3], [1.0, -0.3], [-0.2, -0.3], [-0.2, 0.3]]" 
+      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200", "inflation_layer"]
       voxel2d_layer_s2:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -308,7 +355,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.35
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -320,9 +367,11 @@ global_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: map
-      robot_base_frame: base_link
+      robot_base_frame: drive_footprint
       use_sim_time: True
-      footprint: "[[0.6, 0.32], [0.6, -0.32], [-0.6, -0.32], [-0.6, 0.32]]" 
+      # robot_radius: 0.8
+      # footprint: "[[0.6, 0.4], [0.6, -0.4], [-0.6, -0.4], [-0.6, 0.4]]" 
+      footprint: "[[1.0, 0.3], [1.0, -0.3], [-0.2, -0.3], [-0.2, 0.3]]" 
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "stvl_layer", "inflation_layer"]
@@ -376,7 +425,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        inflation_radius: 0.35
       always_send_full_costmap: True
 
 map_server:
@@ -421,6 +470,7 @@ behavior_server:
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
+    # behavior_plugins: [ "backup", "drive_on_heading", "assisted_teleop"]
     spin:
       plugin: "nav2_behaviors/Spin"
     backup:
@@ -431,13 +481,13 @@ behavior_server:
       plugin: "nav2_behaviors/Wait"
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
-    global_frame: odom
-    robot_base_frame: base_link
-    transform_tolerance: 0.1
-    use_sim_time: true
-    simulate_ahead_time: 2.0
-    max_rotational_vel: 1.0
-    min_rotational_vel: 0.4
+    global_frame: map
+    robot_base_frame: drive_footprint
+    transform_tolerance: 0.2
+    use_sim_time: True
+    simulate_ahead_time: 4.0
+    max_rotational_vel: 0.3
+    min_rotational_vel: -0.3
     rotational_acc_lim: 3.2
 
 robot_state_publisher:
@@ -454,18 +504,3 @@ waypoint_follower:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
       enabled: True
       waypoint_pause_duration: 200
-
-velocity_smoother:
-  ros__parameters:
-    use_sim_time: True
-    smoothing_frequency: 20.0
-    scale_velocities: False
-    feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 0.26]
-    min_velocity: [-0.26, 0.0, -0.26]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
-    odom_topic: "odom"
-    odom_duration: 0.1
-    deadband_velocity: [0.0, 0.0, 0.0]
-    velocity_timeout: 1.0

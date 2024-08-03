@@ -23,6 +23,7 @@ ground_segmentation:
     latch: false                # latch output topics or not
     visualize: false            # visualize segmentation result - USE ONLY FOR DEBUGGING
 
-    input_topic: "/livox/lidar/pointcloud"
+    # input_topic: "/livox/lidar/pointcloud"
+    input_topic: "/pcl_filter"
     obstacle_output_topic: "segmentation/obstacle"
     ground_output_topic: "segmentation/ground"

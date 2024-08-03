@@ -164,7 +164,11 @@
   <gazebo>
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
       <ros>
-        <remapping>/tf:=tf</remapping>
+        <!-- Add a namespace -->
+        <namespace>/</namespace>
+        <!-- Remap the default topic -->
+        <!-- <remapping>cmd_vel:=cmd_vel_chassis</remapping> -->
+        <remapping>odom:=odom</remapping>
       </ros>
 
       <update_rate>30</update_rate>
@@ -181,8 +185,6 @@
       <max_wheel_torque>300</max_wheel_torque>
       <max_wheel_acceleration>0.4</max_wheel_acceleration>
 
-      <!-- Receive velocity commands on this ROS topic -->
-      <command_topic>cmd_vel</command_topic>
       <!-- <command_topic>cmd_vel_chassis</command_topic> -->
       <publish_odom>false</publish_odom>
       <publish_odom_tf>false</publish_odom_tf>
