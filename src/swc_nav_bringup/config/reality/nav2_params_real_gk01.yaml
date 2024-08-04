@@ -296,8 +296,8 @@ controller_server:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 20.0
-      publish_frequency: 10.0
+      update_frequency: 10.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: drive_footprint
       use_sim_time: True

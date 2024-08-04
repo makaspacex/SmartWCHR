@@ -8,7 +8,7 @@ from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, Grou
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
-from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition
+from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition, UnlessCondition
 from pathlib import Path
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -40,7 +40,10 @@ def generate_launch_description():
 
     #################################### FAST_LIO parameters start ####################################
     fastlio_mid360_params = os.path.join(package_share_dir, 'config', 'simulation', 'fastlio_mid360_sim.yaml')
+    fastlio_mid360_params_dict = yaml.safe_load(open(fastlio_mid360_params))
     fastlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'fastlio.rviz')
+    fastlio_pub_tf_en = fastlio_mid360_params_dict['/**']['ros__parameters']['publish']['tf_en']
+    lio_remappings = [("/Odometry", "/odom")]  if fastlio_pub_tf_en else None
     ##################################### FAST_LIO parameters end #####################################
 
     ################################### POINT_LIO parameters start ####################################
@@ -165,7 +168,7 @@ def generate_launch_description():
                 package='fast_lio',
                 executable='fastlio_mapping',
                 name="fastlio_mapping",
-                remappings=[("/Odometry", "/odom")],
+                remappings=lio_remappings,
                 parameters=[
                     fastlio_mid360_params,
                     {use_sim_time: use_sim_time}
@@ -219,7 +222,7 @@ def generate_launch_description():
                 condition = LaunchConfigurationEquals('localization', 'slam_toolbox'),
                 package='slam_toolbox',
                 executable='localization_slam_toolbox_node',
-                name='slam_toolbox',
+                name='localization_slam_toolbox_node',
                 parameters=[
                     slam_toolbox_localization_file_dir,
                     {'use_sim_time': use_sim_time,
@@ -233,7 +236,8 @@ def generate_launch_description():
                 condition = LaunchConfigurationEquals('localization', 'amcl'),
                 launch_arguments = {
                     'use_sim_time': use_sim_time,
-                    'params_file': nav2_params_file_dir}.items()
+                    'params_file': nav2_params_file_dir,
+                    'map': nav2_map_dir}.items()
             ),
 
             TimerAction(

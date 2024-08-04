@@ -10,8 +10,50 @@ import time
 from statistics import mean
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
 from rclpy.qos import qos_profile_sensor_data
+import re
+from nav_msgs.msg import Odometry
+import tf_transformations
+from geometry_msgs.msg import Quaternion, TransformStamped
 
 from datetime import datetime
+from dataclasses import dataclass
+
+@dataclass
+class SWCStatus:
+    linear_x:float         # 线速度          
+    angle_z:float          # 角速度  
+    pose_x:float           # 坐标x 
+    pose_y:float           # 坐标y 
+    ryw_z:float            # 偏航角z  
+    battery_remain:float   # 电池剩余
+    def __init__(self):
+        super().__init__()
+
+def get_sign(hex_str:str):
+    sum = 0
+    hex_str = hex_str.replace(" ","")
+    for _ele in re.findall(r'[A-F\d]{2}', hex_str):
+        sum += int(_ele,16)
+    return str(hex(sum)).upper()[-2:]
+
+def verify_data(frame_str:str):
+    ss = get_sign(frame_str[:-2])
+    if ss == frame_str[-2:]:
+        return True
+    return False
+
+def decode_msg(valid_msg:str) -> SWCStatus:
+    ret = SWCStatus()
+    eles = re.findall(r'[A-F\d]{2}', valid_msg)
+    
+    ret.linear_x = int.from_bytes(bytes.fromhex("".join(eles[2:4])),byteorder='big', signed=True)/1000          # 线速度
+    ret.angle_z = int.from_bytes(bytes.fromhex("".join(eles[4:6])),byteorder='big', signed=True)/1.0            # 角速度
+    ret.pose_x = int.from_bytes(bytes.fromhex("".join(eles[6:10])),byteorder='big', signed=True)/1000           # 坐标x
+    ret.pose_y = int.from_bytes(bytes.fromhex("".join(eles[10:14])),byteorder='big', signed=True)/1000          # 坐标y
+    ret.ryw_z = int.from_bytes(bytes.fromhex("".join(eles[14:16])),byteorder='big', signed=False)/1.0           # 偏航角z
+    ret.battery_remain = int.from_bytes(bytes.fromhex("".join(eles[16:18])),byteorder='big', signed=True)/100   # 电池剩余
+    return ret
+
 
 class CmdVelToSerial(Node):
     def __init__(self, portname="/dev/driver", baudrate = 9600):
@@ -32,8 +74,10 @@ class CmdVelToSerial(Node):
             qos_profile_sensor_data
         )
         # self.subscription  # prevent unused variable warning
-        # self.ser_write_timer_ = self.create_timer(0.1, self.timerCallback)
-
+        self.twist_pub_callback_timer = self.create_timer(0.1, self.twist_pub_callback)
+        self.all_buffer = ""
+        self.odom_publisher = self.create_publisher(Odometry, '/odom_gk', qos_profile_sensor_data)
+        
         self.last_write_time = math.inf
         self.zero_data = "AF 01 00 00 00 00 01 00 00 00 00"
 
@@ -48,7 +92,57 @@ class CmdVelToSerial(Node):
         self.last_print_time = time.time()
         
         self.log_f = open('/home/jetson/Desktop/SmartWCHR/runtime/cmd_log.txt', 'w+')
-    
+        
+    def twist_pub_callback(self):
+        self.connect_dev()
+        try:
+            _raw_data = self.ser.read_all()
+            self.all_buffer += _raw_data.hex().upper()
+        except Exception as e:
+            print(e)
+        
+        msgs = re.findall(r"(BF01[A-F\d]{52})",self.all_buffer)[::-1]
+        # 无消息，不发布
+        if len(msgs)== 0:
+            return
+
+        valid_msg = None
+        for msg in msgs:
+            if verify_data(msg):
+                valid_msg = msg
+                break
+        # 没有有效消息，不发布
+        if not valid_msg:
+            return
+        
+        swc_state = decode_msg(valid_msg)
+        
+        # 发布里程计数据
+        odom_msg = Odometry()
+        odom_msg.header.stamp = self.get_clock().now().to_msg()
+        odom_msg.header.frame_id = 'odom'
+        odom_msg.child_frame_id = 'base_footprint'
+        odom_msg.pose.pose.position.x = swc_state.pose_x
+        odom_msg.pose.pose.position.y = swc_state.pose_y
+        odom_msg.twist.twist.linear.x = swc_state.linear_x
+        odom_msg.twist.twist.linear.y = 0.0
+        odom_msg.twist.twist.angular.z = swc_state.angle_z
+        
+        # 将欧拉角转换为四元数（roll, pitch, yaw）
+        quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, swc_state.ryw_z)
+        quat_msg = Quaternion()
+        quat_msg.x = quaternion[0]
+        quat_msg.y = quaternion[1]
+        quat_msg.z = quaternion[2]
+        quat_msg.w = quaternion[3]
+        odom_msg.pose.pose.orientation = quat_msg
+        
+        self.odom_publisher.publish(odom_msg)
+        
+        # 超过500条就保留最后10条
+        if len(self.all_buffer) > 56*500:
+            self.all_buffer = self.all_buffer[-560:]
+        
     def connect_dev(self):
         if hasattr(self,"ser") and self.ser is not None:
             return 
@@ -61,13 +155,6 @@ class CmdVelToSerial(Node):
                 time.sleep(1)
     
     def get_ser_data(self, v_linear, v_angular):
-        def get_sign(hex_str):
-            if len(hex_str.split(" ")) != 11:
-                raise Exception("error data")
-            sum = 0
-            for _ele in hex_str.split(" "):
-                sum += int(_ele,16)
-            return str(hex(sum))[-2:]
 
         base_data = self.zero_data        
         # 乘以1000并转换为16进制

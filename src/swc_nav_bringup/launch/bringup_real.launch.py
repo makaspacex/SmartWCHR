@@ -7,15 +7,17 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction, TimerAction
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command, TextSubstitution, PythonExpression
-from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command, PythonExpression
+from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition, UnlessCondition
 from pathlib import Path
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
-
+    
     # Get the launch directory
+    pb_swc_simulation_launch_dir = os.path.join(get_package_share_directory('pb_swc_simulation'), 'launch')
     navigation2_launch_dir = os.path.join(get_package_share_directory('swc_navigation'), 'launch')
 
     # Create the launch configuration variables
@@ -38,12 +40,16 @@ def generate_launch_description():
 
     #################################### FAST_LIO parameters start ####################################
     fastlio_mid360_params = os.path.join(package_share_dir, 'config', 'reality', 'fastlio_mid360_real.yaml')
+    fastlio_mid360_params_dict = yaml.safe_load(open(fastlio_mid360_params))
     fastlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'fastlio.rviz')
+    fastlio_pub_tf_en = fastlio_mid360_params_dict['/**']['ros__parameters']['publish']['tf_en']
+    lio_remappings = [("/Odometry", "/odom")]  if fastlio_pub_tf_en else None
     ##################################### FAST_LIO parameters end #####################################
-
+    
     ################################### POINT_LIO parameters start ####################################
     pointlio_mid360_params = os.path.join(package_share_dir, 'config', 'reality', 'pointlio_mid360_real.yaml')
     pointlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'pointlio.rviz')
+    
     #################################### POINT_LIO parameters end #####################################
     
     ################################## slam_toolbox parameters start ##################################
@@ -207,8 +213,8 @@ def generate_launch_description():
             Node(
                 package='fast_lio',
                 executable='fastlio_mapping',
-                name='laserMapping_fast_lio',
-                remappings=[("/Odometry", "/odom")],
+                name='fastlio_mapping',
+                remappings=lio_remappings,
                 parameters=[
                     fastlio_mid360_params,
                     {use_sim_time: use_sim_time}
@@ -218,7 +224,7 @@ def generate_launch_description():
             Node(
                 package='rviz2',
                 executable='rviz2',
-                arguments=['-d', fastlio_rviz_cfg_dir],
+                arguments=['-d', fastlio_rviz_cfg_dir,'--ros-args', '--log-level', 'WARN'],
                 condition = IfCondition(use_lio_rviz),
             ),
         ]),
@@ -229,7 +235,7 @@ def generate_launch_description():
             Node(
                 package='point_lio',
                 executable='pointlio_mapping',
-                name='laserMapping_point_lio',
+                name='pointlio_mapping',
                 output='screen',
                 parameters=[
                     pointlio_mid360_params,
@@ -249,7 +255,7 @@ def generate_launch_description():
             Node(
                 package='rviz2',
                 executable='rviz2',
-                arguments=['-d', pointlio_rviz_cfg_dir],
+                arguments=['-d', pointlio_rviz_cfg_dir,'--ros-args', '--log-level', 'WARN'],
                 condition = IfCondition(use_lio_rviz),
             )
         ])
@@ -326,6 +332,7 @@ def generate_launch_description():
         output="screen",
         remappings=[("/odometry/filtered", "/odom")],
         parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml')],
+        condition = IfCondition(PythonExpression(['not ',f"{fastlio_pub_tf_en}"]))
     )
 
     start_mapping = Node(
@@ -370,7 +377,7 @@ def generate_launch_description():
     # ld.add_action(bringup_fake_vel_transform_node)
     
     ld.add_action(bringup_LIO_group)
-    # ld.add_action(bringup_robot_localization_node) # 使用lio原生的tf定位的话，就可以关掉
+    ld.add_action(bringup_robot_localization_node) # 使用lio原生的tf定位的话，就可以关掉
     ld.add_action(start_localization_group)
     ld.add_action(start_mapping)
     ld.add_action(start_navigation2)

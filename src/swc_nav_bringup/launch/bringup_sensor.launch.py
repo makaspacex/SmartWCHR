@@ -269,13 +269,13 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_sim_time),
             ),
-            # 启动imu
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
-                ),
-                condition=UnlessCondition(use_sim_time),
-            ),
+            # # 启动imu
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource(
+            #         os.path.join(get_package_share_directory("imu"), "launch", "imu.py")
+            #     ),
+            #     condition=UnlessCondition(use_sim_time),
+            # ),
             
             # 启动robot_state_publisher
             start_joint_state_publisher_cmd,
