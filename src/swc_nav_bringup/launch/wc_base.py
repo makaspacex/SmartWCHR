@@ -14,7 +14,7 @@ def generate_launch_description():
     package_name = Path(__file__).parent.parent.stem
     package_share_dir = get_package_share_directory(package_name)
 
-    urdf_model_path = os.path.join(package_share_dir, "urdf/gkchair01_base_sim.urdf")
+    urdf_model_path = os.path.join(package_share_dir, "urdf/gkchair01_base.urdf")
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     robot_description = ParameterValue(Command(["xacro ", str(urdf_model_path)]), value_type=str)

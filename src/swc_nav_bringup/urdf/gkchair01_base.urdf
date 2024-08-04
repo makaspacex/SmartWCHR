@@ -3,23 +3,22 @@
   
   <!-- ****************** ROBOT CONSTANTS *******************************  -->
   <!-- Define the size of the robot's main chassis in meters -->
-  <xacro:property name="base_width" value="0.5" />
-  <xacro:property name="base_length" value="0.8" />
-  <xacro:property name="base_height" value="0.7" />
+  <xacro:property name="base_width" value="0.45" />
+  <xacro:property name="base_length" value="0.6" />
+  <xacro:property name="base_height" value="0.4" />
+  <xacro:property name="base_link_high" value="0.1" />
 
   <!-- Define the shape of the robot's two back wheels in meters -->
   <xacro:property name="wheel_radius" value="0.170" />
   <xacro:property name="wheel_width" value="0.07" />
-  <xacro:property name="wheel_ygap" value="${wheel_width/2+0.01}" />
-  <xacro:property name="wheel_zoff" value="0.125" />
-  <xacro:property name="wheel_xoff" value="0.4" />
+  <xacro:property name="wheel_ygap" value="0.6" />
+  <xacro:property name="wheel_xoff" value="0.3" />
   <!-- <xacro:property name="wheel_joint_type" value="continuous" /> -->
 
-  <xacro:property name="s_wheel_radius" value="0.095" />
+  <xacro:property name="s_wheel_radius" value="0.1" />
   <xacro:property name="s_wheel_width" value="0.04" />
-  <xacro:property name="s_wheel_ygap" value="${-0.002}" />
-  <xacro:property name="s_wheel_zoff" value="${wheel_radius + wheel_zoff-s_wheel_radius}" />
-  <xacro:property name="s_wheel_xoff" value="${wheel_xoff - 0.7}" /> 
+  <xacro:property name="s_wheel_ygap" value="0.5" />
+  <xacro:property name="s_wheel_xoff" value="${wheel_xoff - 0.6}" /> 
   
   <!-- base_link to livox_frame -->
   <!-- 仅仅是为了兼容 -->
@@ -59,18 +58,17 @@
     </material>
   </xacro:macro>
   
-  <xacro:property name="wheel_scale" value="${wheel_radius/0.275}" />
-  <xacro:property name="s_wheel_scale" value="${s_wheel_radius*2/0.1905}" />
+  <xacro:property name="wheel_scale" value="${wheel_radius/0.1525}" />
+  <xacro:property name="s_wheel_scale" value="${s_wheel_radius/0.0975}" />
 
   <!-- *********************** DRIVE WHEELS ******************************  -->
 
   <xacro:macro name="wheel" params="prefix x_reflect y_reflect">
     <link name="${prefix}_link">
-      <xacro:property name="wheel_scale" value="${wheel_radius/0.275}" />
       <visual>
-          <origin xyz="0 0 0" rpy="0 0 ${y_reflect * pi/2}" />
+          <origin xyz="0 0 0" rpy="${- y_reflect * pi/2} 0  0" />
           <geometry>
-            <mesh filename="package://swc_nav_bringup/meshes/wheel2.STL"
+            <mesh filename="package://swc_nav_bringup/meshes/wheel3.STL"
               scale="${wheel_scale} ${wheel_scale} ${wheel_scale}" />
           </geometry>
           <material name="light_black" />
@@ -86,7 +84,7 @@
     <joint name="${prefix}_joint" type="continuous">
       <parent link="base_link" />
       <child link="${prefix}_link" />
-      <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_zoff}"  rpy="0 0 0" />
+      <origin xyz="${x_reflect*wheel_xoff} ${y_reflect*(wheel_ygap/2)} ${-base_link_high + wheel_radius}"  rpy="0 0 0" />
       <axis xyz="0 1 0" />
       <!-- <limit upper="3.1415" lower="-3.1415" effort="30" velocity="5.0"/> -->
     </joint>
@@ -100,9 +98,9 @@
   <xacro:macro name="small_wheel" params="prefix x_reflect y_reflect">
     <link name="${prefix}_link">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 ${y_reflect * pi/2}" />
+        <origin xyz="0 0 0" rpy="${y_reflect * pi/2} 0 0 " />
         <geometry>
-          <mesh filename="package://swc_nav_bringup/meshes/small_wheel.STL" scale="${s_wheel_scale} ${s_wheel_scale} ${s_wheel_scale}" />
+          <mesh filename="package://swc_nav_bringup/meshes/small_wheel2.STL" scale="${s_wheel_scale} ${s_wheel_scale} ${s_wheel_scale}" />
         </geometry>
         <material name="light_black" />
       </visual>
@@ -118,7 +116,7 @@
     <joint name="${prefix}_joint" type="fixed">
       <parent link="base_link" />
       <child link="${prefix}_link" />
-      <origin xyz="${x_reflect*s_wheel_xoff} ${y_reflect*(base_width/2+s_wheel_ygap)} ${-s_wheel_zoff}"
+      <origin xyz="${x_reflect*s_wheel_xoff} ${y_reflect*(s_wheel_ygap/2)} ${-base_link_high + s_wheel_radius}"
         rpy="0 0 0" />
       <axis xyz="0 1 0" />
       <limit upper="3.1415" lower="-3.1415" effort="30" velocity="5.0"/>
@@ -182,23 +180,16 @@
 
   <link name="base_footprint" />
   
-  <joint name="drive_footprint_joint" type="fixed">
-    <parent link="base_footprint" />
-    <child link="drive_footprint" />
-    <origin xyz="${-wheel_xoff} 0 0" rpy="0 0 0" />
-  </joint>
-  <link name="drive_footprint" />
-
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint" />
     <child link="base_link" />
-    <origin xyz="0 0 ${(wheel_radius+wheel_zoff)}" rpy="0 0 0" />
+    <origin xyz="0 0 ${base_link_high}" rpy="0 0 0" />
   </joint>
 
   <!-- base link -->
   <link name="base_link">
     <visual>
-      <origin xyz="0  0 0.2" rpy="0 0 0" />
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0" />
       <geometry>
         <!-- <mesh filename="package://swc_nav_bringup/meshes/robot_base.STL" scale="1.0 1.0 1.0"/> -->
         <box size="${base_length} ${base_width}   ${base_height}"/>
@@ -214,6 +205,13 @@
     <xacro:box_inertia m="20.0" w="${base_width}" d="${base_length}" h="${base_height}"/>
   </link>
 
+  <joint name="drive_footprint_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="drive_footprint" />
+    <origin xyz="${-wheel_xoff} 0 ${-base_link_high}" rpy="0 0 0" />
+  </joint>
+  <link name="drive_footprint" />
+
   <xacro:wheel prefix="left_wheel" x_reflect="-1" y_reflect="1" />
   <xacro:wheel prefix="right_wheel" x_reflect="-1" y_reflect="-1" />
 
@@ -224,7 +222,7 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_link" />
-    <origin xyz="0.44 ${-base_width/2} ${-(wheel_radius+wheel_zoff)+s_wheel_radius*2 + 0.02}" />
+    <origin xyz="${0.65-wheel_xoff} ${-s_wheel_ygap/2} ${-base_link_high+0.31}" />
   </joint>
 
   <!-- laser link -->
@@ -260,7 +258,7 @@
   <joint name="laser_ms200_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_ms200_link" />
-    <origin xyz="-0.285 0.305 0.125" />
+    <origin xyz="${-wheel_xoff+0.1} ${wheel_ygap/2} ${-base_link_high + 0.53}" />
   </joint>
 
   <link name="laser_ms200_link">
@@ -277,7 +275,7 @@
   <joint name="livox_frame_joint" type="fixed">
     <parent link="base_link" />
     <child link="livox_frame" />
-    <origin xyz="0.44 ${base_width/2} ${-(wheel_radius+wheel_zoff)+s_wheel_radius*2 + 0.02}" />
+    <origin xyz="${0.65-wheel_xoff} ${s_wheel_ygap/2} ${-base_link_high+ 0.31}" />
   </joint>
 
   <link name="livox_frame">
