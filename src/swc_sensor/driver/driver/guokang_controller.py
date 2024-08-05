@@ -74,7 +74,7 @@ class CmdVelToSerial(Node):
             qos_profile_sensor_data
         )
         # self.subscription  # prevent unused variable warning
-        self.twist_pub_callback_timer = self.create_timer(0.1, self.twist_pub_callback)
+        # self.twist_pub_callback_timer = self.create_timer(0.1, self.twist_pub_callback)
         self.all_buffer = ""
         self.odom_publisher = self.create_publisher(Odometry, '/odom_gk', qos_profile_sensor_data)
         

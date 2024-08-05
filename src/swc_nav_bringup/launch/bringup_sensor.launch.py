@@ -234,8 +234,8 @@ def generate_launch_description():
                 name="laser_filter_ms200",
                 parameters=[{
                     'use_sim_time': use_sim_time,
-                    "start_angle": 0,
-                    "end_angle": 200,
+                    "start_angle": 110,
+                    "end_angle": 250,
                     }],
                 output="screen",
                  remappings=[
@@ -259,8 +259,8 @@ def generate_launch_description():
                 name="laser_filter_s2",
                 parameters=[{
                     'use_sim_time': use_sim_time,
-                    "start_angle": 210,
-                    "end_angle": 70,
+                    "start_angle": 190,
+                    "end_angle": 80,
                     }],
                 output="screen",
                  remappings=[

@@ -61,7 +61,7 @@ namespace hnurm
     sensor_msgs::msg::PointCloud2 filtered_pointcloud;
     pcl::toROSMsg(cloud, filtered_pointcloud);
     filtered_pointcloud.header.frame_id = "livox_frame";
-
+    filtered_pointcloud.header.stamp = this->now();
     // 发布裁剪后的点云消息
     pointcloud_pub_->publish(filtered_pointcloud);
   }

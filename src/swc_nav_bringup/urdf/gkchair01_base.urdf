@@ -222,7 +222,7 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_link" />
-    <origin xyz="${0.65-wheel_xoff} ${-s_wheel_ygap/2} ${-base_link_high+0.31}" />
+    <origin xyz="${0.61-wheel_xoff} ${-s_wheel_ygap/2} ${-base_link_high+0.335}" />
   </joint>
 
   <!-- laser link -->
@@ -258,7 +258,7 @@
   <joint name="laser_ms200_joint" type="fixed">
     <parent link="base_link" />
     <child link="laser_ms200_link" />
-    <origin xyz="${-wheel_xoff+0.1} ${wheel_ygap/2} ${-base_link_high + 0.53}" />
+    <origin xyz="${-wheel_xoff-0.1} 0 ${-base_link_high + 0.2}" />
   </joint>
 
   <link name="laser_ms200_link">
@@ -275,7 +275,7 @@
   <joint name="livox_frame_joint" type="fixed">
     <parent link="base_link" />
     <child link="livox_frame" />
-    <origin xyz="${0.65-wheel_xoff} ${s_wheel_ygap/2} ${-base_link_high+ 0.31}" />
+    <origin xyz="${0.63-wheel_xoff} ${s_wheel_ygap/2} ${-base_link_high+ 0.345}" />
   </joint>
 
   <link name="livox_frame">

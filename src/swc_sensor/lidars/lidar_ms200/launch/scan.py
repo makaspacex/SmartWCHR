@@ -84,8 +84,8 @@ def generate_launch_description():
                 executable="radar_filter",
                 name="laser_filter_ms200",
                 parameters=[{
-                    "start_angle": 0,
-                    "end_angle": 200,
+                    "start_angle": 110,
+                    "end_angle": 250,
                     }],
                 output="screen",
                  remappings=[

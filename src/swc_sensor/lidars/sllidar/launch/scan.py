@@ -27,7 +27,7 @@ def generate_launch_description():
     )  # for s2 is 1000000
     frame_id = LaunchConfiguration("frame_id", default="laser_link")
     inverted = LaunchConfiguration("inverted", default="false")
-    angle_compensate = LaunchConfiguration("angle_compensate", default="false")
+    angle_compensate = LaunchConfiguration("angle_compensate", default="true")
     scan_mode = LaunchConfiguration("scan_mode", default="DenseBoost")
     use_sim_time = LaunchConfiguration('use_sim_time',default="false")
 
@@ -137,8 +137,8 @@ def generate_launch_description():
                 name="laser_filter_s2",
                 parameters=[{
                     "use_sim_time":use_sim_time,
-                    "start_angle": 210,
-                    "end_angle": 70,
+                    "start_angle": 190,
+                    "end_angle": 80,
                     }],
                 output="screen",
                  remappings=[
