@@ -82,6 +82,7 @@ def generate_launch_description():
     bringup_linefit_ground_segmentation_node = Node(
         package='linefit_ground_segmentation_ros',
         executable='ground_segmentation_node',
+        name="ground_segmentation",
         output='screen',
         parameters=[segmentation_params,{"use_sim_time":use_sim_time}]
     )

@@ -7,7 +7,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction, TimerAction
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command, PythonExpression
 from launch.conditions import LaunchConfigurationEquals, LaunchConfigurationNotEquals, IfCondition, UnlessCondition
 from pathlib import Path
 from launch_ros.parameter_descriptions import ParameterValue
@@ -52,14 +52,13 @@ def generate_launch_description():
     #################################### POINT_LIO parameters end #####################################
 
     ################################## slam_toolbox parameters start ##################################
-    slam_toolbox_map_dir = PathJoinSubstitution([package_share_dir, 'map', world])
-    slam_toolbox_localization_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'mapper_params_localization_sim.yaml')
-    slam_toolbox_mapping_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'mapper_params_online_async_sim.yaml')
+    slam_toolbox_map_file = PathJoinSubstitution([package_share_dir, 'map', world])
+    slam_toolbox_param_file = os.path.join(package_share_dir, 'config', 'simulation', 'slam_toolbox.yaml')
     ################################### slam_toolbox parameters end ###################################
 
     ################################### navigation2 parameters start ##################################
-    nav2_map_dir = PathJoinSubstitution([package_share_dir, 'map', world]), ".yaml"
-    nav2_params_file_dir = os.path.join(package_share_dir, 'config', 'simulation', 'nav2_params_sim.yaml')
+    nav2_map_name = PathJoinSubstitution([package_share_dir, 'map', world]), ".yaml"
+    nav2_params_file = os.path.join(package_share_dir, 'config', 'simulation', 'nav2_params_sim.yaml')
     ################################### navigation2 parameters end ####################################
 
     ################################ icp_registration parameters start ################################
@@ -96,16 +95,18 @@ def generate_launch_description():
         'mode',
         default_value='',
         description='Choose mode: nav, mapping')
+    
+    declare_LIO_cmd = DeclareLaunchArgument(
+        'lio',
+        default_value='fast_lio',
+        description='Choose lio alogrithm: fastlio or pointlio')
 
     declare_localization_cmd = DeclareLaunchArgument(
         'localization',
         default_value='',
         description='Choose localization method: slam_toolbox, amcl, icp')
 
-    declare_LIO_cmd = DeclareLaunchArgument(
-        'lio',
-        default_value='fast_lio',
-        description='Choose lio alogrithm: fastlio or pointlio')
+
     # Specify the actions
     start_swc_simulation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pb_swc_simulation_launch_dir, 'swc_simulation.launch.py')),
@@ -159,15 +160,22 @@ def generate_launch_description():
         }],
         name='pointcloud_to_laserscan'
     )
+    
+    bringup_pcl_filter_node = Node(
+        package='pcl_filter', 
+        executable='pcl_filter_node',
+        name="pcl_filter_node"
+    )
 
     bringup_LIO_group = GroupAction([
+      
         GroupAction(
             condition = LaunchConfigurationEquals('lio', 'fastlio'),
             actions=[
             Node(
                 package='fast_lio',
                 executable='fastlio_mapping',
-                name="fastlio_mapping",
+                name='fastlio_mapping',
                 remappings=lio_remappings,
                 parameters=[
                     fastlio_mid360_params,
@@ -224,9 +232,9 @@ def generate_launch_description():
                 executable='localization_slam_toolbox_node',
                 name='localization_slam_toolbox_node',
                 parameters=[
-                    slam_toolbox_localization_file_dir,
+                    slam_toolbox_param_file,
                     {'use_sim_time': use_sim_time,
-                    'map_file_name': slam_toolbox_map_dir,
+                    'map_file_name': slam_toolbox_map_file,
                     'map_start_pose': [0.0, 0.0, 0.0]}
                 ],
             ),
@@ -236,8 +244,8 @@ def generate_launch_description():
                 condition = LaunchConfigurationEquals('localization', 'amcl'),
                 launch_arguments = {
                     'use_sim_time': use_sim_time,
-                    'params_file': nav2_params_file_dir,
-                    'map': nav2_map_dir}.items()
+                    'params_file': nav2_params_file,
+                    'map': nav2_map_name}.items()
             ),
 
             TimerAction(
@@ -263,8 +271,8 @@ def generate_launch_description():
                 condition = LaunchConfigurationNotEquals('localization', 'slam_toolbox'),
                 launch_arguments={
                     'use_sim_time': use_sim_time,
-                    'map': nav2_map_dir,
-                    'params_file': nav2_params_file_dir,
+                    'map': nav2_map_name,
+                    'params_file': nav2_params_file,
                     'container_name': 'nav2_container'}.items())
         ]
     )
@@ -284,7 +292,8 @@ def generate_launch_description():
         name="ekf_filter_node",
         output="screen",
         remappings=[("/odometry/filtered", "/odom")],
-        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml'),{'use_sim_time': use_sim_time}],
+        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml')],
+        condition = IfCondition(PythonExpression(['not ',f"{fastlio_pub_tf_en}"]))
     )
 
     start_mapping = Node(
@@ -293,7 +302,7 @@ def generate_launch_description():
         executable='async_slam_toolbox_node',
         name='async_slam_toolbox_node',
         parameters=[
-            slam_toolbox_mapping_file_dir,
+            slam_toolbox_param_file,
             {'use_sim_time': use_sim_time,}
         ],
     )
@@ -302,8 +311,8 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(navigation2_launch_dir, 'bringup_swc_navigation.py')),
         launch_arguments={
             'use_sim_time': use_sim_time,
-            'map': nav2_map_dir,
-            'params_file': nav2_params_file_dir,
+            'map': nav2_map_name,
+            'params_file': nav2_params_file,
             'nav_rviz': use_nav_rviz}.items()
     )
 
@@ -325,7 +334,7 @@ def generate_launch_description():
     # ld.add_action(bringup_fake_vel_transform_node)
     
     ld.add_action(bringup_LIO_group)
-    # ld.add_action(bringup_robot_localization_node)
+    ld.add_action(bringup_robot_localization_node) # 使用lio原生的tf定位的话，就可以关掉
     ld.add_action(start_localization_group)
     ld.add_action(start_mapping)
     ld.add_action(start_navigation2)

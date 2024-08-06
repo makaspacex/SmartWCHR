@@ -26,9 +26,9 @@
   <xacro:arg name="rpy" default="0 0 0" />
 
   <!-- Define intertial property macros  -->
-  <xacro:macro name="box_inertia" params="m w h d">
+  <xacro:macro name="box_inertia" params="m w h d or_z:=0">
     <inertial>
-      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}" />
+      <origin xyz="0 0 ${or_z}" rpy="${pi/2} 0 ${pi/2}" />
       <mass value="${m}" />
       <inertia ixx="${(m/12) * (h*h + d*d)}" ixy="0.0" ixz="0.0" iyy="${(m/12) * (w*w + d*d)}"
         iyz="0.0" izz="${(m/12) * (w*w + h*h)}" />
@@ -90,8 +90,8 @@
     </joint>
     <gazebo reference="${prefix}_link">
       <material>Gazebo/Black</material>
-      <mu1>2.0</mu1>  <!-- 摩擦系数 -->
-      <mu2>2.0</mu2>
+      <mu1>1.0</mu1>  <!-- 摩擦系数 -->
+      <mu2>1.0</mu2>
     </gazebo>
   </xacro:macro>
 
@@ -113,7 +113,7 @@
       <xacro:cylinder_inertia m="1.5" r="${s_wheel_radius}" h="${s_wheel_width}" />
     </link>
 
-    <joint name="${prefix}_joint" type="fixed">
+    <joint name="${prefix}_joint" type="continuous">
       <parent link="base_link" />
       <child link="${prefix}_link" />
       <origin xyz="${x_reflect*s_wheel_xoff} ${y_reflect*(s_wheel_ygap/2)} ${-base_link_high + s_wheel_radius}"
@@ -123,8 +123,8 @@
     </joint>
     <gazebo reference="${prefix}_link">
       <material>Gazebo/Black</material>
-      <mu1>0.001</mu1>  <!-- 摩擦系数 -->
-      <mu2>0.001</mu2>
+      <mu1>0.00001</mu1>  <!-- 摩擦系数 -->
+      <mu2>0.00001</mu2>
     </gazebo>
   </xacro:macro>
 
@@ -183,7 +183,7 @@
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint" />
     <child link="base_link" />
-    <origin xyz="0 0 ${base_link_high}" rpy="0 0 0" />
+    <origin xyz="${wheel_xoff} 0 ${base_link_high}" rpy="0 0 0" />
   </joint>
 
   <!-- base link -->
@@ -197,21 +197,14 @@
       <material name="light_blue" />
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0" />
       <geometry>
-        <box size="${base_length} ${base_width} 0.3"/>
+        <box size="${base_length} ${base_width} ${base_height}"/>
       </geometry>
     </collision>
-    <xacro:box_inertia m="20.0" w="${base_width}" d="${base_length}" h="${base_height}"/>
+    <xacro:box_inertia m="20.0" w="${base_width}" d="${base_length}" h="${base_height}" or_z="${base_height/2}"/>
   </link>
-
-  <joint name="drive_footprint_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="drive_footprint" />
-    <origin xyz="${-wheel_xoff} 0 ${-base_link_high}" rpy="0 0 0" />
-  </joint>
-  <link name="drive_footprint" />
-
+  
   <xacro:wheel prefix="left_wheel" x_reflect="-1" y_reflect="1" />
   <xacro:wheel prefix="right_wheel" x_reflect="-1" y_reflect="-1" />
 

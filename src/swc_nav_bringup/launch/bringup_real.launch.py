@@ -54,8 +54,7 @@ def generate_launch_description():
     
     ################################## slam_toolbox parameters start ##################################
     slam_toolbox_map_file = PathJoinSubstitution([package_share_dir, 'map', world])
-    slam_toolbox_localization_file = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_localization_real.yaml')
-    slam_toolbox_mapping_file = os.path.join(package_share_dir, 'config', 'reality', 'mapper_params_online_async_real.yaml')
+    slam_toolbox_param_file = os.path.join(package_share_dir, 'config', 'reality', 'slam_toolbox.yaml')
     ################################### slam_toolbox parameters end ###################################
 
     ################################### navigation2 parameters start ##################################
@@ -270,7 +269,7 @@ def generate_launch_description():
                 executable='localization_slam_toolbox_node',
                 name='localization_slam_toolbox_node',
                 parameters=[
-                    slam_toolbox_localization_file,
+                    slam_toolbox_param_file,
                     {'use_sim_time': use_sim_time,
                     'map_file_name': slam_toolbox_map_file,
                     'map_start_pose': [0.0, 0.0, 0.0]}
@@ -341,7 +340,7 @@ def generate_launch_description():
         executable='async_slam_toolbox_node',
         name='async_slam_toolbox_node',
         parameters=[
-            slam_toolbox_mapping_file,
+            slam_toolbox_param_file,
             {'use_sim_time': use_sim_time,}
         ],
     )

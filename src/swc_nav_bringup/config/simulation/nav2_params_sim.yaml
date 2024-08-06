@@ -6,7 +6,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "drive_footprint"
+    base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -43,7 +43,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: map
-    robot_base_frame: drive_footprint
+    robot_base_frame: base_footprint
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -179,7 +179,7 @@ controller_server:
         type: "line" # string, default:"point" # 指定用于优化的机器人足迹模型类型。不同的类型有“点”、“圆”、“线”、“双圆”和“多边形”。模型的类型显着影响所需的计算时间。
         radius: 0.2 # double, default:0.2 此参数仅与“圆形”类型相关。它包含圆的半径。圆的中心位于机器人的旋转轴处。
         line_start: [0.0, 0.0] #(double[2], default: [-0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的起始坐标。
-        line_end: [0.7, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
+        line_end: [0.5, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
         front_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了前圆的中心沿机器人的 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
         front_radius: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它包含前圆的半径。
         rear_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了后圆的中心沿着机器人的负 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
@@ -296,17 +296,17 @@ controller_server:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 20.0
-      publish_frequency: 10.0
-      global_frame: map
-      robot_base_frame: drive_footprint
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      global_frame: odom
+      robot_base_frame: base_footprint
       use_sim_time: True
       rolling_window: true
       width: 10
       height: 10
       resolution: 0.02
       # robot_radius: 0.8
-      footprint: "[[1.0, 0.3], [1.0, -0.3], [-0.2, -0.3], [-0.2, 0.3]]" 
+      footprint: "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" 
       plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200", "inflation_layer"]
       voxel2d_layer_s2:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -367,11 +367,11 @@ global_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: map
-      robot_base_frame: drive_footprint
+      robot_base_frame: base_footprint
       use_sim_time: True
       # robot_radius: 0.8
       # footprint: "[[0.6, 0.4], [0.6, -0.4], [-0.6, -0.4], [-0.6, 0.4]]" 
-      footprint: "[[1.0, 0.3], [1.0, -0.3], [-0.2, -0.3], [-0.2, 0.3]]" 
+      footprint: "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" 
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "stvl_layer", "inflation_layer"]
@@ -482,7 +482,7 @@ behavior_server:
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: map
-    robot_base_frame: drive_footprint
+    robot_base_frame: base_footprint
     transform_tolerance: 0.2
     use_sim_time: True
     simulate_ahead_time: 4.0

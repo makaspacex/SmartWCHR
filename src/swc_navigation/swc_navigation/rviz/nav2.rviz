@@ -79,7 +79,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        drive_footprint:
+        base_footprint:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -145,7 +145,7 @@ Visualization Manager:
           Value: true
         base_link:
           Value: true
-        drive_footprint:
+        base_footprint:
           Value: true
         imu_link:
           Value: true
@@ -196,7 +196,7 @@ Visualization Manager:
                   {}
                 right_wheel_link:
                   {}
-              drive_footprint:
+              base_footprint:
                 {}
       Update Interval: 0
       Value: true

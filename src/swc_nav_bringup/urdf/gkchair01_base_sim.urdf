@@ -199,13 +199,13 @@
 
   <!-- mid360_imu plugin -->
   <!-- https://github.com/ros-simulation/gazebo_ros_pkgs/wiki/ROS-2-Migration:-IMU-Sensors -->
-  <joint name="livox_imu_joint" type="fixed">
+  <!-- <joint name="livox_imu_joint" type="fixed">
     <parent link="base_link" />
     <child link="livox_imu" />
     <origin xyz="0.44 ${base_width/2} ${-(wheel_radius+wheel_zoff)+s_wheel_radius*2 + 0.02}" />
-  </joint>
+  </joint> -->
 
-  <link name="livox_imu">
+  <!-- <link name="livox_imu">
     <visual>
       <origin xyz="0 0 0.0" rpy="0 0 0" />
       <geometry>
@@ -228,7 +228,7 @@
         <frame_name>livox_frame</frame_name>
       </plugin>
     </sensor>
-  </gazebo>
+  </gazebo> -->
   
   <xacro:macro name="makamid360">
     <xacro:property name="M_PI" value="3.1415926"/> 
@@ -240,6 +240,17 @@
     <xacro:property name="noise_stddev" value="0.002"/>
     
     <gazebo reference="livox_frame">
+      <sensor name="mid360_imu" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+          <ros>
+            <namespace>/</namespace>
+            <remapping>~/out:=/livox/imu</remapping>
+          </ros>
+          <frame_name>livox_frame</frame_name>
+        </plugin>
+      </sensor>
       <sensor type="ray" name="livox_frame">
         <pose>0 0 0 0 0 0</pose>
         <visualize>true</visualize>
