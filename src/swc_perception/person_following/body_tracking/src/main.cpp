@@ -84,10 +84,6 @@ int main(int argc, char *argv[]) {
   );
 
 
-
-
-
-
   exec.add_node(message_sync_node);
 
   // auto miniPublisher_node = std::make_shared<MinimalPublisher> ();

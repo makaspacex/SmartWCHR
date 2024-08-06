@@ -7,11 +7,33 @@
 #include "std_msgs/msg/string.hpp"
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+
 #include <sensor_msgs/msg/temperature.hpp>
 #include "person_tracking_msgs/msg/persons_info.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
+
+#include <message_filters/sync_policies/approximate_time.h>
+
+/*
+参考链接：
+https://gist.github.com/zkytony/0ff81b20b9d6636ab60bb6eab46ee92c
+*/
+
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <message_filters/synchronizer.h>
+
+// using geometry_msgs::msg::PointStamped;
+using namespace message_filters;
+using namespace message_filters::sync_policies;
+using namespace std::chrono_literals;
+
+// typedef ApproximateTime<PointStamped, PointStamped> PointSyncPolicy;
+// typedef Synchronizer<PointSyncPolicy> PointSync;
+
+typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image> personSyncPolicy;
+typedef Synchronizer<personSyncPolicy> PersonSync;
 
 
 
@@ -28,8 +50,6 @@ using namespace std::placeholders;
 using SmartCbType = std::function<void(
     const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &img)>;
 
-//void FeedSmart1(const ai_msgs::msg::PerceptionTargets::ConstSharedPtr &msg, sensor_msgs::msg::Image::ConstSharedPtr &image);
-
 
 class MessageSyncNode : public rclcpp::Node {
 public:
@@ -40,10 +60,18 @@ public:
 
         smart_msg_sub_.subscribe(this, "/persons_info");
         image_sub_.subscribe(this, "/image");
-        time_sync_ = std::make_shared<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>>(smart_msg_sub_, image_sub_, 10);
-        time_sync_->registerCallback(&MessageSyncNode::syncCallback, this);
+        
+        // time_sync_ = std::make_shared<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>>(smart_msg_sub_, image_sub_, 10);
+        
+        // personSyncPolicy(200)，表示同步允许的时间间隔为200ms
+        time_sync_ = std::make_shared<PersonSync>(personSyncPolicy(200),
+                                            smart_msg_sub_, image_sub_);
 
-        sync_publisher_ = this->create_publisher<std_msgs::msg::String>("sync_node_info", 10);
+
+        // sync_->registerCallback(&Syncer::cb, this);
+        
+        
+        time_sync_->registerCallback(&MessageSyncNode::syncCallback, this);
 
       }
 
@@ -52,17 +80,13 @@ private:
     {
         
         cv::Mat cv_image = cv_bridge::toCvCopy(image, "bgr8")->image;
-
-        // cv::Mat cv_image = cv::imdecode(cv::Mat(image->data), cv::IMREAD_COLOR);
         auto image_size = cv_image.size();
 
+        /*
+        RCLCPP_INFO(rclcpp::get_logger("MessageSyncNode"),
+              "sync subscribe two message");
+        */
 
-
-        auto img_size_data = "width：" + std::to_string(image_size.width) + ", height: " + std::to_string(image_size.height);
-        auto sync_node_msg = std_msgs::msg::String();
-
-        sync_node_msg.data = img_size_data;
-        sync_publisher_->publish(sync_node_msg);
 
         // 在这里处理同步后的消息
         // 可以使用 smart_msg 和 image 进行进一步的操作
@@ -79,10 +103,8 @@ private:
     SmartCbType smart_cb_ = nullptr;
     message_filters::Subscriber<person_tracking_msgs::msg::PersonsInfo> smart_msg_sub_;
     message_filters::Subscriber<sensor_msgs::msg::Image> image_sub_;
-    std::shared_ptr<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>> time_sync_;
-
-    
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr sync_publisher_; 
+    // std::shared_ptr<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>> time_sync_;
+    std::shared_ptr<PersonSync> time_sync_;
 
 };
 

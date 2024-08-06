@@ -23,6 +23,8 @@
   <depend>message_filters</depend>
   <depend>cv_bridge</depend>
   <depend>ament_index_cpp</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
 
 
   <test_depend>ament_lint_auto</test_depend>

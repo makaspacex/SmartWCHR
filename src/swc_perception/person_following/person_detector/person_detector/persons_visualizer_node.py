@@ -34,15 +34,9 @@ class PersonsVisualizerNode(Node):
         x = int(key_landmark.x)
         y = int(key_landmark.y)
 
-        # x = int(key_landmark.x * w)
-        # y = int(key_landmark.y * h)
         cv2.circle(image, (x, y), 10, (0, 255, 0), -1)  # 绘制小圈
 
-        # self.get_logger().info(f"key_point_x : {x}    key_point_y : {y}")
-
         return image
-        # 输出关键点信息
-        # print(f'Keypoint {idx} at ({x}, {y}), visibility: {landmark.visibility}')
 
 
     def callback(self, image_msg, persons_msg):

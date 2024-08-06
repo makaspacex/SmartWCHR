@@ -30,6 +30,9 @@ find_package(cv_bridge REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(person_tracking_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 
 find_package(dlib REQUIRED)
@@ -100,6 +103,9 @@ ament_target_dependencies(${PROJECT_NAME}
   cv_bridge
   ament_index_cpp
   person_tracking_msgs
+  tf2_ros
+  tf2_geometry_msgs
+  geometry_msgs
   # Eigen3
   )
 
