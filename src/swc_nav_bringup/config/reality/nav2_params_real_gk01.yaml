@@ -114,12 +114,12 @@ velocity_smoother:
     use_sim_time: False
     smoothing_frequency: 10.0
     scale_velocities: False
-    feedback: "OPEN_LOOP"
+    feedback: "CLOSED_LOOP"
     max_velocity: [0.40, 0.0, 0.40]
     min_velocity: [-0.40, 0.0, -0.40]
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
-    odom_topic: "odom"
+    odom_topic: "odom_driver"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
@@ -160,7 +160,7 @@ controller_server:
       
       # 1、机器人配置参数
       acc_lim_x: 2.0 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
-      acc_lim_theta: 0.3 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
+      acc_lim_theta: 0.2 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
       max_vel_x: 0.4 # double, default:0.4 机器人的最大平移速度（米/秒）
       max_vel_y: 0.0
       max_vel_x_backwards: 0.4 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
@@ -302,8 +302,8 @@ local_costmap:
       robot_base_frame: base_footprint
       use_sim_time: True
       rolling_window: true
-      width: 5
-      height: 5
+      width: 10
+      height: 10
       resolution: 0.02
       # robot_radius: 0.8
       footprint: "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" 
