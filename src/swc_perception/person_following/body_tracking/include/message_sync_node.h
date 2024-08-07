@@ -32,9 +32,11 @@ using namespace std::chrono_literals;
 // typedef ApproximateTime<PointStamped, PointStamped> PointSyncPolicy;
 // typedef Synchronizer<PointSyncPolicy> PointSync;
 
-typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image> personSyncPolicy;
-typedef Synchronizer<personSyncPolicy> PersonSync;
+// typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image> personSyncPolicy;
+// typedef Synchronizer<personSyncPolicy> PersonSync;
 
+typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image, sensor_msgs::msg::Image> personSyncPolicy;
+typedef Synchronizer<personSyncPolicy> PersonSync;
 
 
 
@@ -60,12 +62,13 @@ public:
 
         smart_msg_sub_.subscribe(this, "/persons_info");
         image_sub_.subscribe(this, "/image");
+        depth_sub_.subscribe(this, "/camera/depth/image_raw");
         
         // time_sync_ = std::make_shared<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>>(smart_msg_sub_, image_sub_, 10);
         
         // personSyncPolicy(200)，表示同步允许的时间间隔为200ms
         time_sync_ = std::make_shared<PersonSync>(personSyncPolicy(200),
-                                            smart_msg_sub_, image_sub_);
+                                            smart_msg_sub_, image_sub_, depth_sub_);
 
 
         // sync_->registerCallback(&Syncer::cb, this);
@@ -76,16 +79,16 @@ public:
       }
 
 private:
-    void syncCallback(const person_tracking_msgs::msg::PersonsInfo::SharedPtr& smart_msg, const sensor_msgs::msg::Image::SharedPtr& image) 
+    void syncCallback(const person_tracking_msgs::msg::PersonsInfo::SharedPtr& smart_msg, const sensor_msgs::msg::Image::SharedPtr& image, const sensor_msgs::msg::Image::SharedPtr& depth_image) 
     {
         
         cv::Mat cv_image = cv_bridge::toCvCopy(image, "bgr8")->image;
         auto image_size = cv_image.size();
 
-        /*
+        
         RCLCPP_INFO(rclcpp::get_logger("MessageSyncNode"),
               "sync subscribe two message");
-        */
+        
 
 
         // 在这里处理同步后的消息
@@ -103,6 +106,9 @@ private:
     SmartCbType smart_cb_ = nullptr;
     message_filters::Subscriber<person_tracking_msgs::msg::PersonsInfo> smart_msg_sub_;
     message_filters::Subscriber<sensor_msgs::msg::Image> image_sub_;
+    message_filters::Subscriber<sensor_msgs::msg::Image> depth_sub_;   //订阅深度图
+
+    // rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_sub_;
     // std::shared_ptr<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>> time_sync_;
     std::shared_ptr<PersonSync> time_sync_;
 

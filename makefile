@@ -16,10 +16,11 @@ LAUNCH_CC = ros2 launch
 
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
 WHEEL_PACKAGES = fast_lio point_lio ros_local cartographer driver encoder imu joy_ctrl  lidar_ms200  sllidar radar_filter livox_ros_driver2 
-DC_PACKAGES = swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner gesture_recognition_msgs gesture_recognition  imu_complementary_filter lidars_sync_fusion linefit_ground_segmentation linefit_ground_segmentation_ros pcl_filter pointcloud_to_laserscan ros2_livox_simulation pb_swc_simulation
-
+DC_PACKAGES = swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner gesture_recognition_msgs gesture_recognition  imu_complementary_filter lidars_sync_fusion linefit_ground_segmentation linefit_ground_segmentation_ros pcl_filter pointcloud_to_laserscan 
+SIM_PACKAGES = ros2_livox_simulation pb_swc_simulation
 WC_NAME = wc
 DC_NAME = dc
+SIM_NAME = sim
 
 DOCKER_RUN_ARGS = run -e CUID=$$(id -u) -it --rm smartwchr /bin/zsh
 # Check if opts is empty
@@ -39,6 +40,13 @@ else ifeq ($(OPTS),$(WC_NAME))
 
 else ifeq ($(OPTS),$(DC_NAME))
 	BUILD_PACKAGES = --packages-select $(DC_PACKAGES)
+	RUN_ARGS =
+	LAUNCH_ARGS =
+	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
+	UP_ARGS =  -f docker-compose.dc.yml up -d
+
+else ifeq ($(OPTS),$(SIM_NAME))
+	BUILD_PACKAGES = --packages-select $(SIM_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS =
 	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)

@@ -66,7 +66,6 @@ class LaserFilter(Node):
         # 创建新的LaserScan消息对象
         filtered_msg = LaserScan()
         filtered_msg.header = msg.header
-        filtered_msg.header.stamp = self.get_clock().now().to_msg()
         filtered_msg.angle_min = msg.angle_min
         filtered_msg.angle_max = msg.angle_max
         filtered_msg.angle_increment = msg.angle_increment

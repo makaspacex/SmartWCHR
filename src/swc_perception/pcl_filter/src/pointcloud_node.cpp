@@ -56,14 +56,12 @@ namespace hnurm
     condrem.setCondition(condition);
     condrem.setInputCloud(cloud.makeShared());
     condrem.filter(cloud);
+    
+    auto filtered_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    pcl::toROSMsg(cloud, *filtered_pointcloud);
+    filtered_pointcloud->header = msg->header;
 
-    // 将裁剪后的点云转换回ROS消息格式
-    sensor_msgs::msg::PointCloud2 filtered_pointcloud;
-    pcl::toROSMsg(cloud, filtered_pointcloud);
-    filtered_pointcloud.header.frame_id = "livox_frame";
-    filtered_pointcloud.header.stamp = this->now();
-    // 发布裁剪后的点云消息
-    pointcloud_pub_->publish(filtered_pointcloud);
+    pointcloud_pub_->publish(*filtered_pointcloud);
   }
 
 }
