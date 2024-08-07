@@ -85,7 +85,7 @@ localization_slam_toolbox_node:
     odom_frame: odom
     map_frame: map
     base_frame: base_footprint
-    scan_topic: /scan
+    scan_topic: /scan_s2_filter
     mode: localization #localization
 
     # if you'd like to start localizing on bringup in a map and pose

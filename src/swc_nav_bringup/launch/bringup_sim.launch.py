@@ -292,7 +292,7 @@ def generate_launch_description():
         name="ekf_filter_node",
         output="screen",
         remappings=[("/odometry/filtered", "/odom")],
-        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml')],
+        parameters=[os.path.join(package_share_dir, 'config/reality/ekf_fast_lio.yaml'),{'use_sim_time': use_sim_time,}],
         condition = IfCondition(PythonExpression(['not ',f"{fastlio_pub_tf_en}"]))
     )
 
