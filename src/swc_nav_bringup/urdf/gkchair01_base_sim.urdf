@@ -92,8 +92,8 @@
     <sensor name="wc_lidar" type="ray">
       <always_on>true</always_on>
       <visualize>true</visualize>
-      <pose>-0.064 0 0.15 0 0 0</pose>
-      <update_rate>5</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <update_rate>10</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -128,8 +128,8 @@
     <sensor name="laser_ms200_plugin" type="ray">
       <always_on>true</always_on>
       <visualize>true</visualize>
-      <pose>-0.064 0 0.15 0 0 0</pose>
-      <update_rate>5</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <update_rate>10</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -160,10 +160,8 @@
     </sensor>
   </gazebo>
 
-  <!-- *********************** WHEEL ODOMETRY ***************************    -->
   <gazebo>
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
-
       <update_rate>10</update_rate>
 
       <!-- wheels -->
@@ -172,13 +170,13 @@
 
       <!-- kinematics -->
       <wheel_separation>0.6</wheel_separation>
-      <wheel_diameter>0.170</wheel_diameter>
+      <wheel_diameter>0.340</wheel_diameter>
 
       <!-- limits -->
       <max_wheel_torque>300</max_wheel_torque>
-      <max_wheel_acceleration>0.4</max_wheel_acceleration>
+      <max_wheel_acceleration>2.0</max_wheel_acceleration>
 
-      <!-- <command_topic>cmd_vel_chassis</command_topic> -->
+      <command_topic>cmd_vel</command_topic>
       <publish_odom>true</publish_odom>
       <publish_odom_tf>false</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
@@ -187,42 +185,21 @@
       <odometry_frame>odom</odometry_frame>
       <robot_base_frame>base_footprint</robot_base_frame>
     </plugin>
+    
+    <plugin name="wheel_joint_state" filename="libgazebo_ros_joint_state_publisher.so">
+      <ros>
+          <remapping>~/out:=joint_states</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+      <joint_name>left_wheel_joint</joint_name>
+      <joint_name>right_wheel_joint</joint_name>
+
+      <joint_name>left_small_wheel_joint</joint_name>
+      <joint_name>right_small_wheel_joint</joint_name>
+    </plugin>
+
   </gazebo>
 
-
-  <!-- mid360_imu plugin -->
-  <!-- https://github.com/ros-simulation/gazebo_ros_pkgs/wiki/ROS-2-Migration:-IMU-Sensors -->
-  <!-- <joint name="livox_imu_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="livox_imu" />
-    <origin xyz="0.44 ${base_width/2} ${-(wheel_radius+wheel_zoff)+s_wheel_radius*2 + 0.02}" />
-  </joint> -->
-
-  <!-- <link name="livox_imu">
-    <visual>
-      <origin xyz="0 0 0.0" rpy="0 0 0" />
-      <geometry>
-        <box size="0.02 0.02 0.02" />
-      </geometry>
-      <material name="orange" />
-    </visual>
-    <xacro:box_inertia m="0.01" w="0.02" d="0.02" h="0.02"/>
-  </link>
-  
-  <gazebo reference="livox_imu">
-    <sensor name="mid360_imu" type="imu">
-      <always_on>true</always_on>
-      <update_rate>100</update_rate>
-      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
-        <ros>
-          <namespace>/</namespace>
-          <remapping>~/out:=/livox/imu</remapping>
-        </ros>
-        <frame_name>livox_frame</frame_name>
-      </plugin>
-    </sensor>
-  </gazebo> -->
-  
   <xacro:macro name="makamid360">
     <xacro:property name="M_PI" value="3.1415926"/> 
     <xacro:property name="laser_min_range" value="0.1"/>
@@ -235,7 +212,7 @@
     <gazebo reference="livox_frame">
       <sensor name="mid360_imu" type="imu">
         <always_on>true</always_on>
-        <update_rate>100</update_rate>
+        <update_rate>200</update_rate>
         <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
           <ros>
             <namespace>/</namespace>
@@ -245,8 +222,7 @@
         </plugin>
       </sensor>
       <sensor type="ray" name="livox_frame">
-        <pose>0 0 0 0 0 0</pose>
-        <visualize>true</visualize>
+        <always_on>true</always_on>
         <update_rate>10</update_rate>
         <plugin name="livox_frame_plugin" filename="libros2_livox.so">
           <ray>

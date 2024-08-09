@@ -114,15 +114,23 @@ velocity_smoother:
     use_sim_time: False
     smoothing_frequency: 10.0
     scale_velocities: False
-    feedback: "CLOSED_LOOP"
-    max_velocity: [0.40, 0.0, 0.40]
-    min_velocity: [-0.40, 0.0, -0.40]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
+    # feedback: "CLOSED_LOOP"
+    feedback: "OPEN_LOOP"
+    max_velocity: [3.60, 0.0, 0.40]
+    min_velocity: [-3.60, 0.0, -0.40]
+    max_accel: [3.5, 0.0, 3.2]
+    max_decel: [-3.5, 0.0, -3.2]
     odom_topic: "odom_driver"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
+
+maka_common_param:
+  ros__parameters:
+    footprint: &footprint "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" # 最后面
+    # footprint: &footprint "[[0.6, 0.35], [0.6, -0.35], [-0.6, -0.35], [-0.6, 0.35]]"  # 中间
+    # footprint: &footprint "[[-1.0, 0.35], [-1.0, -0.35], [0.2, -0.35], [0.2, 0.35]]" # 最前面
+    robot_radius: &robot_radius 0.4
 
 controller_server:
   ros__parameters:
@@ -159,8 +167,8 @@ controller_server:
       # https://github.com/rst-tu-dortmund/teb_local_planner/tree/ros2-master
       
       # 1、机器人配置参数
-      acc_lim_x: 2.0 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
-      acc_lim_theta: 0.2 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
+      acc_lim_x: 0.2 # double, default:0.5 机器人的最大平移加速度（米/秒^2）
+      acc_lim_theta: 0.1 # double, default:0.5 机器人的最大角加速度（以弧度/秒^2为单位）
       max_vel_x: 0.4 # double, default:0.4 机器人的最大平移速度（米/秒）
       max_vel_y: 0.0
       max_vel_x_backwards: 0.4 # double, default:0.2 机器人向后行驶时的最大绝对平移速度（以米/秒为单位）。查看优化参数 weight_kinematics_forward_drive
@@ -177,9 +185,9 @@ controller_server:
       # 以下参数与用于优化的足迹模型相关（请参阅教程避障和机器人足迹模型）。 0.3版本新增
       footprint_model:
         type: "line" # string, default:"point" # 指定用于优化的机器人足迹模型类型。不同的类型有“点”、“圆”、“线”、“双圆”和“多边形”。模型的类型显着影响所需的计算时间。
-        radius: 0.2 # double, default:0.2 此参数仅与“圆形”类型相关。它包含圆的半径。圆的中心位于机器人的旋转轴处。
+        radius: 0.4 # double, default:0.2 此参数仅与“圆形”类型相关。它包含圆的半径。圆的中心位于机器人的旋转轴处。
         line_start: [0.0, 0.0] #(double[2], default: [-0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的起始坐标。
-        line_end: [0.5, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
+        line_end: [0.6, 0.0] # (double[2], default: [0.3, 0.0]) # 此参数仅与“line”类型相关。它包含线段的结束坐标。
         front_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了前圆的中心沿机器人的 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
         front_radius: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它包含前圆的半径。
         rear_offset: 0.2 # double, default:0.2 此参数仅与类型“two_circles”相关。它描述了后圆的中心沿着机器人的负 x 轴移动了多少。假设机器人的旋转轴位于[0,0]。
@@ -245,10 +253,10 @@ controller_server:
 
       # 6、Parallel Planning in distinctive Topologies 独特拓扑中的并行规划
       #    Homotopy Class Planner
-      enable_homotopy_class_planning: false # bool, default:true # 在独特的拓扑中激活并行规划（需要更多的 CPU 资源，因为同时优化多个轨迹）
+      enable_homotopy_class_planning: true # bool, default:true # 在独特的拓扑中激活并行规划（需要更多的 CPU 资源，因为同时优化多个轨迹）
       enable_multithreading: true # bool, default:true 激活多线程以便在不同线程中规划每个轨迹
       max_number_classes: 4 # int, default:4 指定考虑的独特轨迹的最大数量（限制计算量）
-      selection_cost_hysteresis: 1.0 # double, default:1.0 指定新候选者必须具有多少轨迹成本才能被选择（如果 new_cost < old_cost*factor 则选择）。
+      selection_cost_hysteresis: 0.95 # double, default:1.0 指定新候选者必须具有多少轨迹成本才能被选择（如果 new_cost < old_cost*factor 则选择）。
       selection_obst_cost_scale: 100.0 # double, default:100.0 障碍成本项的额外缩放只是为了选择“最佳”候选者。
       selection_viapoint_cost_scale: 1.0 # double, default:1.0 额外缩放经过点成本项只是为了选择“最佳”候选者。 0.4版本新增
       selection_alternative_time_cost: false # bool, default:false 如果为 true，则时间成本（时间差的平方和）将替换为总转换时间（时间差的总和）。
@@ -302,12 +310,12 @@ local_costmap:
       robot_base_frame: base_footprint
       use_sim_time: True
       rolling_window: true
-      width: 10
-      height: 10
-      resolution: 0.02
-      # robot_radius: 0.8
-      footprint: "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" 
-      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200", "inflation_layer"]
+      width: 6
+      height: 6
+      resolution: 0.05
+      # robot_radius: *robot_radius
+      footprint: *footprint
+      plugins: ["voxel2d_layer_s2", "voxel2d_layer_ms200", "voxel2d_layer_mid360", "inflation_layer"]
       voxel2d_layer_s2:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -369,9 +377,7 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_footprint
       use_sim_time: True
-      # robot_radius: 0.8
-      # footprint: "[[0.6, 0.4], [0.6, -0.4], [-0.6, -0.4], [-0.6, 0.4]]" 
-      footprint: "[[1.0, 0.35], [1.0, -0.35], [-0.2, -0.35], [-0.2, 0.35]]" 
+      robot_radius: 0.5
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "stvl_layer", "inflation_layer"]

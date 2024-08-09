@@ -90,8 +90,8 @@
     </joint>
     <gazebo reference="${prefix}_link">
       <material>Gazebo/Black</material>
-      <mu1>1.0</mu1>  <!-- 摩擦系数 -->
-      <mu2>1.0</mu2>
+      <mu1>2.0</mu1>  <!-- 摩擦系数 -->
+      <mu2>2.0</mu2>
     </gazebo>
   </xacro:macro>
 
@@ -184,6 +184,7 @@
     <parent link="base_footprint" />
     <child link="base_link" />
     <origin xyz="${wheel_xoff} 0 ${base_link_high}" rpy="0 0 0" />
+    <!-- <origin xyz="0 0 ${base_link_high}" rpy="0 0 0" /> -->
   </joint>
 
   <!-- base link -->

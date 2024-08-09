@@ -72,8 +72,8 @@ SegmentationNode::SegmentationNode(const rclcpp::NodeOptions &node_options)
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       input_topic, rclcpp::SensorDataQoS(),
       std::bind(&SegmentationNode::scanCallback, this, std::placeholders::_1));
-  ground_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(ground_topic, 1);
-  obstacle_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(obstacle_topic, 1);
+  ground_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(ground_topic, 10);
+  obstacle_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(obstacle_topic, 10);
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);

@@ -160,7 +160,7 @@ def generate_launch_description():
     
     # 如果没有时间源，joint_state将无法获取有效的时间，导致TF变换未发布。
     ld.add_action(gazebo_client_launch) 
-    ld.add_action(start_joint_state_publisher_cmd)
+    # ld.add_action(start_joint_state_publisher_cmd) # 改为gazebo的插件发布，可以看到车轮动态
     ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(bringup_RMUL_cmd_group) # type: ignore
     ld.add_action(bringup_RMUC_cmd_group) # type: ignore
