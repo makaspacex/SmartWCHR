@@ -4,19 +4,18 @@
     "ms-python.debugpy",
     "charliermarsh.ruff",
     "twxs.cmake",
-    "ms-vscode.makefile-tools",
     "ms-toolsai.jupyter-keymap",
     "ms-vscode.cmake-tools",
     "donjayamanne.githistory",
     "ms-toolsai.jupyter",
     "ms-python.vscode-pylance",
     "yzhang.markdown-all-in-one",
-    "ms-vscode.cpptools-extension-pack",
-    "ms-iot.vscode-ros",
     "smilerobotics.urdf",
     "redhat.vscode-xml",
     "tamasfe.even-better-toml",
     "timonwong.shellcheck",
-    "yzhang.markdown-all-in-one",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.vscode-remote-extensionpack"
   ]
 }
