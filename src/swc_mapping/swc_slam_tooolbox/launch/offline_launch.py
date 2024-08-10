@@ -10,9 +10,13 @@ from launch_ros.actions import LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
+from pathlib import Path
 
 
 def generate_launch_description():
+    package_name = Path(__file__).parent.parent.stem
+    package_share_dir = get_package_share_directory(package_name)
+    
     autostart = LaunchConfiguration('autostart')
     use_lifecycle_manager = LaunchConfiguration("use_lifecycle_manager")
 
@@ -25,8 +29,7 @@ def generate_launch_description():
         description='Enable bond connection during node activation')
 
     start_sync_slam_toolbox_node = LifecycleNode(
-          parameters=[
-            get_package_share_directory("slam_toolbox") + '/config/mapper_params_offline.yaml',
+          parameters=[str(package_share_dir) + '/config/mapper_params_offline.yaml',
             {'use_lifecycle_manager': use_lifecycle_manager}
           ],
           package='slam_toolbox',

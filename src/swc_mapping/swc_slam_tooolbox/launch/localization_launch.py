@@ -13,9 +13,13 @@ from launch_ros.actions import LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
+from pathlib import Path
 
 
 def generate_launch_description():
+    package_name = Path(__file__).parent.parent.stem
+    package_share_dir = get_package_share_directory(package_name)
+    
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_lifecycle_manager = LaunchConfiguration("use_lifecycle_manager")
     slam_params_file = LaunchConfiguration('slam_params_file')
@@ -27,7 +31,7 @@ def generate_launch_description():
         description='Use simulation/Gazebo clock')
     declare_slam_params_file_cmd = DeclareLaunchArgument(
         'slam_params_file',
-        default_value=os.path.join(get_package_share_directory("slam_toolbox"),
+        default_value=os.path.join(package_share_dir,
                                    'config', 'mapper_params_localization.yaml'),
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
     declare_autostart_cmd = DeclareLaunchArgument(
