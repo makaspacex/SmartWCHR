@@ -46,7 +46,9 @@ TrackingManager::TrackingManager() : Node("body_tracking") {
   // 可视化跟踪结果
   visual_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("person_following_visual", 10);
   // /goal消息发布者
-  goal_publisher_ = node->create_publisher<geometry_msgs::msg::PoseStamped>("/goal", 10);
+  goal_publisher_ = node->create_publisher<geometry_msgs::msg::PoseStamped>("/goal_pose", 10);
+  
+
 
   // 创建 tf2 变换监听器
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -79,8 +81,8 @@ TrackingManager::TrackingManager() : Node("body_tracking") {
         }
 
         if (track_info_.tracking_sta == TrackingStatus::TRACKING) {
-          // 发布/goal消息，跟随目标行人
-          Publish_goal(smart_frame);
+          // 计算/goal
+          Caculate_goal(smart_frame);
         }
 
       }
@@ -121,9 +123,9 @@ void TrackingManager::CancelMove() {
 
 // 在这个函数当中，完成四个状态转换的逻辑
 // initial、training、Lost(reid)、tracking
-void TrackingManager::ProcessSmart(
-    std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
-  
+// void TrackingManager::ProcessSmart(
+//     std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
+void TrackingManager::ProcessSmart(const Triplet &msg_image) {  
 
   auto msg = msg_image.first;  // msg是订阅到的PeronsInfo
 
@@ -400,12 +402,31 @@ void TrackingManager::ProcessSmart(
 }
 
 
-// 增加的FeedSmart1代替FeedSmart
-void TrackingManager::FeedSmart1(const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &image) {
+// // 增加的FeedSmart1代替FeedSmart
+// void TrackingManager::FeedSmart1(const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &image) {
+//   if (!rclcpp::ok()) return;
+//   std::unique_lock<std::mutex> lg(smart_queue_mtx_);
+
+//   std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> tmp(msg, image);
+//   smart_image_queue_.push(tmp);
+
+//   if (smart_image_queue_.size() > queue_len_limit_) {
+//     RCLCPP_INFO(rclcpp::get_logger("TrackingManager"),
+//                 "smart queue len exceed limit: %d",
+//                 queue_len_limit_);
+//     smart_image_queue_.pop();
+//   }
+//   smart_queue_condition_.notify_one();
+//   lg.unlock();
+// }
+
+// 增加的FeedSmart2代替FeedSmart1
+void TrackingManager::FeedSmart2(const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &image, const sensor_msgs::msg::LaserScan::ConstSharedPtr &scan_msg) {
   if (!rclcpp::ok()) return;
   std::unique_lock<std::mutex> lg(smart_queue_mtx_);
 
-  std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> tmp(msg, image);
+  Triplet tmp = {msg, image, scan_msg};
+  // std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> tmp(msg, image);
   smart_image_queue_.push(tmp);
 
   if (smart_image_queue_.size() > queue_len_limit_) {
@@ -429,7 +450,8 @@ std::vector<std::shared_ptr<rclcpp::Node>> TrackingManager::GetNodes() {
 const TrackCfg &TrackingManager::GetTrackCfg() const { return track_cfg_; }
 
 
-void TrackingManager::Visualization(std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
+// void TrackingManager::Visualization(std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
+void TrackingManager::Visualization(const Triplet &msg_image) {
   cv::Mat input_image = cv_bridge::toCvCopy(msg_image.second, "bgr8")->image;
 
   auto msg = msg_image.first;  // msg是订阅到的PeronsInfo
@@ -472,40 +494,115 @@ void TrackingManager::Visualization(std::pair<person_tracking_msgs::msg::Persons
 }
 
 
-void TrackingManager::Publish_goal(std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
-  cv::Mat input_image = cv_bridge::toCvCopy(msg_image.second, "bgr8")->image;
+// void TrackingManager::Publish_goal(std::pair<person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr, sensor_msgs::msg::Image::ConstSharedPtr> &msg_image) {
+void TrackingManager::Caculate_goal(const Triplet &msg_image) {
 
+  cv::Mat input_image = cv_bridge::toCvCopy(msg_image.second, "bgr8")->image;
+  
   auto msg = msg_image.first;  // msg是订阅到的PeronsInfo
   if (!msg || !rclcpp::ok()) {
     return;
   }
 
-  cv::Point2f center(-1, -1);   //  = cv::Point2f
+  cv::Point2f center(-1, -1); 
+  float bbox_width = -1;
   for (const auto &person : msg->persons) {
     if (person.id == track_info_.track_id) {
       center.x = person.center.x;
       center.y = person.center.y;
+      bbox_width = person.width;
     }
   }
 
   if (center.x > 0) {
     // 获取相应坐标的深度值
-    // float depth_value = extract_depth_from_pointcloud(msg, image_x, image_y);
-    float depth_value = 1.0;
+    float depth_value = 0.0;
 
-    
+
     /*
-      data: [536.75638,   0.     , 286.90511,
-           0.     , 537.00102, 284.33105,
+      data: [235.67877,   0.     , 186.26218,
+           0.     , 236.79534, 111.24331,
            0.     ,   0.     ,   1.     ]
-    */
-    // 相机内参
-    float fx = 536.75638; // Example focal length in pixels (x-direction)
-    float fy = 537.00102; // Example focal length in pixels (y-direction)
-    float cx = 286.90511; // Example principal point (x-coordinate)
-    float cy = 284.33105; // Example principal point (y-coordinate)
 
-    // 通过内参转化为相机坐标系的坐标
+
+    */
+    // 相机内参，通过相机标定获得
+    float fx = 235.67877; 
+    float fy = 236.79534;
+    float cx = 186.26218;
+    float cy = 111.24331;
+
+
+    // 图像的宽高
+    int image_width = input_image.cols, image_height = input_image.rows;
+    // RCLCPP_INFO(this->get_logger(), "Image width: %d Image height: %d", image_width, image_height);
+    // width = 320   height = 240
+  
+    // 水平和垂直视场角，通过内参计算
+    float fov_x = 1.19;
+    float fov_y = 0.94;
+
+
+    // 每个像素点对应的角度值
+    float angle_per_pixel_x = fov_x / image_width;
+
+    // 计算检测框中心点的角度（行人中心相对相机的角度）
+    float center_angle_x = (center.x - image_width / 2) * angle_per_pixel_x;
+
+    // 计算检测框在图像中的角度范围
+    float half_width_angle = (bbox_width / 2) * angle_per_pixel_x;
+
+    // 计算角度范围
+    float angle_min_ = center_angle_x - half_width_angle;
+    float angle_max_ = center_angle_x + half_width_angle;
+
+
+    RCLCPP_INFO(this->get_logger(), "angle_min: %.2f angle_max: %.2f", angle_min_, angle_max_);
+
+
+    auto scan_msg = msg_image.third;   // 雷达消息
+
+
+     // 获取雷达数据
+    std::vector<float> distances = scan_msg->ranges;
+    std::vector<float> angles(scan_msg->ranges.size());
+    
+    // 生成每个雷达测量点的角度
+    for (size_t i = 0; i < angles.size(); ++i)
+    {
+        angles[i] = scan_msg->angle_min + i * scan_msg->angle_increment;
+    }
+
+    // 创建用于存储指定角度范围内的距离值的数组
+    std::vector<float> relevant_distances;
+
+    // 遍历角度范围内的雷达数据
+    for (size_t i = 0; i < distances.size(); ++i)
+    {
+        if (angles[i] >= angle_min_ && angles[i] <= angle_max_)
+        {
+            if (distances[i] > 0.0)  // 过滤掉无效距离
+            {
+                relevant_distances.push_back(distances[i]);
+            }
+        }
+    }
+
+    if (relevant_distances.empty())
+    {
+        RCLCPP_WARN(this->get_logger(), "No data in the specified angle range");
+    }
+    else
+    {
+        // 求最小距离值
+        auto min_distance = *std::min_element(relevant_distances.begin(), relevant_distances.end());
+        RCLCPP_INFO(this->get_logger(), "Minimum distance in the angle range: %f meters", min_distance);
+        depth_value = min_distance;
+    }
+
+
+
+    // 通过内参将图像中的坐标转化为相机坐标系的坐标
     float X_camera = (center.x - cx) * depth_value / fx;
     float Y_camera = (center.y - cy) * depth_value / fy;
     float Z_camera = depth_value;
@@ -517,9 +614,22 @@ void TrackingManager::Publish_goal(std::pair<person_tracking_msgs::msg::PersonsI
     point_in_camera.point.z = Z_camera;
 
     /*
+      TODO: 根据目标行人与机器人的角度信息，设置跟随距离，使目标位置与行人保持一定距离
+    */
+
+      // 计算所需的偏移量
+    float distance_to_keep = 1; // 目标位置与行人之间的距离为1m
+    float offset_x = distance_to_keep * cos(center_angle_x);
+    float offset_y = distance_to_keep * sin(center_angle_x);
+
+    // 计算目标位置
+    point_in_camera.point.x -= offset_x;
+    point_in_camera.point.y -= offset_y;
+    
+    
     // Transform the point from camera frame to map frame
     try {
-        geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_->lookupTransform("map", "camera_frame", tf2::TimePointZero);
+        geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_->lookupTransform("map", "astra_link", tf2::TimePointZero);
         geometry_msgs::msg::PointStamped point_in_map;
         tf2::doTransform(point_in_camera, point_in_map, transform_stamped);
 
@@ -536,16 +646,38 @@ void TrackingManager::Publish_goal(std::pair<person_tracking_msgs::msg::PersonsI
         goal.pose.orientation.z = 0.0;
         goal.pose.orientation.w = 1.0;
 
-        goal_publisher_->publish(goal);
 
-        // point_in_map就是在map下的坐标
+        // TODO1：计算正确的目标角度，应该面向行人
+        /*
+          center_angle_x ：行人相对相机的角度
+          // 获取机器人在 map 坐标系中的朝向角度
+          float robot_heading_angle = get_robot_heading_angle_in_map(); // 替换为实际方法
+          float angle_in_map_frame = center_angle_x + robot_heading_angle;
+          tf2::Quaternion q;
+          q.setRPY(0, 0, angle_in_map_frame);
+          goal.pose.orientation.x = q.x();
+          goal.pose.orientation.y = q.y();
+          goal.pose.orientation.z = q.z();
+          goal.pose.orientation.w = q.w();
+        */
 
-        // Publish the transformed point
-        // point_publisher_->publish(point_in_map);
+
+        auto now = rclcpp::Clock().now();// this->now();
+        // 检查距离上次发布消息是否已过去1秒
+        if ((now - last_publish_time_).seconds() >= 1.0) {
+            // 发布消息
+            goal_publisher_->publish(goal);
+            RCLCPP_INFO(this->get_logger(), "Publish the goal topic!!!!!!!!!!!!!!!!!");
+            
+            // 更新上次发布消息的时间
+            last_publish_time_ = now;
+        }
+
     } catch (tf2::TransformException &ex) {
         RCLCPP_ERROR(this->get_logger(), "Transform exception: %s", ex.what());
     }
-    */
     
   }
 }
+
+

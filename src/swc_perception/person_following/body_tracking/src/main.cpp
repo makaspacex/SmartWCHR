@@ -76,10 +76,11 @@ int main(int argc, char *argv[]) {
 */
   auto message_sync_node = std::make_shared<MessageSyncNode>(
     "message_sync_node",
-    std::bind(&TrackingManager::FeedSmart1,          // FeedSmart1，FeedSmart的改版，需要传入两个参数而不是一个
+    std::bind(&TrackingManager::FeedSmart2,          // FeedSmart1，FeedSmart的改版，需要传入两个参数而不是一个
               TrackingManager::Instance(),          // 跟之前一样
               std::placeholders::_1,
-		          std::placeholders::_2
+		          std::placeholders::_2,
+              std::placeholders::_3
 		)
   );
 

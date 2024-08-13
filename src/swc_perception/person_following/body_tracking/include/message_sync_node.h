@@ -35,7 +35,7 @@ using namespace std::chrono_literals;
 // typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image> personSyncPolicy;
 // typedef Synchronizer<personSyncPolicy> PersonSync;
 
-typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image, sensor_msgs::msg::Image> personSyncPolicy;
+typedef ApproximateTime<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image, sensor_msgs::msg::LaserScan> personSyncPolicy;
 typedef Synchronizer<personSyncPolicy> PersonSync;
 
 
@@ -50,7 +50,7 @@ using namespace std::placeholders;
 
 // 函数指针，两个参数分别为推理结果的消息和原始图片的消息
 using SmartCbType = std::function<void(
-    const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &img)>;
+    const person_tracking_msgs::msg::PersonsInfo::ConstSharedPtr &msg, const sensor_msgs::msg::Image::ConstSharedPtr &img, const sensor_msgs::msg::LaserScan::ConstSharedPtr &scan_msg)>;
 
 
 class MessageSyncNode : public rclcpp::Node {
@@ -62,13 +62,15 @@ public:
 
         smart_msg_sub_.subscribe(this, "/persons_info");
         image_sub_.subscribe(this, "/image");
-        depth_sub_.subscribe(this, "/camera/depth/image_raw");
+
+        // depth_sub_.subscribe(this, "/camera/depth/image_raw");
+        scan_sub_.subscribe(this, "/scan_s2_raw");
         
         // time_sync_ = std::make_shared<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>>(smart_msg_sub_, image_sub_, 10);
         
         // personSyncPolicy(200)，表示同步允许的时间间隔为200ms
         time_sync_ = std::make_shared<PersonSync>(personSyncPolicy(200),
-                                            smart_msg_sub_, image_sub_, depth_sub_);
+                                            smart_msg_sub_, image_sub_, scan_sub_);
 
 
         // sync_->registerCallback(&Syncer::cb, this);
@@ -79,15 +81,14 @@ public:
       }
 
 private:
-    void syncCallback(const person_tracking_msgs::msg::PersonsInfo::SharedPtr& smart_msg, const sensor_msgs::msg::Image::SharedPtr& image, const sensor_msgs::msg::Image::SharedPtr& depth_image) 
+    void syncCallback(const person_tracking_msgs::msg::PersonsInfo::SharedPtr& smart_msg, const sensor_msgs::msg::Image::SharedPtr& image, const sensor_msgs::msg::LaserScan::SharedPtr& scan_msg) 
     {
         
         cv::Mat cv_image = cv_bridge::toCvCopy(image, "bgr8")->image;
         auto image_size = cv_image.size();
 
         
-        RCLCPP_INFO(rclcpp::get_logger("MessageSyncNode"),
-              "sync subscribe two message");
+        // RCLCPP_INFO(rclcpp::get_logger("MessageSyncNode"), "sync subscribe three message");
         
 
 
@@ -95,7 +96,7 @@ private:
         // 可以使用 smart_msg 和 image 进行进一步的操作
         // 20230828smart_cb_是初始化节点时，传入的函数指针
         if (smart_cb_) {
-            smart_cb_(smart_msg, image);
+            smart_cb_(smart_msg, image, scan_msg);
         } else {
         RCLCPP_WARN(rclcpp::get_logger("MessageSync"),
             "smart_cb_ was not set");
@@ -106,7 +107,9 @@ private:
     SmartCbType smart_cb_ = nullptr;
     message_filters::Subscriber<person_tracking_msgs::msg::PersonsInfo> smart_msg_sub_;
     message_filters::Subscriber<sensor_msgs::msg::Image> image_sub_;
-    message_filters::Subscriber<sensor_msgs::msg::Image> depth_sub_;   //订阅深度图
+    // message_filters::Subscriber<sensor_msgs::msg::Image> depth_sub_;   //订阅深度图
+    message_filters::Subscriber<sensor_msgs::msg::LaserScan> scan_sub_;   //订阅雷达消息
+
 
     // rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_sub_;
     // std::shared_ptr<message_filters::TimeSynchronizer<person_tracking_msgs::msg::PersonsInfo, sensor_msgs::msg::Image>> time_sync_;
