@@ -20,7 +20,7 @@ std::shared_ptr<TrackingManager> TrackingManager::Instance() {
   return inst;
 }
 
-TrackingManager::TrackingManager() : Node("body_tracking") {
+TrackingManager::TrackingManager() : Node("body_tracking_node") {
   start_ = true;
 
   track_info_.is_movectrl_running = false;
@@ -115,12 +115,6 @@ void TrackingManager::byl_log(std::string const & text)
 }
 
 
-
-// 发布0速度指令，停止运动
-void TrackingManager::CancelMove() {
-
-}
-
 // 在这个函数当中，完成四个状态转换的逻辑
 // initial、training、Lost(reid)、tracking
 // void TrackingManager::ProcessSmart(
@@ -209,6 +203,7 @@ void TrackingManager::ProcessSmart(const Triplet &msg_image) {
       RCLCPP_INFO(rclcpp::get_logger("TrackingManager"),
               "lost target in TRAINING STATE");
       track_info_.tracking_sta = TrackingStatus::LOST;  
+      CancelMove();
       stay_TRACKING = false; 
 
     } 
@@ -216,7 +211,7 @@ void TrackingManager::ProcessSmart(const Triplet &msg_image) {
 
     // 注释掉这段在跟踪过程中更新分类器的代码，一开始输入10张训练照片就不更新分类器了
     // 因为在跟随的过程中更新分类器速率太慢了
-    /*
+    
     else {
       boost::optional<double> pred = context->predict(found->second);   // 用分类器得到target框的置信度
       if(pred && *pred < -0.1) {                                      // 置信度小于-0.1，说明目标跟丢了，还是进入LOST状态
@@ -238,7 +233,7 @@ void TrackingManager::ProcessSmart(const Triplet &msg_image) {
         }
       }
     }
-    */
+    
     
     // 如果没跟丢，即stay_TRACKING == true，则要进行下面的代码，判断跟踪对象是否做出了取消跟随的指令
     if (stay_TRACKING) {
@@ -251,6 +246,7 @@ void TrackingManager::ProcessSmart(const Triplet &msg_image) {
         if ((person.keypoints[12].x > 0 && person.keypoints[16].x > 0) && (person.keypoints[12].y > person.keypoints[16].y)) {
               cancel = true;
               byl_log("cancel is true");
+              CancelMove();
               break;
         }
       } 
@@ -591,6 +587,7 @@ void TrackingManager::Caculate_goal(const Triplet &msg_image) {
     if (relevant_distances.empty())
     {
         RCLCPP_WARN(this->get_logger(), "No data in the specified angle range");
+        return;
     }
     else
     {
@@ -622,7 +619,7 @@ void TrackingManager::Caculate_goal(const Triplet &msg_image) {
     float offset_x = distance_to_keep * cos(center_angle_x);
     float offset_y = distance_to_keep * sin(center_angle_x);
 
-    // 计算目标位置
+    // 计算目标位置，减去偏移量，使机器人与目标行人保持一定距离
     point_in_camera.point.x -= offset_x;
     point_in_camera.point.y -= offset_y;
     
@@ -641,26 +638,29 @@ void TrackingManager::Caculate_goal(const Triplet &msg_image) {
         goal.pose.position.x = point_in_map.point.x;
         goal.pose.position.y = point_in_map.point.y;
         goal.pose.position.z = point_in_map.point.z;
-        goal.pose.orientation.x = 0.0;
-        goal.pose.orientation.y = 0.0;
-        goal.pose.orientation.z = 0.0;
-        goal.pose.orientation.w = 1.0;
 
+        // 计算目标位置的角度
+        // 提取摄像头当前在map坐标系下的角度信息
+        tf2::Quaternion q(
+            transform_stamped.transform.rotation.x,
+            transform_stamped.transform.rotation.y,
+            transform_stamped.transform.rotation.z,
+            transform_stamped.transform.rotation.w
+        );
 
-        // TODO1：计算正确的目标角度，应该面向行人
-        /*
-          center_angle_x ：行人相对相机的角度
-          // 获取机器人在 map 坐标系中的朝向角度
-          float robot_heading_angle = get_robot_heading_angle_in_map(); // 替换为实际方法
-          float angle_in_map_frame = center_angle_x + robot_heading_angle;
-          tf2::Quaternion q;
-          q.setRPY(0, 0, angle_in_map_frame);
-          goal.pose.orientation.x = q.x();
-          goal.pose.orientation.y = q.y();
-          goal.pose.orientation.z = q.z();
-          goal.pose.orientation.w = q.w();
-        */
-
+        // 转换为欧拉角
+        tf2::Matrix3x3 m(q);
+        double roll, pitch, robot_heading_angle;
+        m.getRPY(roll, pitch, robot_heading_angle);
+        
+        // 目标角度等于行人相对摄像头的角度+摄像头在map中的角度
+        float angle_in_map_frame = center_angle_x + robot_heading_angle;
+        tf2::Quaternion goal_q;
+        goal_q.setRPY(0, 0, angle_in_map_frame);
+        goal.pose.orientation.x = goal_q.x();
+        goal.pose.orientation.y = goal_q.y();
+        goal.pose.orientation.z = goal_q.z();
+        goal.pose.orientation.w = goal_q.w();
 
         auto now = rclcpp::Clock().now();// this->now();
         // 检查距离上次发布消息是否已过去1秒
@@ -678,6 +678,51 @@ void TrackingManager::Caculate_goal(const Triplet &msg_image) {
     }
     
   }
+}
+
+
+// 将当前位姿作为目标发布，起到取消跟随的作用
+void TrackingManager::CancelMove() {
+  // 方案一，订阅/pose消息（应该是当前位姿），作为目标位姿发布
+  // pose_subscription_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+  //                   "/pose",
+  //                   10,
+  //                   [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+  //                     goal_publisher_->publish(*msg);
+  //                     RCLCPP_INFO(this->get_logger(), "Cancel Move, Received and Publish /Pose");
+  //                   });
+  
+
+
+  // 方案二，通过tf获取base_footprint在map下的位姿，作为目标位姿发布
+  geometry_msgs::msg::PoseStamped pose_stamped;
+  pose_stamped.header.frame_id = "map";
+  pose_stamped.header.stamp = this->get_clock()->now();
+
+  try {
+      // 获取 TF 变换
+      geometry_msgs::msg::TransformStamped transform = tf_buffer_->lookupTransform(
+          "map", "base_footprint", tf2::TimePointZero);
+
+      // 将 TF 变换转换为 PoseStamped 消息
+      pose_stamped.pose.position.x = transform.transform.translation.x;
+      pose_stamped.pose.position.y = transform.transform.translation.y;
+      pose_stamped.pose.position.z = transform.transform.translation.z;
+      pose_stamped.pose.orientation.x = transform.transform.rotation.x;
+      pose_stamped.pose.orientation.y = transform.transform.rotation.y;
+      pose_stamped.pose.orientation.z = transform.transform.rotation.z;
+      pose_stamped.pose.orientation.w = transform.transform.rotation.w;
+
+      // 发布消息
+      goal_publisher_->publish(pose_stamped);
+
+      RCLCPP_INFO(this->get_logger(), "Cancel Move, Published the basefoorprint pose");
+  } catch (tf2::TransformException &ex) {
+      RCLCPP_ERROR(this->get_logger(), "Transform error: %s", ex.what());
+  }
+
+
+
 }
 
 

@@ -69,48 +69,48 @@ class ParametersClass : public rclcpp::Node {
     this->get_parameter("img_width", cfg_->img_width);
     this->get_parameter("img_height", cfg_->img_height);
 
-    std::stringstream ss;
-    //  ss << "track_body: " << cfg_->track_body << std::endl;
-    ss << "activate_wakeup_gesture: " << cfg_->activate_wakeup_gesture
-       << std::endl;
-    ss << "track_serial_lost_num_thr: " << cfg_->track_serial_lost_num_thr
-       << std::endl;
-    ss << "activate_robot_rotate_thr: " << cfg_->activate_robot_rotate_thr
-       << std::endl;
-    //  ss << "track_lost_protection_angel_thr: "
-    //     << cfg_->track_lost_protection_angel_thr << std::endl;
-    //  ss << "track_overmoving_protection_angel_thr: "
-    //     << cfg_->track_overmoving_protection_angel_thr << std::endl;
-    ss << "activate_robot_move_thr: " << cfg_->activate_robot_move_thr
-       << std::endl;
-    //  ss << "stop_robot_move_to_top_thr: " << cfg_->stop_robot_move_to_top_thr
-    //     << std::endl;
-    ss << "linear_velocity: " << cfg_->move_step << std::endl;
-    ss << "angular_velocity: " << cfg_->rotate_step << std::endl;
-    //  ss << "stop_move_rect_width_ratio_thr: "
-    //     << cfg_->stop_move_rect_width_ratio_thr << std::endl;
-    //  ss << "start_move_rect_width_ratio_thr: "
-    //     << cfg_->start_move_rect_width_ratio_thr << std::endl;
-    ss << "img_width: " << cfg_->img_width << std::endl;
-    ss << "img_height: " << cfg_->img_height << std::endl;
+    // std::stringstream ss;
+    // //  ss << "track_body: " << cfg_->track_body << std::endl;
+    // ss << "activate_wakeup_gesture: " << cfg_->activate_wakeup_gesture
+    //    << std::endl;
+    // ss << "track_serial_lost_num_thr: " << cfg_->track_serial_lost_num_thr
+    //    << std::endl;
+    // ss << "activate_robot_rotate_thr: " << cfg_->activate_robot_rotate_thr
+    //    << std::endl;
+    // //  ss << "track_lost_protection_angel_thr: "
+    // //     << cfg_->track_lost_protection_angel_thr << std::endl;
+    // //  ss << "track_overmoving_protection_angel_thr: "
+    // //     << cfg_->track_overmoving_protection_angel_thr << std::endl;
+    // ss << "activate_robot_move_thr: " << cfg_->activate_robot_move_thr
+    //    << std::endl;
+    // //  ss << "stop_robot_move_to_top_thr: " << cfg_->stop_robot_move_to_top_thr
+    // //     << std::endl;
+    // ss << "linear_velocity: " << cfg_->move_step << std::endl;
+    // ss << "angular_velocity: " << cfg_->rotate_step << std::endl;
+    // //  ss << "stop_move_rect_width_ratio_thr: "
+    // //     << cfg_->stop_move_rect_width_ratio_thr << std::endl;
+    // //  ss << "start_move_rect_width_ratio_thr: "
+    // //     << cfg_->start_move_rect_width_ratio_thr << std::endl;
+    // ss << "img_width: " << cfg_->img_width << std::endl;
+    // ss << "img_height: " << cfg_->img_height << std::endl;
 
-    if (first_dump_config_) {
-      first_dump_config_ = false;
-      RCLCPP_WARN(rclcpp::get_logger("ParametersClass"),
-                  "TrackCfg param are\n%s",
-                  ss.str().data());
-    } else {
-      RCLCPP_DEBUG(rclcpp::get_logger("ParametersClass"),
-                   "TrackCfg param are\n%s",
-                   ss.str().data());
-    }
+    // if (first_dump_config_) {
+    //   first_dump_config_ = false;
+    //   RCLCPP_WARN(rclcpp::get_logger("ParametersClass"),
+    //               "TrackCfg param are\n%s",
+    //               ss.str().data());
+    // } else {
+    //   RCLCPP_DEBUG(rclcpp::get_logger("ParametersClass"),
+    //                "TrackCfg param are\n%s",
+    //                ss.str().data());
+    // }
 
-    if (cfg_->stop_move_rect_width_ratio_thr <
-        cfg_->start_move_rect_width_ratio_thr) {
-      RCLCPP_ERROR(rclcpp::get_logger("ParametersClass"),
-                   "stop_move_rect_width_ratio_thr and "
-                   "start_move_rect_width_ratio_thr params are abnormal\n");
-    }
+    // if (cfg_->stop_move_rect_width_ratio_thr <
+    //     cfg_->start_move_rect_width_ratio_thr) {
+    //   RCLCPP_ERROR(rclcpp::get_logger("ParametersClass"),
+    //                "stop_move_rect_width_ratio_thr and "
+    //                "start_move_rect_width_ratio_thr params are abnormal\n");
+    // }
   }
 
  private:

@@ -22,10 +22,8 @@
 int main(int argc, char *argv[]) {
   std::stringstream ss;
   ss << "\n\tThis is body tracking package.\n\n"
-     << "\tgesture strategy usage\n"
-     << "\nWake up gesture is \"Okay\".\n"
-     << "Cancel gesture is \"Palm\".\n"
-     << "Control will be reset if body is lost.\n"
+     << "\nWake up action is putting your left arm up.\n"
+     << "Cancel action is putting your right arm up.\n"
      << "============================================\n";
   std::cout << ss.str() << std::endl;
 

@@ -12,15 +12,16 @@ def generate_launch_description():
             executable='person_tracker_node',
             name='person_tracker_node',
             output='screen',
-            parameters=[{'param_name': 'value'}],  # 可选的参数
-            remappings=[('/old/topic', '/new/topic')]  # 可选的主题重映射
+            
+            # parameters=[{'param_name': 'value'}],  # 可选的参数
+            # remappings=[('/old/topic', '/new/topic')]  # 可选的主题重映射
         ),
         Node(
             package='person_detector',
             executable='persons_visualize_node',
             name='persons_visualize_node',
             output='screen',
-            parameters=[{'param_name': 'value'}],  # 可选的参数
-            remappings=[('/old/topic', '/new/topic')]  # 可选的主题重映射
+            # parameters=[{'param_name': 'value'}],  # 可选的参数
+            # remappings=[('/old/topic', '/new/topic')]  # 可选的主题重映射
         ),
     ])

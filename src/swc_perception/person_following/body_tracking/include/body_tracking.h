@@ -118,6 +118,9 @@ class TrackingManager : public rclcpp::Node {
   // 目标指令发布者
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_publisher_;
 
+  // /pose消息的订阅者
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscription_;
+
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   
@@ -136,7 +139,9 @@ class TrackingManager : public rclcpp::Node {
   // 当前的/goal_pose消息
   geometry_msgs::msg::PoseStamped my_goal;
   // 上次发布/goal_pose消息的时间
+  // rclcpp::Time last_publish_time_{rclcpp::Clock().now()};
   rclcpp::Time last_publish_time_{rclcpp::Clock().now()};
+
 };
 
 

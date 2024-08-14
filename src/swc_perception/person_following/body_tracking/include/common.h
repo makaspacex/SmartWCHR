@@ -134,8 +134,6 @@ struct TrackCfg {
   // 检测框对应的图片分辨率
   int img_width = 640;
   int img_height = 480;
-  // int img_width = 960;
-  // int img_height = 544;
 };
 
 struct LaserScanMsg {
