@@ -13,7 +13,6 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/weights', glob('weights/*')),
         ('share/' + package_name + '/data', glob('data/*')),
-
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,6 +23,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'yolomix_node = yolomix.yolomix_node:main',
+            'visualization_node = yolomix.VisualizationNode:main'
         ],
+        
     },
 )

@@ -7,6 +7,19 @@
   <maintainer email="qyciuui@163.com">jetson</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>std_msgs</depend>
+  <depend>rclpy</depend>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>yolomix_msgs</exec_depend>
+
+
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
