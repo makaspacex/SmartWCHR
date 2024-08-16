@@ -52,7 +52,7 @@ class VisualizationNode(Node):
 
 
             # Draw keypoints
-            draw_points = [5, 9]
+            draw_points = [6, 10]
             for idx, kp in enumerate(person.keypoints):
                 if idx in draw_points:
                     x, y = int(kp.x), int(kp.y)
