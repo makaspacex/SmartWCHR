@@ -3,6 +3,7 @@
 #include "include/context.hpp"
 // #include <cv_bridge/cv_bridge.h>
 #include <ccf_person_identification/person_classifier.hpp>
+#include <opencv2/opencv.hpp>
 
 
 
@@ -57,6 +58,15 @@ void Context::extract_features(const cv::Mat& bgr_image, std::unordered_map<long
 
             std::unordered_map<std::string, cv::Mat> images;
             images["body"] = cv::Mat(bgr_image, *track.second->person_region);
+
+            // // 创建窗口
+            // cv::namedWindow("Display Image", cv::WINDOW_AUTOSIZE);
+            
+            // // 显示图片
+            // cv::imshow("Display Image", images["body"]);
+            
+            // // 等待用户按键
+            // cv::waitKey(0);
 
             if(!classifier->extractInput(track.second->input, images)) {
                 RCLCPP_WARN(rclcpp::get_logger("TrackingManager"), "failed to extract input data");

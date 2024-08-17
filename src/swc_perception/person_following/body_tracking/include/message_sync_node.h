@@ -13,6 +13,14 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
+// 包含自定义的消息规则
+/*
+① 对应的文件名+.hpp后缀
+② 文件名大写变小写
+③ 大写和小写中间的地方加‘_’
+*/
+#include "yolomix_msgs/msg/yolo_persons.hpp"
+
 
 #include <message_filters/sync_policies/approximate_time.h>
 

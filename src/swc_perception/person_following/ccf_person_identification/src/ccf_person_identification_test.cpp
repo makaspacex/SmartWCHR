@@ -50,13 +50,13 @@ int main(int argc, char** argv) {
         neg1["body"] = cv::imread((boost::format("%s/n%02d-01.jpg") % dataset_dir % i).str());
         neg2["body"] = cv::imread((boost::format("%s/n%02d-02.jpg") % dataset_dir % i).str());
 	
-	cv::Mat img;
-	int height = pos["body"].rows;
-	int width = pos["body"].cols;
-	cout << "origin size() : height: " << pos["body"].rows << "    width: " << pos["body"].cols << endl;
-	cv::resize(pos["body"], img, cv::Size(640, 480));
-	cout << "img.size() : height: " << img.rows << "    width: " << img.cols << endl;	
-	pos["body"] = img;
+        cv::Mat img;
+        int height = pos["body"].rows;
+        int width = pos["body"].cols;
+        cout << "origin size() : height: " << pos["body"].rows << "    width: " << pos["body"].cols << endl;
+        cv::resize(pos["body"], img, cv::Size(640, 480));
+        cout << "img.size() : height: " << img.rows << "    width: " << img.cols << endl;	
+        pos["body"] = img;
 
         if (!pos["body"].data || !neg1["body"].data || !neg2["body"].data) {
             std::cerr << "error: failed to open image!! image_id: " << i << std::endl;

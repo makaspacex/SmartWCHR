@@ -247,6 +247,10 @@ class DetectionNode(Node):
 
             # 绘制边界框
             cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 2)
+            
+            # Draw ID
+            text = f"ID: {person.id}"
+            cv2.putText(cv_image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # 将OpenCV图像转换回ROS图像消息
         output_msg = self.cv_bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")

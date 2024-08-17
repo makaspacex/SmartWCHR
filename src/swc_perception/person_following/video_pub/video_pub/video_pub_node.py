@@ -15,10 +15,15 @@ class VideoPublisherNode(Node):
         self.bridge = CvBridge()
 
         # 设置视频文件路径
-        video_path = 'test_videos/kun_test.mp4'
+        self.declare_parameter("video_path", 'test_videos/kun_test.mp4')
+        
         package_share_directory = get_package_share_directory('video_pub')
-        self.video_path = os.path.join(package_share_directory, video_path)
+        
+        self.video_path = self.get_parameter("video_path").get_parameter_value().string_value
 
+        if not os.path.exists(self.video_path):
+            raise Exception(f"File not found:{self.video_path}")
+        
         # self.video_path = os.path.join(self.get_package_share_directory('video_pub'), video_path)  # 这里设置你的视频文件路径
         self.cap = cv2.VideoCapture(self.video_path)
         

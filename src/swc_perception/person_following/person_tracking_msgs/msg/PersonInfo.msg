@@ -4,3 +4,4 @@ geometry_msgs/Point center
 float64 width
 float64 height
 geometry_msgs/Point[] keypoints
+# sensor_msgs/Image image

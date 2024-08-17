@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_map>        
 #include <utility>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -74,6 +75,10 @@ class TrackingManager : public rclcpp::Node {
 
   void CancelMove();
 
+  // 纯视觉跟随和取消
+  void Visual_follow(const Triplet &msg_image);
+  void VisualCancelMove();
+
   std::mutex robot_strategy_mtx_;
   // 如果上一帧智能数据的策略未处理完，当前智能数据不处理 
   std::atomic_bool last_frame_done_;
@@ -133,6 +138,7 @@ class TrackingManager : public rclcpp::Node {
 
   // 是否发布可视化消息
   bool if_visualization = true;
+  
 
   std::unordered_map<TrackingStatus, std::string> state_;
 
@@ -141,6 +147,12 @@ class TrackingManager : public rclcpp::Node {
   // 上次发布/goal_pose消息的时间
   // rclcpp::Time last_publish_time_{rclcpp::Clock().now()};
   rclcpp::Time last_publish_time_{rclcpp::Clock().now()};
+
+
+  // 发布速度指令
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+  // 是否纯视觉跟随
+  bool pure_visual_following = true;
 
 };
 

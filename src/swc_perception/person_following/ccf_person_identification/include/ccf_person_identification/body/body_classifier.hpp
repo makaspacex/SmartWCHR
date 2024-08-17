@@ -27,7 +27,7 @@ public:
     {
         std::string package_path = ament_index_cpp::get_package_share_directory("ccf_person_identification");
 	// std::string package_path = ament_index_cpp::get_package_prefix("ccf_person_identification");
-        std::string channel_types = node->declare_parameter<std::string>("channel_types", "cnn10");
+        std::string channel_types = node->declare_parameter<std::string>("channel_types", "cnn25");
         bool use_only_first_layer = node->declare_parameter<bool>("use_only_first_layer", false);
 
         // define channel set for body classification
