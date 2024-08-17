@@ -21,9 +21,12 @@ class VideoPublisherNode(Node):
         
         self.video_path = self.get_parameter("video_path").get_parameter_value().string_value
 
+        
+        
         if not os.path.exists(self.video_path):
             raise Exception(f"File not found:{self.video_path}")
         
+        self.get_logger().info(f"video path:{self.video_path}")
         # self.video_path = os.path.join(self.get_package_share_directory('video_pub'), video_path)  # 这里设置你的视频文件路径
         self.cap = cv2.VideoCapture(self.video_path)
         
