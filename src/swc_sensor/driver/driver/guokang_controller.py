@@ -94,15 +94,17 @@ class CmdVelToSerial(Node):
 
         # 上一次接收到速度指令的时间
         self.last_Twist_time = time.time() 
-        self.timer = self.create_timer(0.6, self.timer_callback)
-
+        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.last_print_ss = time.time()
     
     def timer_callback(self):
-        if time.time() - self.last_Twist_time > 0.5:
-            ser_data = self.get_ser_data(0, 0)
-            self.write_to_ser(ser_data=ser_data)
+        if time.time() - self.last_Twist_time < 0.5:
+            return 
+        ser_data = self.get_ser_data(0, 0)
+        self.write_to_ser(ser_data=ser_data)
+        if time.time() - self.last_print_ss > 1:
             self.get_logger().warn("No speed command for more than 0.5s")
-            
+            self.last_print_ss = time.time()
         
     def twist_pub_callback(self):
         self.connect_dev()

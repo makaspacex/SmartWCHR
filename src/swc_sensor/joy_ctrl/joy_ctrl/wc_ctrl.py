@@ -134,7 +134,7 @@ class JoyTeleop(Node):
             if curtime - self.last_not_zero_cmd > 0.5:
                 _send=False
                 if curtime - self.last_print_time > 1:
-                    self.get_logger().info(f"send zero than 0.5s, stop send cmd vel msgs.")
+                    self.get_logger().warn(f"Stop send zero cmd for more than 0.5s.")
         else:
             self.last_not_zero_cmd = time.time()
         
