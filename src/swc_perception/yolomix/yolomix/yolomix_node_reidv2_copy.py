@@ -24,50 +24,6 @@ from ultralytics.trackers.basetrack import BaseTrack
 from ultralytics.trackers.byte_tracker import STrack
 
 
-# from sklearn.metrics.pairwise import cosine_similarity
-
-'''
-from torchreid.utils import FeatureExtractor
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model_name = "osnet_x0_75"
-# # reid-specific models
-# 'mudeep': MuDeep,
-# 'resnet50mid': resnet50mid,
-# 'hacnn': HACNN,
-# 'pcb_p6': pcb_p6,
-# 'pcb_p4': pcb_p4,
-# 'mlfn': mlfn,
-# 'osnet_x1_0': osnet_x1_0,
-# 'osnet_x0_75': osnet_x0_75,
-# 'osnet_x0_5': osnet_x0_5,
-# 'osnet_x0_25': osnet_x0_25,
-# 'osnet_ibn_x1_0': osnet_ibn_x1_0,
-# 'osnet_ain_x1_0': osnet_ain_x1_0,
-# 'osnet_ain_x0_75': osnet_ain_x0_75,
-# 'osnet_ain_x0_5': osnet_ain_x0_5,
-# 'osnet_ain_x0_25': osnet_ain_x0_25
-reid_fe_extractor = FeatureExtractor(model_name=model_name,device=device)
-
-
-img_path = "src/swc_perception/person_following/ccf_person_identification/data/test/p05.jpg"
-img = cv2.imread(img_path)
-
-
-fe = reid_fe_extractor([img, img,img,img,img,img,img])
-fe.shape
-'''
-class BotEncoder(FeatureExtractor):
-    def __init__(self,model_name,device):
-        super().__init__(model_name=model_name,device=device)
-
-    def inference(self, img, dets) -> np.ndarray:
-        croped_imgs = []
-        for det in dets:
-            _c = get_roi(img, det)
-            croped_imgs.append(_c)
-        fetures = self.__call__(croped_imgs).cpu().detach().numpy()
-        return fetures
-
 def get_roi( image, box):
     x_center, y_center, width, height = box[:4]
     # 计算左上角和右下角的坐标
@@ -100,16 +56,11 @@ class YolomixNode(Node):
         
         # Load reID model
         model_name = "osnet_x0_75"
-        self.reid_fe_extractor = BotEncoder(model_name=model_name,device=device)
+        self.reid_fe_extractor = FeatureExtractor(model_name=model_name,device=device)
         
         # 注册跟踪器以及reid的encoder
-        self.tracker_config_file = os.path.join(package_share_dir,"config/custom_botsort.yaml")
-        # self.tracker_config_file = os.path.join(package_share_dir,"config/custom_bytetrack.yaml")
-        
-        from ultralytics.trackers import register_tracker
-        register_tracker(self.model, persist=True)
-        self.model.track(np.zeros(shape=(480,640,3)), persist=True, conf=0.65,  tracker=self.tracker_config_file)
-        self.model.predictor.trackers[0].encoder = self.reid_fe_extractor
+        # self.tracker_config_file = os.path.join(package_share_dir,"config/custom_botsort.yaml")
+        self.tracker_config_file = os.path.join(package_share_dir,"config/custom_bytetrack.yaml")
         
         # id特征库，第0维是id号，第1维是时间，2~513维是特征
         self.feature_library = np.empty((0, 514))
@@ -131,6 +82,10 @@ class YolomixNode(Node):
             self.listener_callback,
             10
         )
+
+        self.max_tracked_id = 0
+        self.mapping_table = {}
+
 
     def cosine_similarity(self, vector_a, vector_b):
         dot_product = np.dot(vector_a, vector_b)
@@ -158,49 +113,66 @@ class YolomixNode(Node):
         cosin_sim = a_dot_b / abmo
         return cosin_sim
     
-    def match_and_assign_id(self, reid_features, threshold=0.8):
-        assigned_ids = []
+    def match_and_assign_id(self, reid_features, yolo_ids, threshold=0.8):
+        '''
+        看当前对象是否已经被track，如果已经被track，不重复reid
+        每个对象只进行一次reid
+        看当前已经出现的id有哪些，即用一个变量记录上一帧中的max_tracked_id
+        如果给当前对象分配的track_id < max_tracked_id，则说明当前对象已经被track，不用被reid
+
+        建立一个映射表，从track_id到reid_library中的id
+
+        '''
+        # assigned_ids = []
 
          # 检查库是否为空
         if self.feature_library.shape[0] == 0:
-            for feature in reid_features:
+            for idx, feature in enumerate(reid_features):
                 new_id = self.next_id
                 self.next_id += 1
-                assigned_ids.append(new_id)
+
+                self.mapping_table[yolo_ids[idx]] = new_id
+
                 # 获取当前时间戳作为存入时间
                 current_time = time.time()
                 # 将ID、时间和特征组合为一行
                 new_entry = np.hstack(([new_id, current_time], feature))
                 # 将新的条目添加到 feature_library
                 self.feature_library = np.vstack([self.feature_library, new_entry])
+            return
 
-            return assigned_ids
           
+
         stored_lib = self.feature_library[:, 2:]
         stored_ids = self.feature_library[:, 0]
         # reid_features  n×512      stored_lib    N×512     T:512×N
         cos_sim = self.cosin_sim_cal(reid_features, stored_lib)   # n×N  
         best_match_idx = np.argmax(cos_sim, axis=1)               # n×1  当前特征跟库里的第几个最匹配
 
-        # cos_sim[0, best_match_idx[0]]  # 第0号特征对应最大的余弦相似度
-        for index, best_match in enumerate(best_match_idx):
-            stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
-            similarity = cos_sim[index, best_match]  # 当前特征与最匹配的库里的特征的相似度
-            if similarity > threshold:
-                assigned_ids.append(stored_id)
-            else:
-                stored_id = self.next_id
-                self.next_id += 1
-                assigned_ids.append(stored_id)
 
-            # 获取当前时间戳作为存入时间
-            current_time = time.time()
-            # 将ID、时间和特征组合为一行
-            new_entry = np.hstack(([stored_id, current_time], reid_features[index]))
-            # 将新的条目添加到 feature_library
-            self.feature_library = np.vstack([self.feature_library, new_entry])
+        for idx, feature in enumerate(reid_features):
+            if yolo_ids[idx] <= self.max_tracked_id:  # 当前对象已经被track，不用进行reid，直接压进特征库即可
+                current_time = time.time()
+                lib_id = self.mapping_table[yolo_ids[idx]]
+                new_entry = np.hstack(([lib_id, current_time], feature))
+                # 将新的条目添加到 feature_library
+                self.feature_library = np.vstack([self.feature_library, new_entry])
+            else:                                           # 当前是新的没有被track的对象，第一次需要reid
+                best_match = best_match_idx[idx]
+                stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
+                similarity = cos_sim[idx, best_match]  # 当前特征与最匹配的库里的特征的相似度
+                if similarity < threshold:
+                    stored_id = self.next_id
+                    self.next_id += 1
+                self.mapping_table[yolo_ids[idx]] = int(stored_id)
 
-        return assigned_ids
+
+                # 获取当前时间戳作为存入时间
+                current_time = time.time()
+                # 将ID、时间和特征组合为一行
+                new_entry = np.hstack(([stored_id, current_time], feature))
+                # 将新的条目添加到 feature_library
+                self.feature_library = np.vstack([self.feature_library, new_entry])
         
 
     def listener_callback(self, msg):
@@ -233,6 +205,8 @@ class YolomixNode(Node):
                 count = BaseTrack._count
                 self.model.predictor.trackers[0].reset()
                 BaseTrack._count = count
+
+            
         # 判断yolo模型是否跟踪到，分配id
         if results[0].boxes.is_track:
             boxes = results[0].boxes.xywh.tolist()
@@ -240,10 +214,12 @@ class YolomixNode(Node):
             keypoints = results[0].keypoints.data.tolist()
             
             roi_images = []
+            yolo_ids = []  # yolo_track分配的id
              # 遍历所有检测到的对象结果
             for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
                 x_center, y_center, width, height = box
 
+                yolo_ids.append(track_id)
                 roi_image = get_roi(cv_image, box)
                 roi_images.append(roi_image)
 
@@ -259,11 +235,18 @@ class YolomixNode(Node):
                 # 将 YoloPerson 消息添加到 YoloPersons 消息中
                 yolo_persons_msg.persons.append(yolo_person_msg)
 
-            # if len(roi_images) > 0:
-            #     reid_features = self.reid_fe_extractor(roi_images).cpu()
-            #     assign_ids = self.match_and_assign_id(reid_features)
-            #     for assign_id, person in zip(assign_ids, yolo_persons_msg.persons):
-            #         person.id = assign_id
+            
+            if len(roi_images) > 0:
+                reid_features = self.reid_fe_extractor(roi_images).cpu()
+                self.match_and_assign_id(reid_features, yolo_ids)
+
+                self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
+                
+                for person in yolo_persons_msg.persons:
+                    person.id = self.mapping_table[person.id]
+
+                # for assign_id, person in zip(assign_ids, yolo_persons_msg.persons):
+                #     person.id = int(assign_id)
                 # for idx, person in enumerate(yolo_persons_msg.persons):
                 #     person.id = int(assign_ids[idx])
 

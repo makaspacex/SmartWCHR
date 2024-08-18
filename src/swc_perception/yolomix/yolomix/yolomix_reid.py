@@ -20,7 +20,13 @@ from torchreid.utils import FeatureExtractor
 import numpy as np
 import time
 # from sklearn.metrics.pairwise import cosine_similarity
-from .sort import Sort
+# from .sort import Sort
+from ultralytics.engine.results import Results
+from typing import List, Union
+from ultralytics.trackers.basetrack import BaseTrack
+from ultralytics.trackers.byte_tracker import STrack
+from std_msgs.msg import String
+
 
 
 class YolomixNode(Node):
@@ -40,7 +46,7 @@ class YolomixNode(Node):
         self.reid_fe_extractor = FeatureExtractor(model_name=model_name,device=device)
         # Create a CvBridge object
         self.cv_bridge = CvBridge()
-        self.sort_tracker = Sort()  # 初始化 SORT 跟踪器
+        # self.sort_tracker = Sort()  # 初始化 SORT 跟踪器
 
         # Create a publisher for YoloPersons messages
         self.persons_publisher = self.create_publisher(YoloPersons, '/yolo_persons', 10)
@@ -54,15 +60,18 @@ class YolomixNode(Node):
         )
         self.subscription
 
+        self.tracker_config_file = os.path.join(package_share_dir,"config/custom_bytetrack.yaml")
+
 
         self.target_id = None
         self.target_feature = None
-        self.alpha = 0.5
-        self.similarity_threshold = 0.7
+        self.alpha = 0.9
+        self.similarity_threshold = 0.8
         self.yolo_persons = None
 
 
         self.visual_publisher = self.create_publisher(Image, '/reid_visualization', 10)
+        self.log_publisher = self.create_publisher(String, 'reid_log', 10)
 
 
 
@@ -103,6 +112,12 @@ class YolomixNode(Node):
         return dot_product / (norm_a * norm_b)
     
 
+    def log(self, log_data):
+        log_msg = String()
+        log_msg.data = log_data
+        self.log_publisher.publish(log_msg)
+    
+
     def listener_callback(self, msg):
         self.Visualizatin()
 
@@ -115,13 +130,22 @@ class YolomixNode(Node):
         # Convert ROS Image message to OpenCV image
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
-        results = self.model.track(cv_image)
+
+        results:List[Results] = self.model.track(cv_image, persist=True, conf=0.65,  tracker=self.tracker_config_file)
+
+
+        if len(results[0].boxes) == 0:
+            if hasattr(self.model.predictor, "trackers"):
+                count = BaseTrack._count
+                self.model.predictor.trackers[0].reset()
+                BaseTrack._count = count
+        
 
 
         boxes = results[0].boxes.xywh.tolist()
-        if len(boxes) == 0:
+        # if len(boxes) == 0:
             # self.get_logger().info('update a null list')
-            self.sort_tracker.update(np.array(np.array([])))
+        #     self.sort_tracker.update(np.array(np.array([])))
         
 
         # 判断yolo模型是否跟踪到，分配id
@@ -140,32 +164,12 @@ class YolomixNode(Node):
         have_find = False  # 本次是否找到target
 
 
-        # 将 boxes 转换为 SORT 输入格式：[[x1, y1, x2, y2, score], ...]
-        detections = []
-        for box in boxes:
-            x_center, y_center, width, height = box
-            x1 = x_center - width / 2
-            y1 = y_center - height / 2
-            x2 = x_center + width / 2
-            y2 = y_center + height / 2
-            # score = 1.0  # 如果没有置信度分数，可以设置为 1.0 或其他固定值
-            # print([x1, y1, x2, y2, 1.0])
-            detections.append([x1, y1, x2, y2, 1.0])
-
-        # 使用 SORT 跟踪器进行跟踪
-        tracked_objects = self.sort_tracker.update(np.array(detections))
-        # for i, track in enumerate(tracked_objects):
-        #     x1, y1, x2, y2, track_id = track
-        #     self.get_logger().info('track_id = :       ' + str(track_id))
-
-
-
         # 遍历所有检测到的对象结果
-        # for box, track_id, keypoint in zip(boxes, track_ids, keypoints, tracked_objects):
-        for box, keypoint, tracked_object in zip(boxes, keypoints, tracked_objects):
+        for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
+        # for box, keypoint, tracked_object in zip(boxes, keypoints):
         # for box, keypoint in zip(boxes, keypoints):
             x_center, y_center, width, height = box
-            track_id = int(tracked_object[4])
+            # track_id = int(tracked_object[4])
             
             
             # 获取行人的 ROI 图片
@@ -208,7 +212,11 @@ class YolomixNode(Node):
         if not have_find and (not (self.target_feature is None)) and len(roi_images) > 0:
             detected_features = self.reid_fe_extractor(roi_images).cpu()
             similarities = [self.cosine_similarity(f, self.target_feature) for f in detected_features]
-            
+
+            for idx, similarite in enumerate(similarities):
+                this_id = results[0].boxes.id.int().tolist()[idx]
+                log_data = f'similarite from {this_id} to target_id {self.target_id} is {similarite}'
+                self.log(log_data)
             
 
             # 获取相似度最高且超过阈值的候选者
@@ -216,7 +224,16 @@ class YolomixNode(Node):
             self.get_logger().info('max_similarity:       ' + str(max_similarity))
             if max_similarity > self.similarity_threshold:
                 best_match_index = similarities.index(max_similarity)
-                self.target_id = tracked_objects[best_match_index][4]  # 更新target_id
+                # self.target_id = tracked_objects[best_match_index][4]  # 更新target_id
+                last_target_id = self.target_id
+
+                self.target_id = results[0].boxes.id.int().tolist()[best_match_index]  # 更新target_id
+
+
+
+                log_data = f'target_id changed, from {last_target_id} to {self.target_id}, the similarity: {max_similarity}'
+                self.log(log_data)
+                
 
                 self.get_logger().info('update target:       ' + str(results[0].boxes.id.int()[best_match_index]))
 
@@ -258,11 +275,11 @@ class YolomixNode(Node):
                 color = (255, 0, 0)  # 蓝色
 
             # 绘制边界框
-            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 2)
+            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 1)
             
             # Draw ID
             text = f"ID: {person.id}"
-            cv2.putText(cv_image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(cv_image, text, (center_x, center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # 将OpenCV图像转换回ROS图像消息
         output_msg = self.cv_bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")

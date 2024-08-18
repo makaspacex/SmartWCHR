@@ -25,7 +25,7 @@ class VisualizationNode(Node):
         self.subscription
 
         # Create a publisher for the annotated image
-        self.publisher = self.create_publisher(Image, '/annotated_image', 10)
+        self.publisher = self.create_publisher(Image, '/yolomix_visualization', 10)
 
     def listener_callback(self, msg):
         # Convert the ROS Image message to OpenCV image
@@ -44,15 +44,17 @@ class VisualizationNode(Node):
             y_max = int(y_center + height / 2)
 
             # Draw bounding box
-            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 1)
 
             # Draw ID
             text = f"ID: {person.id}"
-            cv2.putText(cv_image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # cv2.putText(cv_image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(cv_image, text, (x_center, y_center), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
 
             # Draw keypoints
-            draw_points = [6, 10]
+            # draw_points = [6, 10]
+            draw_points = []
             for idx, kp in enumerate(person.keypoints):
                 if idx in draw_points:
                     x, y = int(kp.x), int(kp.y)
