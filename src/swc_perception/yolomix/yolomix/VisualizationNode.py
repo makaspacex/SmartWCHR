@@ -53,12 +53,14 @@ class VisualizationNode(Node):
 
 
             # Draw keypoints
-            # draw_points = [6, 10]
-            draw_points = []
+            # 2 is right eye
+            # 1 is left eye
+            draw_points = [1, 9]
+            # draw_points = []
             for idx, kp in enumerate(person.keypoints):
                 if idx in draw_points:
                     x, y = int(kp.x), int(kp.y)
-                    cv2.circle(cv_image, (x, y), 3, (0, 0, 255), -1)
+                    cv2.circle(cv_image, (x, y), 2, (255, 0, 0), -1)
 
         # Convert the OpenCV image back to ROS Image message
         annotated_image_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')

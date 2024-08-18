@@ -54,7 +54,8 @@ class JoyTeleop(Node):
         
         self.last_init_odom = time.time()
         
-    
+        self.last_not_zero_cmd = time.time()
+        
     def buttonCallback(self,joy_data):
         if not isinstance(joy_data, Joy): 
             return
@@ -128,9 +129,17 @@ class JoyTeleop(Node):
         twist.linear.x = xlinear_speed
         twist.angular.z = angular_speed
         
-        if self.joy_active:
-            for i in range(3): 
-                self.pub_cmdVel.publish(twist)
+        _send = True
+        if abs(twist.linear.x)<1e-5 and abs(twist.angular.z) < 1e-5:
+            if curtime - self.last_not_zero_cmd > 0.5:
+                _send=False
+                if curtime - self.last_print_time > 1:
+                    self.get_logger().info(f"send zero than 0.5s, stop send cmd vel msgs.")
+        else:
+            self.last_not_zero_cmd = time.time()
+        
+        if _send and self.joy_active:
+            self.pub_cmdVel.publish(twist)
 
         # logging to console 
         if curtime - self.last_print_time > 1:

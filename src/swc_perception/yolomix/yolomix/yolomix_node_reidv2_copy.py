@@ -22,6 +22,7 @@ from ultralytics.engine.results import Results
 from typing import List, Union
 from ultralytics.trackers.basetrack import BaseTrack
 from ultralytics.trackers.byte_tracker import STrack
+from sklearn.metrics.pairwise import cosine_similarity as sk_cosine_similarity
 
 
 def get_roi( image, box):
@@ -53,6 +54,7 @@ class YolomixNode(Node):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {device}")
         self.model = YOLO(model_path).to(device)
+        self.model.model.eval()
         
         # Load reID model
         model_name = "osnet_x0_75"
@@ -83,9 +85,20 @@ class YolomixNode(Node):
             10
         )
 
+        self.timer = self.create_timer(1.0, self.timer_callback)
+
         self.max_tracked_id = 0
         self.mapping_table = {}
-
+        
+        self.last_process_time = time.time()
+    
+    def timer_callback(self):
+         # 获取当前时间
+        current_time = time.time()
+        # 找到时间差超过30秒的条目索引
+        valid_indices = np.where((current_time - self.feature_library[:, 1]) < 30)[0]
+        # 过滤掉时间差超过30秒的条目
+        self.feature_library = self.feature_library[valid_indices]
 
     def cosine_similarity(self, vector_a, vector_b):
         dot_product = np.dot(vector_a, vector_b)
@@ -141,15 +154,17 @@ class YolomixNode(Node):
                 self.feature_library = np.vstack([self.feature_library, new_entry])
             return
 
-          
-
-        stored_lib = self.feature_library[:, 2:]
-        stored_ids = self.feature_library[:, 0]
         # reid_features  n×512      stored_lib    N×512     T:512×N
-        cos_sim = self.cosin_sim_cal(reid_features, stored_lib)   # n×N  
+        stored_ids = self.feature_library[:, 0]
+        _tt = time.time()
+        cos_sim = sk_cosine_similarity(reid_features, self.feature_library[:, 2:])   # n×N  
+        self.get_logger().info(f'sk_cosine_similarity {time.time() - _tt:.2f} s')
+        
         best_match_idx = np.argmax(cos_sim, axis=1)               # n×1  当前特征跟库里的第几个最匹配
 
-
+        # 取出库中已存在的id
+        lib_ids = self.feature_library[:,0]
+        
         for idx, feature in enumerate(reid_features):
             if yolo_ids[idx] <= self.max_tracked_id:  # 当前对象已经被track，不用进行reid，直接压进特征库即可
                 current_time = time.time()
@@ -166,16 +181,22 @@ class YolomixNode(Node):
                     self.next_id += 1
                 self.mapping_table[yolo_ids[idx]] = int(stored_id)
 
-
                 # 获取当前时间戳作为存入时间
                 current_time = time.time()
                 # 将ID、时间和特征组合为一行
                 new_entry = np.hstack(([stored_id, current_time], feature))
                 # 将新的条目添加到 feature_library
                 self.feature_library = np.vstack([self.feature_library, new_entry])
-        
-
+    
     def listener_callback(self, msg):
+        # self.get_logger().info("listener_callback")
+        time1 = time.time()
+        
+        # 处理时间小于200毫秒就不处理
+        # _now_time = time.time()
+        # if _now_time - self.last_process_time < 0.2:
+        #     self.last_process_time = _now_time
+        #     return
 
         yolo_persons_msg = YoloPersons()
         yolo_persons_msg.header = Header()
@@ -186,72 +207,79 @@ class YolomixNode(Node):
         # Convert ROS Image message to OpenCV image
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
-        results:List[Results] = self.model.track(cv_image, persist=True, conf=0.65,  tracker=self.tracker_config_file)
+        _tt = time.time()
+        results:List[Results] = self.model.track(cv_image, persist=True, conf=0.65,  tracker=self.tracker_config_file, verbose=False)
+        self.get_logger().info(f'self.model.track {time.time() - _tt:.2f} s')
+
+        # annotated_frame = results[0].plot()
         
-        annotated_frame = results[0].plot()
-        
-        # Convert the OpenCV image back to ROS Image message
-        annotated_image_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')
-        # Create a new header for the annotated image
-        annotated_image_msg.header = Header()
-        annotated_image_msg.header.stamp = self.get_clock().now().to_msg()
-        annotated_image_msg.header.frame_id = msg.header.frame_id
+        # # Convert the OpenCV image back to ROS Image message
+        # annotated_image_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')
+        # # Create a new header for the annotated image
+        # annotated_image_msg.header = Header()
+        # annotated_image_msg.header.stamp = self.get_clock().now().to_msg()
+        # annotated_image_msg.header.frame_id = msg.header.frame_id
 
         # Publish the annotated image
-        self.annotated_image_publisher.publish(annotated_image_msg)
+        # self.annotated_image_publisher.publish(annotated_image_msg)
         
-        if len(results[0].boxes) == 0:
-            if hasattr(self.model.predictor, "trackers"):
-                count = BaseTrack._count
-                self.model.predictor.trackers[0].reset()
-                BaseTrack._count = count
-
-            
-        # 判断yolo模型是否跟踪到，分配id
-        if results[0].boxes.is_track:
-            boxes = results[0].boxes.xywh.tolist()
-            track_ids = results[0].boxes.id.int().tolist()
-            keypoints = results[0].keypoints.data.tolist()
-            
-            roi_images = []
-            yolo_ids = []  # yolo_track分配的id
-             # 遍历所有检测到的对象结果
-            for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
-                x_center, y_center, width, height = box
-
-                yolo_ids.append(track_id)
-                roi_image = get_roi(cv_image, box)
-                roi_images.append(roi_image)
-
-                # 创建 YoloPerson 消息
-                yolo_person_msg = YoloPerson()
-                yolo_person_msg.id = track_id
-                yolo_person_msg.center = Point(x=x_center, y=y_center, z=0.0)
-                yolo_person_msg.width = width
-                yolo_person_msg.height = height
-
-                # 添加关键点到 YoloPerson 消息中
-                yolo_person_msg.keypoints = [Point(x=kp[0], y=kp[1], z=0.0) for kp in keypoint]
-                # 将 YoloPerson 消息添加到 YoloPersons 消息中
-                yolo_persons_msg.persons.append(yolo_person_msg)
-
-            
-            if len(roi_images) > 0:
-                reid_features = self.reid_fe_extractor(roi_images).cpu()
-                self.match_and_assign_id(reid_features, yolo_ids)
-
-                self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
-                
-                for person in yolo_persons_msg.persons:
-                    person.id = self.mapping_table[person.id]
-
-                # for assign_id, person in zip(assign_ids, yolo_persons_msg.persons):
-                #     person.id = int(assign_id)
-                # for idx, person in enumerate(yolo_persons_msg.persons):
-                #     person.id = int(assign_ids[idx])
+        # 如果没有任何对象，就清空跟踪器
+        if len(results[0].boxes) == 0 and hasattr(self.model.predictor, "trackers"):
+            count = BaseTrack._count
+            self.model.predictor.trackers[0].reset()
+            BaseTrack._count = count
 
         # 没有跟踪到或者没有检测到人的情况下，也发布消息，只是没有person
+        if not results[0].boxes.is_track:
+            self.persons_publisher.publish(yolo_persons_msg)
+            return
+        
+        # 存在被跟踪的对象
+        boxes = results[0].boxes.xywh.tolist()
+        track_ids = results[0].boxes.id.int().tolist()
+        keypoints = results[0].keypoints.data.tolist()
+        
+        roi_images = []
+        yolo_ids = []  # yolo_track分配的id
+        
+        # 遍历所有检测到的对象结果
+        for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
+            x_center, y_center, width, height = box
+
+            yolo_ids.append(track_id)
+            roi_image = get_roi(cv_image, box)
+            roi_images.append(roi_image)
+
+            # 创建 YoloPerson 消息
+            yolo_person_msg = YoloPerson()
+            yolo_person_msg.id = track_id
+            yolo_person_msg.center = Point(x=x_center, y=y_center, z=0.0)
+            yolo_person_msg.width = width
+            yolo_person_msg.height = height
+
+            # 添加关键点到 YoloPerson 消息中
+            yolo_person_msg.keypoints = [Point(x=kp[0], y=kp[1], z=0.0) for kp in keypoint]
+            # 将 YoloPerson 消息添加到 YoloPersons 消息中
+            yolo_persons_msg.persons.append(yolo_person_msg)
+        
+        if len(roi_images) == 0:
+            return
+        
+        _tt = time.time()
+        reid_features = self.reid_fe_extractor(roi_images).cpu()
+        self.get_logger().info(f'self.reid_fe_extractor {time.time() - _tt:.2f} s')
+        
+        _tt = time.time()
+        self.match_and_assign_id(reid_features, yolo_ids)
+        self.get_logger().info(f'self.match_and_assign_id {time.time() - _tt:.2f} s')
+        
+        self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
+
+        for person in yolo_persons_msg.persons:
+            person.id = self.mapping_table[person.id]
+
         self.persons_publisher.publish(yolo_persons_msg)
+        self.get_logger().info(f'The lister_callback function consuming {time.time() - time1:.2f} s')
 
 
 def main(args=None):

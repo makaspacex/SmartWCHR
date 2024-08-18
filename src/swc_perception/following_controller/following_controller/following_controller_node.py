@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist
 import math
 from cv_bridge import CvBridge
 import cv2
+import time
 
 
 class DetectionNode(Node):
@@ -28,6 +29,7 @@ class DetectionNode(Node):
 
         self.latest_laser_scan = None
         self.latest_yolo_persons = None
+        self.last_lost_time = None
         # Initialize CvBridge
         self.cv_bridge = CvBridge()
 
@@ -54,6 +56,8 @@ class DetectionNode(Node):
         # Save the latest messages
         self.latest_laser_scan = scan_msg
         self.latest_yolo_persons = yolo_persons_msg
+        # self.get_logger().info("update the self.latest_yolo_persons")
+
 
     # 这种方式存在bug，如果画面中只有一个人，这个人走出画面，不会有新的yoloperson消息发布，不更新了
     # 解决方案：让yolomix_node在没有检测到人的情况下也发布yolo_persons消息
@@ -77,7 +81,7 @@ class DetectionNode(Node):
         # Process the data to check if left wrist is higher than left shoulder
         for person in self.latest_yolo_persons.persons:
             keypoints = person.keypoints
-            left_shoulder = keypoints[5]  # left shoulder is index 5
+            left_shoulder = keypoints[1]  # left eye is index 1
             left_wrist = keypoints[9]    # left wrist is index 9
 
             if left_shoulder.x > 0 and left_wrist.x > 0:  # Ensure that keypoints have at least left shoulder and wrist
@@ -92,8 +96,13 @@ class DetectionNode(Node):
         if self.latest_yolo_persons is None or self.latest_laser_scan is None:
             return
         
+        # 超过30s没有重新找到跟随对象，重新初始化
+        if time.time() - self.last_lost_time > 30:
+            self.state = 'initing'
+            return
+        
         for person in self.latest_yolo_persons.persons:
-            if person.id == person.id == self.track_id:
+            if person.id == self.track_id:
                 self.state = 'following'
 
 
@@ -111,6 +120,7 @@ class DetectionNode(Node):
                     target_person = person
 
         if lost: 
+            self.last_lost_time = time.time()
             self.state = 'lost'
             self.Stop()
             self.get_logger().info("Lost target while following...")
@@ -118,7 +128,7 @@ class DetectionNode(Node):
         
         # 判断目标是否举起右手，取消跟随
         keypoints = target_person.keypoints
-        right_shoulder = keypoints[6]  # right shoulder is index 5
+        right_shoulder = keypoints[2]  # right eye is index 2
         right_wrist = keypoints[10]    # right wrist is index 10
         if right_wrist.y < right_shoulder.y:
             self.track_id = -1
@@ -224,11 +234,12 @@ class DetectionNode(Node):
     def Visualization(self):
         if self.latest_yolo_persons is None:
             return
-
+        
         # 将ROS图像消息转换为OpenCV图像
         cv_image = self.cv_bridge.imgmsg_to_cv2(self.latest_yolo_persons.image, desired_encoding='bgr8')
 
         for person in self.latest_yolo_persons.persons:
+            # self.get_logger().info("Visualization")
             # 获取边界框坐标和中心点
             center_x, center_y = int(person.center.x), int(person.center.y)
             bbox_width, bbox_height = int(person.width), int(person.height)
@@ -240,17 +251,20 @@ class DetectionNode(Node):
             y_max = int(center_y + bbox_height / 2)
 
             # 根据ID选择框的颜色
+            self.get_logger().info(f"self.track_id = {self.track_id}")
             if person.id == self.track_id:
                 color = (0, 0, 255)  # 红色
             else:
                 color = (255, 0, 0)  # 蓝色
 
             # 绘制边界框
-            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 2)
+            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 1)
             
             # Draw ID
-            text = f"ID: {person.id}"
-            cv2.putText(cv_image, text, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            H, W = cv_image.shape[:2]
+            _t_x = min(max(0, x_min), W)
+            _t_y = min(max(30, y_min), H)
+            cv2.putText(cv_image, f"ID: {person.id}", (_t_x, _t_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
         # 将OpenCV图像转换回ROS图像消息
         output_msg = self.cv_bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")

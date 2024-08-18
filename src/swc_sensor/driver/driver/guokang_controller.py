@@ -66,7 +66,6 @@ class CmdVelToSerial(Node):
         self.ser = None
         self.connect_dev()
         
-
         self.subscription = self.create_subscription(
             Twist,
             'cmd_vel',
@@ -92,6 +91,18 @@ class CmdVelToSerial(Node):
         self.last_print_time = time.time()
         
         self.log_f = open('/home/jetson/Desktop/SmartWCHR/runtime/cmd_log.txt', 'w+')
+
+        # 上一次接收到速度指令的时间
+        self.last_Twist_time = time.time() 
+        self.timer = self.create_timer(0.6, self.timer_callback)
+
+    
+    def timer_callback(self):
+        if time.time() - self.last_Twist_time > 0.5:
+            ser_data = self.get_ser_data(0, 0)
+            self.write_to_ser(ser_data=ser_data)
+            self.get_logger().warn("No speed command for more than 0.5s")
+            
         
     def twist_pub_callback(self):
         self.connect_dev()
@@ -187,6 +198,7 @@ class CmdVelToSerial(Node):
             self.get_logger().error(f"failed write data to {self.portname}")
 
     def listener_callback(self, msg):
+        self.last_Twist_time = time.time()
         # 保留1s的平均速率，如果等于0，忽略后面的0速度指令
         self.connect_dev()
         
