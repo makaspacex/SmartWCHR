@@ -248,7 +248,7 @@ class OdomCalculator(Node):
     def __init__(self):
         super().__init__(node_name='odom_cal_node')
         self.publisher = self.create_publisher(Odometry, '/odom_diff', qos_profile_sensor_data)
-        self.sub_odom2init = self.create_subscription(String, '/odom2init', self.reset_odom, qos_profile_sensor_data)
+        self.sub_ctrl_cmd = self.create_subscription(String, '/ctrl_cmd', self.reset_odom, qos_profile_sensor_data)
         
         self.declare_parameter("robot_name", value="gk01")
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
@@ -312,6 +312,8 @@ class OdomCalculator(Node):
         
         
     def reset_odom(self, msg):
+        if msg.data != 'odom2init':
+            return
         # 清除reset事件并且等待左右两个编码器完成读数
         self.reset_odom_event.clear()
         # 总的累积里程

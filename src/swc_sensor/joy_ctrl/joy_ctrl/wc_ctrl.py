@@ -39,7 +39,7 @@ class JoyTeleop(Node):
         
         #create pub
         self.pub_cmdVel = self.create_publisher(Twist,'cmd_vel',  1)
-        self.pub_odom2init = self.create_publisher(String,'odom2init',  1)
+        self.pub_ctrl_cmd = self.create_publisher(String,'ctrl_cmd',  1)
         #create sub
         self.sub_Joy = self.create_subscription(Joy,'joy', self.buttonCallback, 1)
         
@@ -52,7 +52,7 @@ class JoyTeleop(Node):
 
         self.last_print_time = time.time()
         
-        self.last_init_odom = time.time()
+        self.last_semd_ctrl_cmd_time = time.time()
         
         self.last_not_zero_cmd = time.time()
         
@@ -80,13 +80,20 @@ class JoyTeleop(Node):
                 self.pub_cmdVel.publish(Twist())
             self.cancel_time = curtime
         
-        if joy_data.buttons[14] == 1 and curtime - self.last_init_odom > 1:
+        if joy_data.buttons[14] == 1 and curtime - self.last_semd_ctrl_cmd_time > 1:
             msg = String()                                            # 创建一个String类型的消息对象
-            msg.data = 'reset odom to init'                                  # 填充消息对象中的消息数据
-            self.pub_odom2init.publish(msg)
-            self.get_logger().info("send set odom msg") 
-            self.last_init_odom = curtime
+            msg.data = 'odom2init'                                  # 填充消息对象中的消息数据
+            self.pub_ctrl_cmd.publish(msg)
+            self.get_logger().warn("send odom2init msg") 
+            self.last_semd_ctrl_cmd_time = curtime
         
+        # 左2与右2同时按下
+        if joy_data.buttons[8] == 1 and joy_data.buttons[9] == 1 and curtime - self.last_semd_ctrl_cmd_time > 1:
+            msg = String() 
+            msg.data = 'clean_reid_fetures_lib'
+            self.pub_ctrl_cmd.publish(msg)
+            self.get_logger().warn("send clean_reid_fetures_lib msg") 
+            self.last_semd_ctrl_cmd_time = curtime
         
         #linear Gear control
         if 1 in joy_data.buttons[0:2] and curtime - self.last_swith_gear_time > 0.3:
