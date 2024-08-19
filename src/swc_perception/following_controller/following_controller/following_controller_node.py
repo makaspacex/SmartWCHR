@@ -4,6 +4,7 @@ from sensor_msgs.msg import LaserScan, Image
 from yolomix_msgs.msg import YoloPerson, YoloPersons
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 from rclpy.qos import QoSProfile
+from rclpy.qos import qos_profile_sensor_data
 from geometry_msgs.msg import Twist
 import math
 from cv_bridge import CvBridge
@@ -34,8 +35,8 @@ class DetectionNode(Node):
         self.cv_bridge = CvBridge()
 
         # Create subscribers for the scan and yolo_persons topics
-        self.scan_subscriber = Subscriber(self, LaserScan, '/scan_s2_raw', qos_profile=QoSProfile(depth=10))
-        self.yolo_subscriber = Subscriber(self, YoloPersons, '/yolo_persons', qos_profile=QoSProfile(depth=10))
+        self.scan_subscriber = Subscriber(self, LaserScan, '/scan_s2_raw', qos_profile_sensor_data)
+        self.yolo_subscriber = Subscriber(self, YoloPersons, '/yolo_persons', qos_profile_sensor_data)
         # Publisher for cmd_vel topic
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -96,8 +97,8 @@ class DetectionNode(Node):
         if self.latest_yolo_persons is None or self.latest_laser_scan is None:
             return
         
-        # 超过30s没有重新找到跟随对象，重新初始化
-        if time.time() - self.last_lost_time > 30:
+        # 超过10s没有重新找到跟随对象，重新初始化寻找跟随目标
+        if time.time() - self.last_lost_time > 10:
             self.state = 'initing'
             return
         
@@ -185,17 +186,23 @@ class DetectionNode(Node):
 
         depth = min(relevant_distances)
         # self.get_logger().info("depth:  %.2f"%depth)
+        
+
+        
 
         # Compute the angle theta
-        theta = center_angle_x - (20 / 180 * math.pi)
+        theta = center_angle_x - (8 / 180 * math.pi)
+
+        self.get_logger().info(f"theta = {theta / math.pi * 180}   depth = {depth}")
+        
 
         # self.get_logger().info("theta:  %.2f"%(theta / math.pi * 180))
 
-        max_vx = 0.8
+        max_vx = 0.6
         min_vx = 0.2
         max_va = 0.3
         gain_vx = 0.8
-        gain_va = 0.3
+        gain_va = 0.5
         distance = 2
         angle_threshold = math.pi / 4
 
@@ -221,7 +228,7 @@ class DetectionNode(Node):
         twist.linear.x = vx
         twist.angular.z = va
         self.cmd_vel_publisher.publish(twist)
-        self.get_logger().info(f"Publish twist vx = {vx},   va = {va}")
+        # self.get_logger().info(f"Publish twist vx = {vx},   va = {va}")
     
 
     def Stop(self):
@@ -251,7 +258,7 @@ class DetectionNode(Node):
             y_max = int(center_y + bbox_height / 2)
 
             # 根据ID选择框的颜色
-            self.get_logger().info(f"self.track_id = {self.track_id}")
+            # self.get_logger().info(f"self.track_id = {self.track_id}")
             if person.id == self.track_id:
                 color = (0, 0, 255)  # 红色
             else:

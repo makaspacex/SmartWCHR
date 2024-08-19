@@ -23,7 +23,8 @@ from typing import List, Union
 from ultralytics.trackers.basetrack import BaseTrack
 from ultralytics.trackers.byte_tracker import STrack
 from sklearn.metrics.pairwise import cosine_similarity as sk_cosine_similarity
-
+from std_msgs.msg import String
+from rclpy.qos import qos_profile_sensor_data
 
 def get_roi( image, box):
     x_center, y_center, width, height = box[:4]
@@ -77,13 +78,12 @@ class YolomixNode(Node):
         self.annotated_image_publisher = self.create_publisher(Image, '/annotated_image', 10)
         self.bridge = CvBridge()
         
+        
+        qos_profile_sensor_data_depth1 = qos_profile_sensor_data
+        qos_profile_sensor_data_depth1.depth = 1
+        
         # Create a subscriber for the image topic
-        self.subscription = self.create_subscription(
-            Image,
-            '/image',
-            self.listener_callback,
-            10
-        )
+        self.subscription = self.create_subscription(Image,'/image',self.listener_callback, qos_profile_sensor_data_depth1 )
 
         self.timer = self.create_timer(1.0, self.timer_callback)
 
@@ -91,6 +91,9 @@ class YolomixNode(Node):
         self.mapping_table = {}
         
         self.last_process_time = time.time()
+
+        self.clean_subscription = self.create_subscription(String,'/ctrl_cmd',self.clean_feature_library, qos_profile_sensor_data_depth1)
+        self.clean_subscription  # 防止变量被垃圾回收
     
     def timer_callback(self):
          # 获取当前时间
@@ -99,6 +102,12 @@ class YolomixNode(Node):
         valid_indices = np.where((current_time - self.feature_library[:, 1]) < 30)[0]
         # 过滤掉时间差超过30秒的条目
         self.feature_library = self.feature_library[valid_indices]
+    
+    def clean_feature_library(self, msg):
+        if msg.data != 'clean_reid_fetures_lib':
+            return
+        self.feature_library = np.empty((0, 514))
+        self.get_logger().info('clean the feature library')
 
     def cosine_similarity(self, vector_a, vector_b):
         dot_product = np.dot(vector_a, vector_b)
@@ -155,20 +164,25 @@ class YolomixNode(Node):
             return
 
         # reid_features  n×512      stored_lib    N×512     T:512×N
+        # 取出库中已存在的id
         stored_ids = self.feature_library[:, 0]
-        _tt = time.time()
+        # _tt = time.time()
         cos_sim = sk_cosine_similarity(reid_features, self.feature_library[:, 2:])   # n×N  
-        self.get_logger().info(f'sk_cosine_similarity {time.time() - _tt:.2f} s')
+        # self.get_logger().info(f'sk_cosine_similarity {time.time() - _tt:.2f} s')
         
         best_match_idx = np.argmax(cos_sim, axis=1)               # n×1  当前特征跟库里的第几个最匹配
 
-        # 取出库中已存在的id
-        lib_ids = self.feature_library[:,0]
+
         
+        # 当前帧已经被分配的id
+        assigned_id = set()
         for idx, feature in enumerate(reid_features):
             if yolo_ids[idx] <= self.max_tracked_id:  # 当前对象已经被track，不用进行reid，直接压进特征库即可
                 current_time = time.time()
                 lib_id = self.mapping_table[yolo_ids[idx]]
+
+                assigned_id.add(lib_id)  # 当前帧中，已经有lib_id这个id了，有新人进来，reid不能匹配到这个id
+
                 new_entry = np.hstack(([lib_id, current_time], feature))
                 # 将新的条目添加到 feature_library
                 self.feature_library = np.vstack([self.feature_library, new_entry])
@@ -176,7 +190,7 @@ class YolomixNode(Node):
                 best_match = best_match_idx[idx]
                 stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
                 similarity = cos_sim[idx, best_match]  # 当前特征与最匹配的库里的特征的相似度
-                if similarity < threshold:
+                if similarity < threshold or stored_id in assigned_id:
                     stored_id = self.next_id
                     self.next_id += 1
                 self.mapping_table[yolo_ids[idx]] = int(stored_id)
@@ -193,11 +207,10 @@ class YolomixNode(Node):
         time1 = time.time()
         
         # 处理时间小于200毫秒就不处理
-        # _now_time = time.time()
-        # if _now_time - self.last_process_time < 0.2:
-        #     self.last_process_time = _now_time
-        #     return
-
+        _now_time = time.time()
+        self.last_process_time = _now_time
+        
+        
         yolo_persons_msg = YoloPersons()
         yolo_persons_msg.header = Header()
         yolo_persons_msg.header.stamp = self.get_clock().now().to_msg()
@@ -207,21 +220,7 @@ class YolomixNode(Node):
         # Convert ROS Image message to OpenCV image
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
-        _tt = time.time()
         results:List[Results] = self.model.track(cv_image, persist=True, conf=0.65,  tracker=self.tracker_config_file, verbose=False)
-        self.get_logger().info(f'self.model.track {time.time() - _tt:.2f} s')
-
-        # annotated_frame = results[0].plot()
-        
-        # # Convert the OpenCV image back to ROS Image message
-        # annotated_image_msg = self.bridge.cv2_to_imgmsg(annotated_frame, encoding='bgr8')
-        # # Create a new header for the annotated image
-        # annotated_image_msg.header = Header()
-        # annotated_image_msg.header.stamp = self.get_clock().now().to_msg()
-        # annotated_image_msg.header.frame_id = msg.header.frame_id
-
-        # Publish the annotated image
-        # self.annotated_image_publisher.publish(annotated_image_msg)
         
         # 如果没有任何对象，就清空跟踪器
         if len(results[0].boxes) == 0 and hasattr(self.model.predictor, "trackers"):
@@ -231,6 +230,7 @@ class YolomixNode(Node):
 
         # 没有跟踪到或者没有检测到人的情况下，也发布消息，只是没有person
         if not results[0].boxes.is_track:
+            self.get_logger().info('not results[0].boxes.is_track:')
             self.persons_publisher.publish(yolo_persons_msg)
             return
         
@@ -244,6 +244,12 @@ class YolomixNode(Node):
         
         # 遍历所有检测到的对象结果
         for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
+
+            num_detected_keypoints = np.sum(np.array(keypoint)[:, 0] > 0)
+            self.get_logger().info(f'num_detected_keypoints: {num_detected_keypoints}')
+            if num_detected_keypoints < 10:
+                continue
+
             x_center, y_center, width, height = box
 
             yolo_ids.append(track_id)

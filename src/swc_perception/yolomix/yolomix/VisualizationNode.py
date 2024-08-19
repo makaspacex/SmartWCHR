@@ -7,6 +7,7 @@ import cv2
 from geometry_msgs.msg import Point
 from std_msgs.msg import Header
 import numpy as np
+from rclpy.qos import qos_profile_sensor_data
 
 class VisualizationNode(Node):
     def __init__(self):
@@ -20,7 +21,8 @@ class VisualizationNode(Node):
             YoloPersons,
             '/yolo_persons',
             self.listener_callback,
-            10
+            1
+            # qos_profile_sensor_data
         )
         self.subscription
 
@@ -56,7 +58,7 @@ class VisualizationNode(Node):
             # 2 is right eye
             # 1 is left eye
             draw_points = [1, 9]
-            # draw_points = []
+            draw_points = []
             for idx, kp in enumerate(person.keypoints):
                 if idx in draw_points:
                     x, y = int(kp.x), int(kp.y)

@@ -11,7 +11,7 @@ class VideoPublisherNode(Node):
         super().__init__('video_publisher_node')
 
         # 创建发布者，发布图像消息
-        self.publisher_ = self.create_publisher(Image, '/image', 10)
+        self.publisher_ = self.create_publisher(Image, '/image', 20)
         self.bridge = CvBridge()
 
         # 设置视频文件路径
