@@ -190,6 +190,7 @@ class YolomixNode(Node):
                 data = copy.copy(detection.boxes.data)
                 data[:, -3]= torch.tensor(reids, dtype=torch.float32)
                 detection.boxes.data = data
+                
                 annotated_image = detection.plot()
                 
             except Exception as e:
@@ -199,6 +200,9 @@ class YolomixNode(Node):
         
     def reid(self):
         cost_timer = CostTimer()
+        class NoPersonError(Exception):
+            pass
+        
         while True:
             if not self.detect_deque:
                 time.sleep(0.001)
@@ -216,8 +220,7 @@ class YolomixNode(Node):
                 
                 # 没有跟踪到或者没有检测到人的情况下，也发布消息，只是没有person
                 if not detection.boxes.is_track:
-                    # raise Exception('no person detected or tracked')
-                    pass
+                    raise NoPersonError('no person detected or tracked')
                 
                 # 存在被跟踪的对象
                 boxes = detection.boxes.xywh.tolist()
@@ -259,17 +262,18 @@ class YolomixNode(Node):
                 self.match_and_assign_id(reid_features, yolo_ids)
                 cost_timer.end()
                 
-                # 交给渲染函数渲染可视化结果
-                self.render_queen.append(detection)
-                
                 self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
 
                 for person in yolo_persons_msg.persons:
                     person.id = self.mapping_table[person.id]
-            
+            except NoPersonError:
+                pass
             except Exception as e:
                 self.get_logger().error(f"{e}")
             finally:
+                # 交给渲染函数渲染可视化结果
+                self.render_queen.append(detection)
+                # 发布检测的消息
                 self.persons_publisher.publish(yolo_persons_msg)
                 cost_timer.end("self.reid")
                 # self.get_logger().info(f'{cost_timer}')
