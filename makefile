@@ -16,7 +16,7 @@ LAUNCH_CC = ros2 launch
 
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
 WHEEL_PACKAGES = fast_lio point_lio ros_local driver encoder imu joy_ctrl  lidar_ms200  sllidar radar_filter livox_ros_driver2 
-DC_PACKAGES = swc_cartographer swc_slam_tooolbox swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner gesture_recognition_msgs gesture_recognition  imu_complementary_filter lidars_sync_fusion linefit_ground_segmentation linefit_ground_segmentation_ros pcl_filter pointcloud_to_laserscan 
+DC_PACKAGES = swc_cartographer swc_slam_tooolbox swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner following_controller gesture_recognition_msgs gesture_recognition  imu_complementary_filter lidars_sync_fusion linefit_ground_segmentation linefit_ground_segmentation_ros pcl_filter  person_tracking_msgs person_detector video_pub yolomix_msgs yolomix pointcloud_to_laserscan 
 SIM_PACKAGES = ros2_livox_simulation pb_swc_simulation
 WC_NAME = wc
 DC_NAME = dc

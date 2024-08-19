@@ -27,7 +27,7 @@ from std_msgs.msg import String
 from rclpy.qos import qos_profile_sensor_data
 import threading
 from collections import deque
-
+import copy
 
 def get_roi( image, box):
     x_center, y_center, width, height = box[:4]
@@ -146,9 +146,6 @@ class YolomixNode(Node):
         # Create a publisher for YoloPersons messages
         self.persons_publisher = self.create_publisher(YoloPersons, '/yolo_persons', 10)
         
-        self.annotated_image_publisher = self.create_publisher(Image, '/annotated_image', 10)
-        
-        
         qos_profile_sensor_data_depth1 = qos_profile_sensor_data
         qos_profile_sensor_data_depth1.depth = 1
         
@@ -169,6 +166,36 @@ class YolomixNode(Node):
         self.detect_deque = deque(maxlen=1)
         self.super_thread = threading.Thread(target=self.reid, daemon=True)
         self.super_thread.start()
+        
+        # 开启可视化线程
+        self.annotated_image_publisher = self.create_publisher(Image, '/annotated_image', 5)
+        self.render_thread = threading.Thread(target=self.render, daemon=True)
+        self.render_queen = deque(maxlen=1)
+        self.render_thread.start()
+        
+    def render(self):
+        while True:
+            if not self.render_queen:
+                time.sleep(0.001)
+                continue
+            try:
+                detection:Results = self.render_queen.popleft()
+                annotated_image = detection.orig_img
+                if not detection.boxes.is_track:
+                    continue
+                
+                reids = []
+                for _id in detection.boxes.id.int().tolist():
+                    reids.append(self.mapping_table[_id])
+                data = copy.copy(detection.boxes.data)
+                data[:, -3]= torch.tensor(reids, dtype=torch.float32)
+                detection.boxes.data = data
+                annotated_image = detection.plot()
+                
+            except Exception as e:
+                self.get_logger().error(f"{e}")
+            finally:
+                self.annotated_image_publisher.publish(self.cv_bridge.cv2_to_imgmsg(annotated_image, encoding='bgr8'))
         
     def reid(self):
         cost_timer = CostTimer()
@@ -231,6 +258,9 @@ class YolomixNode(Node):
                 cost_timer.new("self.match_and_assign_id")
                 self.match_and_assign_id(reid_features, yolo_ids)
                 cost_timer.end()
+                
+                # 交给渲染函数渲染可视化结果
+                self.render_queen.append(detection)
                 
                 self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
 
