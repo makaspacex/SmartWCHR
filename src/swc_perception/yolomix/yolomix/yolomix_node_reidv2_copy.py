@@ -189,7 +189,8 @@ class YolomixNode(Node):
                 
                 # 没有跟踪到或者没有检测到人的情况下，也发布消息，只是没有person
                 if not detection.boxes.is_track:
-                    raise Exception('no person detected or tracked')
+                    # raise Exception('no person detected or tracked')
+                    pass
                 
                 # 存在被跟踪的对象
                 boxes = detection.boxes.xywh.tolist()
@@ -201,11 +202,6 @@ class YolomixNode(Node):
                 
                 # 遍历所有检测到的对象结果
                 for box, track_id, keypoint in zip(boxes, track_ids, keypoints):
-
-                    num_detected_keypoints = np.sum(np.array(keypoint)[:, 0] > 0)
-                    # self.get_logger().info(f'num_detected_keypoints: {num_detected_keypoints}')
-                    if num_detected_keypoints < 10:
-                        continue
 
                     x_center, y_center, width, height = box
 
@@ -246,7 +242,7 @@ class YolomixNode(Node):
             finally:
                 self.persons_publisher.publish(yolo_persons_msg)
                 cost_timer.end("self.reid")
-                self.get_logger().info(f'{cost_timer}')
+                # self.get_logger().info(f'{cost_timer}')
             
     def timer_callback(self):
          # 获取当前时间
@@ -300,9 +296,10 @@ class YolomixNode(Node):
 
         # reid_features  n×512      stored_lib    N×512     T:512×N
         # 取出库中已存在的id
-        stored_ids = self.feature_library[:, 0]
+        # stored_ids = self.feature_library[:, 0].cpu().numpy().astype(int)
+        stored_ids = self.feature_library[:, 0].cpu().numpy().astype(int).tolist()
         cos_sim = cosine_sim_cal(reid_features, self.feature_library[:, 2:])   # n×N  
-        best_match_idx = torch.argmax(cos_sim, dim=1).cpu().numpy()              # n×1  当前特征跟库里的第几个最匹配
+        best_match_idx = torch.argmax(cos_sim, dim=1).cpu().numpy().tolist()              # n×1  当前特征跟库里的第几个最匹配
 
         # 当前帧已经被分配的id
         assigned_id = set()
@@ -321,13 +318,18 @@ class YolomixNode(Node):
                 stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
                 similarity = cos_sim[idx, best_match]  # 当前特征与最匹配的库里的特征的相似度
 
-                self.get_logger().info(f'a new person appear, the best_math_id is {stored_id}')
-
+                self.get_logger().info(f'a new person appear, the best_math_id is {stored_id}   similarity is {similarity}')
+                # self.get_logger().info(f'assigned_id:  {assigned_id}')
                 if similarity < threshold or stored_id in assigned_id:
-                    self.get_logger().info(f'similarity is {similarity}')
+                    if stored_id in assigned_id:
+                        self.get_logger().info(f'The id {stored_id} already exists in this frame, so assign a new id {self.next_id}')
+                    else:
+                        self.get_logger().info(f'similarity is too low, so assign a new id {self.next_id}')
                     stored_id = self.next_id
                     self.next_id += 1
-                self.mapping_table[yolo_ids[idx]] = int(stored_id)
+                assigned_id.add(stored_id)
+
+                self.mapping_table[yolo_ids[idx]] = stored_id
 
                 # 获取当前时间戳作为存入时间
                 current_time = time.time()

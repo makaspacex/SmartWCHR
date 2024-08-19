@@ -35,8 +35,8 @@ class DetectionNode(Node):
         self.cv_bridge = CvBridge()
 
         # Create subscribers for the scan and yolo_persons topics
-        self.scan_subscriber = Subscriber(self, LaserScan, '/scan_s2_raw', qos_profile_sensor_data)
-        self.yolo_subscriber = Subscriber(self, YoloPersons, '/yolo_persons', qos_profile_sensor_data)
+        self.scan_subscriber = Subscriber(self, LaserScan, '/scan_s2_raw', qos_profile=QoSProfile(depth=10))
+        self.yolo_subscriber = Subscriber(self, YoloPersons, '/yolo_persons', qos_profile=QoSProfile(depth=10))
         # Publisher for cmd_vel topic
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
