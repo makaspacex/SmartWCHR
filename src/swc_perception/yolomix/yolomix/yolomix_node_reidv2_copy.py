@@ -240,7 +240,8 @@ class YolomixNode(Node):
                         if reid == self.tart_id:
                             color = (0, 0, 255)
                         
-                        name = ("" if reid is None else f"id:{reid} ") + names[c]
+                        # name = ("" if reid is None else f"reid:{reid} tid:{track_id}") + names[c]
+                        name = ("" if reid is None else f"reid:{reid} tid:{track_id}")
                         label = (f"{name} {conf:.2f}" if conf else name) if labels else None
                         box = d.xyxyxyxy.reshape(-1, 4, 2).squeeze() if is_obb else d.xyxy.squeeze()
                         annotator.box_label(
@@ -336,7 +337,7 @@ class YolomixNode(Node):
                 cost_timer.end()
                 
                 cost_timer.new("self.match_and_assign_id")
-                self.match_and_assign_id(reid_features, yolo_ids)
+                self.match_and_assign_id_new(reid_features, yolo_ids)
                 cost_timer.end()
                 
                 self.max_tracked_id = max(yolo_ids)   # 更新上一帧中最大的tracked_id
@@ -347,6 +348,7 @@ class YolomixNode(Node):
                 pass
             except Exception as e:
                 self.get_logger().error(f"{e}")
+                raise e
             finally:
                 # 交给渲染函数渲染可视化结果
                 self.render_queen.append(detection)
@@ -376,6 +378,45 @@ class YolomixNode(Node):
         norm_b = np.linalg.norm(vector_b)
         return dot_product / (norm_a * norm_b)
 
+    
+    def match_and_assign_id_new(self, reid_features, yolo_ids, threshold=0.75):
+        lib_ids = self.feature_library[:, 0].cpu().numpy().astype(int)
+        cos_sim = cosine_sim_cal(reid_features, self.feature_library[:, 2:])   # n×N  
+        best_match_idx = torch.argmax(cos_sim, dim=1).cpu().numpy().astype(int).tolist() if cos_sim.shape[1] !=0 else None   # n×1  当前特征跟库里的第几个最匹配
+        # 当前track_id最匹配库中的track_id
+        best_match_ids = lib_ids[best_match_idx].tolist() if best_match_idx is not None else None
+        
+        current_time = time.time()
+        _new_reids = [k for k, v in self.mapping_table.items() if k!=v]
+        for i, track_id, feature in zip(range(len(reid_features)),yolo_ids , reid_features):
+            
+            # 默认值是track_id
+            reid = self.mapping_table.get(track_id, track_id)
+            # 库中最匹配的track_id以及相似度
+            best_match_lib_track_id = best_match_ids[i] if best_match_ids is not None else None
+            best_match_cos_sim = cos_sim[i,best_match_idx[i]] if best_match_idx is not None else None
+            
+            # 1、这个id 没有被reid过，而且不在库中
+            cond1 = track_id not in _new_reids and track_id not in lib_ids
+            # 2、当前库中存在匹配的id
+            cond2 = best_match_lib_track_id is not None
+            # 3、相似度大于阈值
+            cond3 = best_match_cos_sim and best_match_cos_sim>threshold
+            # 4、这个匹配的id，没有被别人reid，也不在当前帧的id列表中，防止重复
+            cond4 = best_match_lib_track_id not in _new_reids and best_match_lib_track_id not in yolo_ids
+            # 满足所有条件，那么进行reid映射
+            if cond1 and cond2 and cond3 and cond4:
+                reid = best_match_lib_track_id
+                _new_reids.append(reid)
+            
+            if cond1:
+                self.get_logger().info(f"new {track_id} best_matched_id:{best_match_lib_track_id} cos_sim:{best_match_cos_sim}" )
+            
+            self.mapping_table[track_id] = reid
+            new_entry = torch.cat((torch.tensor([reid, current_time], device=self.device), feature))
+            self.feature_library = torch.cat((self.feature_library, torch.unsqueeze(new_entry, dim=0)), dim=0)
+        
+    
     def match_and_assign_id(self, reid_features, yolo_ids, threshold=0.75):
         '''
         看当前对象是否已经被track，如果已经被track，不重复reid
