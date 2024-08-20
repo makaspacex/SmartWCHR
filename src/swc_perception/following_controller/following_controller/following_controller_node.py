@@ -6,11 +6,13 @@ from message_filters import ApproximateTimeSynchronizer, Subscriber
 from rclpy.qos import QoSProfile
 from rclpy.qos import qos_profile_sensor_data
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String
 import math
 from cv_bridge import CvBridge
 import cv2
 import time
 
+# 'following_id'
 
 class DetectionNode(Node):
     def __init__(self):
@@ -41,6 +43,7 @@ class DetectionNode(Node):
         self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
         self.visual_publisher = self.create_publisher(Image, '/following_visualization', 10)
+        self.following_id_publisher = self.create_publisher(String, 'following_id', 10)
 
         # Synchronize the subscribers
         self.ts = ApproximateTimeSynchronizer(
@@ -63,8 +66,9 @@ class DetectionNode(Node):
     # 这种方式存在bug，如果画面中只有一个人，这个人走出画面，不会有新的yoloperson消息发布，不更新了
     # 解决方案：让yolomix_node在没有检测到人的情况下也发布yolo_persons消息
     def timer_callback(self):
+        self.publish_following_id()
+        # self.Visualization()
 
-        self.Visualization()
         if self.state == 'initing':
             self.find_target()
         elif self.state == 'following':
@@ -237,6 +241,12 @@ class DetectionNode(Node):
         twist.angular.z = 0.0
         self.cmd_vel_publisher.publish(twist)
         self.get_logger().info("Stop.............")
+
+    def publish_following_id(self):
+        msg = String()
+        msg.data = str(self.track_id)
+        self.following_id_publisher.publish(msg)
+
 
     def Visualization(self):
         if self.latest_yolo_persons is None:
