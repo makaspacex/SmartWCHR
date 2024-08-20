@@ -24,10 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'yolomix_node = yolomix.yolomix_node:main',
-            'visualization_node = yolomix.VisualizationNode:main',
-            'reid_node = yolomix.yolomix_reid:main',
-            'image_publisher_node = yolomix.image_publisher_node:main'
+            'yolomix = yolomix.yolomix_node:main',
+            'camera = yolomix.camera_node:main'
         ],
         
     },

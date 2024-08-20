@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'following_controler_node = following_controller.following_controller_node:main'
-            # 'following_controler_node = following_controller:following_controller_node:main'
+            'vis = following_controller.following_vis:main'
+            'nav2 = following_controller:following_nav2:main'
         ],
     },
 )
