@@ -382,33 +382,30 @@ class YolomixNode(Node):
         每个对象只进行一次reid
         看当前已经出现的id有哪些，即用一个变量记录上一帧中的max_tracked_id
         如果给当前对象分配的track_id < max_tracked_id，则说明当前对象已经被track，不用被reid
-
         建立一个映射表，从track_id到reid_library中的id
-
         '''
-        # assigned_ids = []
 
-         # 检查库是否为空
+        
+
+        # 检查库是否为空
         if self.feature_library.shape[0] == 0:
             for idx, feature in enumerate(reid_features):
-                new_id = self.next_id
-                self.next_id += 1
-                self.mapping_table[yolo_ids[idx]] = new_id
+                stored_id = yolo_ids[idx]
+                self.mapping_table[yolo_ids[idx]] = stored_id
+                # stored_id就是tracker分配的id
 
-                self.get_logger().info(f'the feature library is empty, add the new id: {new_id}')
+                self.get_logger().info(f'the feature library is empty, assign the tracker id: {stored_id}')
 
                 # 获取当前时间戳作为存入时间
                 current_time = time.time()
                 # 将ID、时间和特征组合为一行
-                new_entry = torch.cat((torch.tensor([new_id, current_time], device=self.device), feature))
+                new_entry = torch.cat((torch.tensor([stored_id, current_time], device=self.device), feature))
                 # 将新的条目添加到 feature_library
                 self.feature_library = torch.cat((self.feature_library, torch.unsqueeze(new_entry, dim=0)), dim=0)
             return
 
         # reid_features  n×512      stored_lib    N×512     T:512×N
-        # 取出库中已存在的id
-        # stored_ids = self.feature_library[:, 0].cpu().numpy().astype(int)
-        stored_ids = self.feature_library[:, 0].cpu().numpy().astype(int).tolist()
+        stored_ids = self.feature_library[:, 0].cpu().numpy().astype(int).tolist()      # 取出库中已存在的id
         cos_sim = cosine_sim_cal(reid_features, self.feature_library[:, 2:])   # n×N  
         best_match_idx = torch.argmax(cos_sim, dim=1).cpu().numpy().tolist()              # n×1  当前特征跟库里的第几个最匹配
 
@@ -417,27 +414,31 @@ class YolomixNode(Node):
         for idx, feature in enumerate(reid_features):
             if yolo_ids[idx] <= self.max_tracked_id:  # 当前对象已经被track，不用进行reid，直接压进特征库即可
                 current_time = time.time()
-                lib_id = self.mapping_table[yolo_ids[idx]]
 
-                assigned_id.add(lib_id)  # 当前帧中，已经有lib_id这个id了，有新人进来，reid不能匹配到这个id
 
-                new_entry = torch.cat((torch.tensor([lib_id, current_time], device=self.device), feature))
+                stored_id = self.mapping_table[yolo_ids[idx]]
+                assigned_id.add(stored_id)
+                new_entry = torch.cat((torch.tensor([stored_id, current_time], device=self.device), feature))
+
                 # 将新的条目添加到 feature_library
                 self.feature_library = torch.cat((self.feature_library, torch.unsqueeze(new_entry, dim=0)), dim=0)
             else:                                           # 当前是新的没有被track的对象，第一次需要reid
                 best_match = best_match_idx[idx]
-                stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
+                # stored_id = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
+                best_match_id_library = stored_ids[best_match]          # 与当前特征最匹配的库里的特征对应的id
                 similarity = cos_sim[idx, best_match]  # 当前特征与最匹配的库里的特征的相似度
 
-                self.get_logger().info(f'a new person appear, the best_math_id is {stored_id}   similarity is {similarity}')
-                # self.get_logger().info(f'assigned_id:  {assigned_id}')
-                if similarity < threshold or stored_id in assigned_id:
-                    if stored_id in assigned_id:
-                        self.get_logger().info(f'The id {stored_id} already exists in this frame, so assign a new id {self.next_id}')
+                stored_id = yolo_ids[idx]
+                self.get_logger().info(f'a new person appear, the best_match_id is {best_match_id_library}   similarity is {similarity}')
+                if similarity < threshold or best_match_id_library in assigned_id:
+                    if best_match_id_library in assigned_id:
+                        self.get_logger().info(f'The id {best_match_id_library} already exists in this frame, so assign the tracker id: {stored_id}')
                     else:
-                        self.get_logger().info(f'similarity is too low, so assign a new id {self.next_id}')
-                    stored_id = self.next_id
-                    self.next_id += 1
+                        self.get_logger().info(f'similarity is too low, so assign the tracker id: {stored_id}')
+                else:
+                    stored_id = best_match_id_library
+                    self.get_logger().info(f'reid---  assign the person the best_match_id_library  {best_match_id_library}')
+
                 assigned_id.add(stored_id)
 
                 self.mapping_table[yolo_ids[idx]] = stored_id

@@ -27,6 +27,17 @@ class DetectionNode(Node):
         # self.fov_y = 0.94
 
 
+
+        self.max_vx = 0.6
+        self.min_vx = 0.2
+        self.max_va = 0.3
+        self.gain_vx = 0.8
+        self.gain_va = 0.5
+        self.distance = 2                          # 跟随过程中保持的距离
+        self.angle_threshold = math.pi / 4         # 小于这个角度，先不前进，只转圈
+        self.dleta_theta = 8                       # 摄像头安装的位置到轮椅中心的角度偏差（角度制）
+
+
         self.state = 'initing'          # 当前状态，包括  initing  following  lost
         self.track_id = -1              # 当前跟随对象的id
 
@@ -77,7 +88,6 @@ class DetectionNode(Node):
             self.find_lost_target()
             
 
-
     # 将举左手的人作为跟随目标
     def find_target(self):
         if self.latest_yolo_persons is None or self.latest_laser_scan is None:
@@ -86,12 +96,12 @@ class DetectionNode(Node):
         # Process the data to check if left wrist is higher than left shoulder
         for person in self.latest_yolo_persons.persons:
             keypoints = person.keypoints
-            left_shoulder = keypoints[1]  # left eye is index 1
+            left_eye = keypoints[1]  # left eye is index 1
             left_wrist = keypoints[9]    # left wrist is index 9
 
-            if left_shoulder.x > 0 and left_wrist.x > 0:  # Ensure that keypoints have at least left shoulder and wrist
+            if left_eye.x > 0 and left_wrist.x > 0:  # Ensure that keypoints have at least left shoulder and wrist
                 # Compare y-coordinates to check if wrist is higher than shoulder
-                if left_wrist.y < left_shoulder.y:
+                if left_wrist.y < left_eye.y:
                     self.track_id = person.id
                     self.state = 'following'
                     self.get_logger().info(f"Person ID {person.id}: Left wrist is higher than left shoulder.")
@@ -133,9 +143,9 @@ class DetectionNode(Node):
         
         # 判断目标是否举起右手，取消跟随
         keypoints = target_person.keypoints
-        right_shoulder = keypoints[2]  # right eye is index 2
+        right_eye = keypoints[2]  # right eye is index 2
         right_wrist = keypoints[10]    # right wrist is index 10
-        if right_wrist.y < right_shoulder.y:
+        if right_wrist.y < right_eye.y:
             self.track_id = -1
             self.state = 'initing'
             self.get_logger().info("Cancel following .......")
@@ -192,36 +202,21 @@ class DetectionNode(Node):
         # self.get_logger().info("depth:  %.2f"%depth)
         
 
-        
-
         # Compute the angle theta
-        theta = center_angle_x - (8 / 180 * math.pi)
+        theta = center_angle_x - self.dleta_theta / 180 * math.pi
 
         self.get_logger().info(f"theta = {theta / math.pi * 180}   depth = {depth}")
         
 
-        # self.get_logger().info("theta:  %.2f"%(theta / math.pi * 180))
-
-        max_vx = 0.6
-        min_vx = 0.2
-        max_va = 0.3
-        gain_vx = 0.8
-        gain_va = 0.5
-        distance = 2
-        angle_threshold = math.pi / 4
-
-        # target_x = Z_camera
-        
-
-        va = min(max_va, max(-max_va, theta * gain_va))
+        va = min(self.max_va, max(-self.max_va, theta * self.gain_va))
         vx = 0.0
 
-        if abs(theta) < angle_threshold:
-            vx = (depth - distance) * gain_vx
+        if abs(theta) < self.angle_threshold:
+            vx = (depth - self.distance) * self.gain_vx
             if vx < 0:
                 vx = 0.0
             else:
-                vx = min(max_vx, vx if vx >= min_vx else min_vx)
+                vx = min(self.max_vx, vx if vx >= self.min_vx else self.min_vx)
             # vx = max(0, min(max_vx, vx if vx >= min_vx else min_vx))
             # vx = max(min_vx, min(max_vx, max(0, vx)))
         else:
