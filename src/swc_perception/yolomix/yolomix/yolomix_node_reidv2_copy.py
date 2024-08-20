@@ -28,6 +28,8 @@ from rclpy.qos import qos_profile_sensor_data
 import threading
 from collections import deque
 import copy
+from ultralytics.utils.plotting import Annotator, colors, save_one_box
+
 
 def get_roi( image, box):
     x_center, y_center, width, height = box[:4]
@@ -173,6 +175,13 @@ class YolomixNode(Node):
         self.render_queen = deque(maxlen=1)
         self.render_thread.start()
         
+        # 订阅跟踪控制器的反馈信息
+        self.follow_info_sub = self.create_subscription(String, '/following_id', self.follow_info_call_back, qos_profile_sensor_data_depth1)
+        self.tart_id = -1
+        
+    def follow_info_call_back(self,msg:String):
+        self.tart_id = int(msg.data)
+    
     def render(self):
         while True:
             if not self.render_queen:
@@ -180,18 +189,86 @@ class YolomixNode(Node):
                 continue
             try:
                 detection:Results = self.render_queen.popleft()
+                
+                # 默认是原图
                 annotated_image = detection.orig_img
+                
+                # 如果没有被跟踪，就直接输出原图
                 if not detection.boxes.is_track:
                     continue
                 
-                reids = []
-                for _id in detection.boxes.id.int().tolist():
-                    reids.append(self.mapping_table[_id])
-                data = copy.copy(detection.boxes.data)
-                data[:, -3]= torch.tensor(reids, dtype=torch.float32)
-                detection.boxes.data = data
+                # reids = []
+                # for _id in detection.boxes.id.int().tolist():
+                #     reids.append(self.mapping_table[_id])
+                # data = copy.copy(detection.boxes.data)
+                # data[:, -3]= torch.tensor(reids, dtype=torch.float32)
+                # detection.boxes.data = data
                 
-                annotated_image = detection.plot()
+                # ==========================================================================================================
+                color_mode = "class"
+                img = None
+                names = detection.names
+                conf=True
+                labels=True
+                is_obb = detection.obb is not None
+                pred_boxes, show_boxes = detection.obb if is_obb else detection.boxes, True
+                pred_probs, show_probs = detection.probs, True
+                annotator = Annotator(
+                    copy.deepcopy(detection.orig_img if img is None else img),
+                    line_width=1,
+                    font_size=8,
+                    pil= False or (pred_probs is not None and show_probs),  # Classify tasks default to pil=True
+                    example=names,
+                )
+
+                # Plot Detect results
+                if pred_boxes is not None and show_boxes:
+                    for i, d in enumerate(reversed(pred_boxes)):
+                        c, conf, track_id = int(d.cls), float(d.conf) if conf else None, None if d.id is None else int(d.id.item())
+                        
+                        reid = track_id
+                        if track_id:
+                            reid = self.mapping_table[reid]
+                        
+                        # 默认是蓝色
+                        color = colors(i if color_mode == "instance" else c, True)
+                        # 如果是被reid的任务，颜色改为橙色
+                        if reid != track_id:
+                            color = (72,229,227)
+                        
+                        # 被跟踪的任务，优先级最高
+                        if reid == self.tart_id:
+                            color = (0, 0, 255)
+                        
+                        name = ("" if reid is None else f"id:{reid} ") + names[c]
+                        label = (f"{name} {conf:.2f}" if conf else name) if labels else None
+                        box = d.xyxyxyxy.reshape(-1, 4, 2).squeeze() if is_obb else d.xyxy.squeeze()
+                        annotator.box_label(
+                            box,
+                            label,
+                            color=color,
+                            rotated=is_obb,
+                        )
+
+                # Plot Classify results
+                if pred_probs is not None and show_probs:
+                    text = ",\n".join(f"{names[j] if names else j} {pred_probs.data[j]:.2f}" for j in pred_probs.top5)
+                    x = round(detection.orig_shape[0] * 0.03)
+                    annotator.text([x, x], text, txt_color=(255, 255, 255))  # TODO: allow setting colors
+
+                # Plot Pose results
+                if detection.keypoints is not None:
+                    for i, k in enumerate(reversed(detection.keypoints.data)):
+                        annotator.kpts(
+                            k,
+                            detection.orig_shape,
+                            radius=3,
+                            kpt_line=True,
+                            kpt_color=colors(i, True) if color_mode == "instance" else None,
+                        )
+                
+                # ==========================================================================================================
+                annotated_image =  annotator.result()
                 
             except Exception as e:
                 self.get_logger().error(f"{e}")
@@ -376,7 +453,7 @@ class YolomixNode(Node):
         
         # Convert ROS Image message to OpenCV image
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        results:List[Results] = self.model.track(cv_image, persist=True, conf=0.65,  tracker=self.tracker_config_file, verbose=False)
+        results:List[Results] = self.model.track(cv_image, persist=True, conf=0.55,  tracker=self.tracker_config_file, verbose=False)
         detect_result = results[0]
         
         # 如果没有任何对象，就清空跟踪器
