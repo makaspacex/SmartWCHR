@@ -241,46 +241,6 @@ class DetectionNode(Node):
         self.following_id_publisher.publish(msg)
 
 
-    def Visualization(self):
-        if self.latest_yolo_persons is None:
-            return
-        
-        # 将ROS图像消息转换为OpenCV图像
-        cv_image = self.cv_bridge.imgmsg_to_cv2(self.latest_yolo_persons.image, desired_encoding='bgr8')
-
-        for person in self.latest_yolo_persons.persons:
-            # self.get_logger().info("Visualization")
-            # 获取边界框坐标和中心点
-            center_x, center_y = int(person.center.x), int(person.center.y)
-            bbox_width, bbox_height = int(person.width), int(person.height)
-
-            # 计算边界框的坐标
-            x_min = int(center_x - bbox_width / 2)
-            y_min = int(center_y - bbox_height / 2)
-            x_max = int(center_x + bbox_width / 2)
-            y_max = int(center_y + bbox_height / 2)
-
-            # 根据ID选择框的颜色
-            # self.get_logger().info(f"self.track_id = {self.track_id}")
-            if person.id == self.track_id:
-                color = (0, 0, 255)  # 红色
-            else:
-                color = (255, 0, 0)  # 蓝色
-
-            # 绘制边界框
-            cv2.rectangle(cv_image, (x_min, y_min), (x_max, y_max), color, 1)
-            
-            # Draw ID
-            H, W = cv_image.shape[:2]
-            _t_x = min(max(0, x_min), W)
-            _t_y = min(max(30, y_min), H)
-            cv2.putText(cv_image, f"ID: {person.id}", (_t_x, _t_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-        # 将OpenCV图像转换回ROS图像消息
-        output_msg = self.cv_bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
-
-        # 发布修改后的图像
-        self.visual_publisher.publish(output_msg)
         
 
 def main(args=None):

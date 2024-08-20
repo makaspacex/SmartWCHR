@@ -6,7 +6,7 @@ import cv2
 
 class ImagePublisher(Node):
     def __init__(self):
-        super().__init__('image_publisher')
+        super().__init__('camera_node')
         
         # Declare and get the 'frequency' parameter
         self.declare_parameter('frequency', 10.0)  # 默认帧率为 10.0 Hz
