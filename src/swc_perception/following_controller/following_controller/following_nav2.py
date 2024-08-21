@@ -11,22 +11,34 @@ import math
 from cv_bridge import CvBridge
 import cv2
 import time
+from geometry_msgs.msg import PointStamped, PoseStamped
 
-# 'following_id'
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+import tf2_ros
+import numpy as np
+import tf_transformations
+import tf2_geometry_msgs
+from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+
 
 class DetectionNode(Node):
     def __init__(self):
         super().__init__('following_controller_node')
 
+        '''
+          data: [352.04623,   0.     , 312.17749,
+           0.     , 351.6016 , 233.29058,
+           0.     ,   0.     ,   1.     ]
+        '''
         # Camera intrinsics
-        # self.fx = 235.67877
-        # self.fy = 236.79534
-        # self.cx = 186.26218
-        # self.cy = 111.24331
-        # self.fov_x = 1.19   # 摄像头的水平视场角
-        # self.fov_y = 0.94
-        self.fov_x = 1.48   # 摄像头的水平视场角
+        self.fx = 352.04623
+        self.fy = 351.6016
+        self.cx = 312.17749
+        self.cy = 233.29058
 
+        # 摄像头的水平视场角
+        self.fov_x = 1.48   
+        self.fov_y = 1.20
 
 
         self.max_vx = 1.3
@@ -34,7 +46,7 @@ class DetectionNode(Node):
         self.max_va = 0.3
         self.gain_vx = 0.8
         self.gain_va = 0.5
-        self.distance = 2                          # 跟随过程中保持的距离
+        self.person_gap = 1.5                          # 跟随过程中保持的距离
         self.angle_threshold = math.pi / 4         # 小于这个角度，先不前进，只转圈
         self.dleta_theta = 8                       # 摄像头安装的位置到轮椅中心的角度偏差（角度制）
 
@@ -56,6 +68,15 @@ class DetectionNode(Node):
 
         self.visual_publisher = self.create_publisher(Image, '/following_visualization', 10)
         self.following_id_publisher = self.create_publisher(String, 'following_id', 10)
+        
+        # nav目标发布器
+        self.navigator = BasicNavigator()
+        self.goal_publisher = self.create_publisher(PoseStamped, 'goal_pose', 1)
+        self.goal_publisher = self.create_publisher(PoseStamped, 'move_base/cancel', 1)
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+
 
         # Synchronize the subscribers
         self.ts = ApproximateTimeSynchronizer(
@@ -65,7 +86,7 @@ class DetectionNode(Node):
         )
         self.ts.registerCallback(self.sync_callback)
 
-
+    
     def sync_callback(self, scan_msg: LaserScan, yolo_persons_msg: YoloPersons):
         # Save the latest messages
         self.latest_laser_scan = scan_msg
@@ -147,11 +168,79 @@ class DetectionNode(Node):
             self.Stop()
             return
         
-        self.CaculateTwist(target_person)
-        
+        self.cal_goal(target_person)
 
-    def CaculateTwist(self, target_person):
         
+    def cal_goal(self, target_person):
+
+        lidar_person_dis = self.get_target_depth(target_person)
+        if lidar_person_dis < 0:
+            return None
+
+        center_x, center_y = (target_person.center.x, target_person.center.y)
+
+        # 计算目标行人相对于相机的角度     center_angle_x
+        cv_image = self.cv_bridge.imgmsg_to_cv2(self.latest_yolo_persons.image)
+        image_height, image_width = cv_image.shape[:2]
+        angle_per_pixel_x = self.fov_x / image_width
+        # 左为正方向
+        center_angle_x = -(center_x - image_width / 2) * angle_per_pixel_x
+
+        # 目标行人中心在相机坐标系下的坐标
+        X_camera = (center_x - self.cx) * lidar_person_dis / self.fx   # x是水平方向，往右边为正方向
+        Y_camera = (center_y - self.cy) * lidar_person_dis / self.fy   # y是垂直方向，往下为正方向
+        Z_camera = lidar_person_dis * np.cos(center_angle_x)           # 相机正前方为z的正方向
+
+        
+        # 轮椅与目标行人要保持一定距离，计算x和y的偏移量
+        # offset_x = self.person_gap * np.sin(center_angle_x)    # 如果角度为正（目标在左），偏移量为正，实际要减去一定的偏移量
+
+        # 计算目标位置，减去偏移量，使机器人与目标行人保持一定距离
+        Z_camera = max(0.0, Z_camera - self.person_gap)
+        X_camera = Z_camera * np.tan(center_angle_x)
+
+        # 目标点相对于相机坐标系：
+        # 往前Z_camera，往右X_camear，角度为   center_angle_x
+
+        pose_stamped = PoseStamped()
+        pose_stamped.header.frame_id = 'astra_link'
+        pose_stamped.header.stamp = self.get_clock().now().to_msg()
+        pose_stamped.pose.position.x = Z_camera
+        pose_stamped.pose.position.y = X_camera
+
+        # 将旋转角度转换为quaternion，单位为弧度值
+        quaternion = tf_transformations.quaternion_from_euler(0.0, 0.0, center_angle_x)
+        
+        # 填充四元数数据
+        pose_stamped.pose.orientation.x = quaternion[0]
+        pose_stamped.pose.orientation.y = quaternion[1]
+        pose_stamped.pose.orientation.z = quaternion[2]
+        pose_stamped.pose.orientation.w = quaternion[3]
+
+        try:
+            # 等待变换变得可用
+            self.tf_buffer.can_transform('map', 'astra_link', rclpy.time.Time(), timeout=rclpy.duration.Duration(seconds=1.0))
+            transform = self.tf_buffer.lookup_transform(
+                'map',  # 目标 frame
+                'astra_link',  # 源 frame
+                rclpy.time.Time()  # 获取最新的变换
+            )
+
+            # 将 pose_stamped 从 base_link 变换到 map
+            transformed_pose_stamped = tf2_geometry_msgs.do_transform_pose_stamped(pose_stamped, transform)
+
+            # 发布变换后的 PoseStamped
+            # self.pose_publisher.publish(transformed_pose)
+            self.navigator.goToPose(transformed_pose_stamped)
+
+            self.get_logger().info(f'Published transformed PoseStamped to map frame.x:{Z_camera} y:{X_camera}')
+        except (LookupException, ConnectivityException, ExtrapolationException) as e:
+            self.get_logger().error(f'Failed to transform pose: {str(e)}')
+
+
+    # 获取目标行人的距离
+    def get_target_depth(self, target_person):
+                
         center = (target_person.center.x, target_person.center.y)
         bbox_width = target_person.width
 
@@ -191,56 +280,19 @@ class DetectionNode(Node):
 
         if not relevant_distances:
             self.get_logger().warn("No depth data in the specified angle range")
-            return
+            return -1
 
         depth = min(relevant_distances)
-        # self.get_logger().info("depth:  %.2f"%depth)
-        
+        return depth
 
-        # Compute the angle theta
-        theta = center_angle_x - self.dleta_theta / 180 * math.pi
-
-        self.get_logger().info(f"theta = {theta / math.pi * 180}   depth = {depth}")
-        
-        
-        va = min(self.max_va, max(-self.max_va, theta * self.gain_va))
-        if abs(theta) < 2 / 180 * math.pi:
-            va = 0.0
-        
-        vx = 0.0
-
-        if abs(theta) < self.angle_threshold:
-            vx = (depth - self.distance) * self.gain_vx
-            if vx < 0:
-                vx = 0.0
-            else:
-                vx = min(self.max_vx, vx if vx >= self.min_vx else self.min_vx)
-            # vx = max(0, min(max_vx, vx if vx >= min_vx else min_vx))
-            # vx = max(min_vx, min(max_vx, max(0, vx)))
-        else:
-            self.get_logger().info("Rotation too big, not moving forward")
-
-        # Create and publish velocity command
-        twist = Twist()
-        twist.linear.x = vx
-        twist.angular.z = va
-        self.cmd_vel_publisher.publish(twist)
-        # self.get_logger().info(f"Publish twist vx = {vx},   va = {va}")
-    
 
     def Stop(self):
-        twist = Twist()
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        self.cmd_vel_publisher.publish(twist)
-        self.get_logger().info("Stop.............")
+        self.navigator.cancelTask()
 
     def publish_following_id(self):
         msg = String()
         msg.data = str(self.track_id)
         self.following_id_publisher.publish(msg)
-
-
         
 
 def main(args=None):

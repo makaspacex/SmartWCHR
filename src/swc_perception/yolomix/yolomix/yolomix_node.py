@@ -357,7 +357,7 @@ class YolomixNode(Node):
                 # 发布检测的消息
                 self.persons_publisher.publish(yolo_persons_msg)
                 cost_timer.end("self.reid")
-                self.get_logger().info(f'{cost_timer}')
+                # self.get_logger().info(f'{cost_timer}')
             
     def timer_callback(self):
          # 获取当前时间
