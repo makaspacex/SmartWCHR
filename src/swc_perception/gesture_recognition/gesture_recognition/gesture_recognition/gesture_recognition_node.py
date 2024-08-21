@@ -6,7 +6,8 @@ import cv2
 import mediapipe as mp
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point
-from my_msgs.msg import HandInfo, HandsInfo
+from gesture_recognition_msgs.msg import HandInfo, HandsInfo
+
 
 
 class HandDetector:
@@ -31,13 +32,13 @@ class HandDetector:
         self.mpHands = mp.solutions.hands
         self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.modelComplex,
                                         self.detectionCon, self.minTrackCon)
-        self.mpDraw = mp.solutions.drawing_utils	# 初始化绘图器
+        # self.mpDraw = mp.solutions.drawing_utils	# 初始化绘图器
         self.tipIds = [4, 8, 12, 16, 20]			# 指尖列表
         self.fingers = []
         self.lmList = []
 
 
-    def findHands(self, img, draw=False):
+    def findHands(self, img):
         """
         从图像(BRG)中找到手部。
         :param img: 用于查找手的图像。
@@ -46,17 +47,16 @@ class HandDetector:
         """
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # 将传入的图像由BGR模式转标准的Opencv模式——RGB模式，
         self.results = self.hands.process(imgRGB)
-        # print("results：--------------------")
-        # print(self.results)
+        
 
-        if self.results.multi_hand_landmarks:
-            for handLms in self.results.multi_hand_landmarks:
-                if draw:
-                    self.mpDraw.draw_landmarks(img, handLms,
-                                               self.mpHands.HAND_CONNECTIONS)
-        return img
+        # if self.results.multi_hand_landmarks:
+        #     for handLms in self.results.multi_hand_landmarks:
+        #         if draw:
+        #             self.mpDraw.draw_landmarks(img, handLms,
+        #                                        self.mpHands.HAND_CONNECTIONS)
+        # return img
 
-    def findPosition(self, img, handNo=0, draw=False):
+    def findPosition(self, img, handNo=0):
         """
         查找单手的地标并将其放入列表中像素格式。还可以返回手部周围的边界框。
         :param img: 要查找的主图像
@@ -78,8 +78,8 @@ class HandDetector:
                 xList.append(px)
                 yList.append(py)
                 self.lmList.append([px, py])
-                if draw:
-                    cv2.circle(img, (px, py), 5, (255, 0, 255), cv2.FILLED)
+                # if draw:
+                #     cv2.circle(img, (px, py), 5, (255, 0, 255), cv2.FILLED)
             xmin, xmax = min(xList), max(xList)
             ymin, ymax = min(yList), max(yList)
             boxW, boxH = xmax - xmin, ymax - ymin
@@ -89,10 +89,10 @@ class HandDetector:
             
             bboxInfo = {"id": id, "bbox": bbox,"center": (cx, cy)}
 
-            if draw:
-                cv2.rectangle(img, (bbox[0] - 20, bbox[1] - 20),
-                              (bbox[0] + bbox[2] + 20, bbox[1] + bbox[3] + 20),
-                              (0, 255, 0), 2)
+            # if draw:
+            #     cv2.rectangle(img, (bbox[0] - 20, bbox[1] - 20),
+            #                   (bbox[0] + bbox[2] + 20, bbox[1] + bbox[3] + 20),
+            #                   (0, 255, 0), 2)
 
         return self.lmList, bboxInfo
 
@@ -163,7 +163,8 @@ class HandDetector:
     
     def detect_gestures(self, img):
         hands_info_list = []
-        img = self.findHands(img)
+        self.findHands(img)
+        # img = self.findHands(img)
         if self.results.multi_hand_landmarks:
             for hand_no, hand_landmarks in enumerate(self.results.multi_hand_landmarks):
                 lmList, bboxInfo = self.findPosition(img, hand_no)
@@ -180,44 +181,6 @@ class HandDetector:
                     hands_info_list.append(hand_info)
         return hands_info_list
     
-    '''
-    def Gesture_recognition_img(self, img, draw=True):
-        img = self.findHands(img, draw=draw)
-        lmList, bbox = self.findPosition(img, draw=draw)
-
-        if lmList:
-            x_1, y_1 = bbox["bbox"][0], bbox["bbox"][1]
-            x1, x2, x3, x4, x5 = self.fingersUp()
-            
-            print(f'{x1} {x2} {x3} {x4} {x5}')
-
-            # 检测大拇指是否竖起有点问题
-            if (x2 == 1 and x3 == 1) and (x4 == 0 and x1 == 0):
-                cv2.putText(img, "2_TWO", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            elif (x3 == 1 and x4 == 1 and x5 == 1) and (x2 == 0):  # 比3的手势的时候，大拇指是否竖起的逻辑有点问题，因此没有判断x1
-                cv2.putText(img, "3_THREE", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            elif (x2 == 1 and x3 == 1 and x4 == 1 and x5 == 1) and (x1 == 0):
-                cv2.putText(img, "4_FOUR", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            elif x1 == 1 and x2 == 1 and x3 == 1 and x4 == 1 and x5 == 1:
-                cv2.putText(img, "5_FIVE", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            elif x2 == 1 and (x1 == 0, x3 == 0, x4 == 0, x5 == 0):
-                cv2.putText(img, "1_ONE", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            elif (x1 and x5) and (x2 == 0 and x3 == 0 and x4 == 0):
-                cv2.putText(img, "SIX!", (x_1, y_1), cv2.FONT_HERSHEY_PLAIN, 3,
-                            (0, 0, 255), 3)
-            # else:
-            #     return None
-        return img
-'''
-
-
-
-
 
 
 class GestureRecognitionNode(Node):
@@ -248,8 +211,9 @@ class GestureRecognitionNode(Node):
 
         # Create HandsInfo message
         hands_info_msg = HandsInfo()
-        hands_info_msg.header = msg.header
+        # hands_info_msg.header = msg.header
         hands_info_msg.hands = hands_info_list
+        hands_info_msg.image = msg
 
         # Publish the hands info
         self.hands_info_publisher.publish(hands_info_msg)

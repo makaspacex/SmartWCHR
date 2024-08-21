@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'gesture_recognition_node = gesture_recognition.gesture_recognition_node:main',
-            'hands_Visualization_node = gesture_recognition.handsVisualizationNode:main'
+            'gesture_recognition = gesture_recognition.gesture_recognition_node:main',
+            'visualization = gesture_recognition.handsVisualizationNode:main'
         ],
     },
 )
