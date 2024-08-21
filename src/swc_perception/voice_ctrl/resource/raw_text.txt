@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?><nlp>
+  <version>1.1</version>
+  <rawtext>前进</rawtext>
+  <confidence>84</confidence>
+  <engine>local</engine>
+  <result>
+    <focus>前进</focus>
+    <confidence>95</confidence>
+    <object>
+      <前进 id="65535">前进</前进>
+    </object>
+  </result>
+</nlp>
