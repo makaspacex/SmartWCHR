@@ -9,12 +9,17 @@ def generate_launch_description():
     # 声明并获取启动参数
     return LaunchDescription(
         [
-            # 创建节点配置
+            DeclareLaunchArgument(
+                "frequency",
+                default_value="20.0",
+                description="frequency",
+            ),
             Node(
                 package="gen_camera",
                 executable="camera",
                 name="image_publish",
                 output="screen",
+                parameters=[{'frequency': LaunchConfiguration('frequency')}]
             ),
         ]
     )
