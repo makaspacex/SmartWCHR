@@ -219,6 +219,13 @@ def generate_launch_description():
                 launch_arguments={'use_sim_time': use_sim_time,"robot_name": robot_name}.items(),
                 condition=UnlessCondition(use_sim_time),
             ),
+            # 启动相机
+            Node(
+                package="gen_camera",
+                executable="camera",
+                name="camera_image_publish",
+                output="screen",
+            ),
             # 启动ms200雷达
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
