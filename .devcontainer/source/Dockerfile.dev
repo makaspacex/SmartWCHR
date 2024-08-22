@@ -17,9 +17,14 @@ RUN apt update &&  \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
+RUN apt update &&  \
+    apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-rmw-cyclonedds-cpp && \
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # imu
 RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple \
-    && pip3 install pyserial numpy rich minimalmodbus transforms3d
+    && pip3 install pyserial numpy rich minimalmodbus transforms3d apscheduler cv_bridge
 
 # update 
 COPY ./ros_shell.sh /
