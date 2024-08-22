@@ -239,7 +239,7 @@ void writeStringToFile(const char* filename, const char* content) {
 
 static void show_result(char *string, char is_over)
 {
-	const char* filename = "/home/jetson/Desktop/SmartWCHR/src/swc_perception/voice_ctrl/resource/raw_text.txt";
+	const char* filename = "/tmp/voice_recognition_text.txt";
 	writeStringToFile(filename, string);
 
 	printf("\rResult: [ %s ]", string);
