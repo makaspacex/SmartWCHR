@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'voice_ctrl = voice_ctrl.voice_ctrl_node:main'
+            'voice_ctrl = voice_ctrl.voice:main'
         ],
     },
 )
