@@ -280,6 +280,14 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_sim_time),
             ),
+            Node(
+                package="voice_ctrl",
+                executable="voice_ctrl",
+                name="voice_ctrl",
+                parameters=[],
+                output="screen",
+                remappings=[],
+            ),
             # # 启动imu
             # IncludeLaunchDescription(
             #     PythonLaunchDescriptionSource(

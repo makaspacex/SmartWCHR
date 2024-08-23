@@ -34,15 +34,15 @@ class CommandSubscriber(Node):
 
 
     def listener_callback(self, command):
-        if command == "xiao3 fei1 qian2 jin4" and self.state != 'go':
+        if command == "xiao3 fei1 qian2 jin4":
             self.state = "go"
             print("前进")
             self.current_timer = self.create_timer(3.0, self.reset_state)
-        elif command == "xiao3 fei1 zuo3 zhuan3" and self.state != 'left':
+        elif command == "xiao3 fei1 zuo3 zhuan3":
             self.state = "left"
             print("左转")
             self.current_timer = self.create_timer(3.14, self.reset_state)
-        elif command == "xiao3 fei1 you4 zhuan3" and self.state != 'right':
+        elif command == "xiao3 fei1 you4 zhuan3":
             self.state = "right"
             print("右转")
             self.current_timer = self.create_timer(3.14, self.reset_state)
