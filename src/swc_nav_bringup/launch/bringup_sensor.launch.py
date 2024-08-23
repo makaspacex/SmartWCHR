@@ -220,11 +220,14 @@ def generate_launch_description():
                 condition=UnlessCondition(use_sim_time),
             ),
             # 启动相机
-            Node(
-                package="gen_camera",
-                executable="camera",
-                name="camera_image_publish",
-                output="screen",
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        get_package_share_directory("gen_camera"), "launch", "camera.py"
+                    )
+                ),
+                launch_arguments={'use_sim_time': use_sim_time}.items(),
+                condition=UnlessCondition(use_sim_time),
             ),
             # 启动ms200雷达
             IncludeLaunchDescription(

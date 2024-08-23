@@ -9,8 +9,10 @@ class ImagePublisher(Node):
     def __init__(self):
         super().__init__('camera_node')
         
-        self.declare_parameter('frequency', 20.0)  # 默认帧率为 20.0 Hz
+        self.declare_parameter('frequency', 8.0)  # 默认帧率为 20.0 Hz
+        self.declare_parameter('showtime', False) 
         frequency = self.get_parameter('frequency').get_parameter_value().double_value
+        self.showtime = self.get_parameter('showtime').get_parameter_value().bool_value
         self.timer_period = 1.0 / frequency  # 根据帧率计算定时器周期
         
         self.publisher_ = self.create_publisher(Image, '/image', 10)
@@ -33,6 +35,8 @@ class ImagePublisher(Node):
         self.frame_n += 1
         _cur_time = time.time()
         
+        if self.showtime:
+            cv2.putText(frame, f"{time.time()}", (0,20), 1, 1.5, (255, 0, 255), 2)
         msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
         self.publisher_.publish(msg)
         height, width, _ = frame.shape

@@ -11,15 +11,20 @@ def generate_launch_description():
         [
             DeclareLaunchArgument(
                 "frequency",
-                default_value="20.0",
+                default_value="8.0",
                 description="frequency",
+            ),
+            DeclareLaunchArgument(
+                "showtime",
+                default_value="false",
+                description="if showtime on frame image",
             ),
             Node(
                 package="gen_camera",
                 executable="camera",
-                name="image_publish",
+                name="camera_image_publish",
                 output="screen",
-                parameters=[{'frequency': LaunchConfiguration('frequency')}]
+                parameters=[{'frequency': LaunchConfiguration('frequency'),'showtime': LaunchConfiguration('showtime')}]
             ),
         ]
     )
