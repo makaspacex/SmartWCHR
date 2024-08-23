@@ -33,27 +33,18 @@ class CommandSubscriber(Node):
         self.current_timer = None  # 保存当前的定时器对象
 
 
-        self.start_go = False
-        self.start_go_time = None
-        self.start_left = False
-        self.start_left_time = None
-        self.start_right = False
-        self.start_right_time = None
-
-
-
     def listener_callback(self, command):
         if command == "xiao3 fei1 qian2 jin4" and self.state != 'go':
             self.state = "go"
-            print("设置前进")
+            print("前进")
             self.current_timer = self.create_timer(3.0, self.reset_state)
         elif command == "xiao3 fei1 zuo3 zhuan3" and self.state != 'left':
             self.state = "left"
-            print("设置左转")
+            print("左转")
             self.current_timer = self.create_timer(3.14, self.reset_state)
         elif command == "xiao3 fei1 you4 zhuan3" and self.state != 'right':
             self.state = "right"
-            print("设置右转")
+            print("右转")
             self.current_timer = self.create_timer(3.14, self.reset_state)
 
 
@@ -77,50 +68,14 @@ class CommandSubscriber(Node):
 
         # 发布速度指令
         twist = Twist()
-
-        if self.start_go and self.state != 'go':
-            now = time.time()
-            duration = now - self.start_go_time
-            print(f"go duration:{duration}s")
-            self.start_go = False
-
-        if self.start_left and self.state != 'left':
-            now = time.time()
-            duration = now - self.start_left_time
-            print(f"left duration:{duration}s")
-            self.start_left = False
-
-        if self.start_right and self.state != 'right':
-            now = time.time()
-            duration = now - self.start_right_time
-            print(f"right duration:{duration}s")
-            self.start_right = False
-
-        
-
-
         if self.state == "go":
-            if not self.start_go:
-                self.start_go_time = time.time()
-            self.start_go = True
-            
             twist.linear.x = 0.3  # 前进速度
         elif self.state == "left":
-            if not self.start_left:
-                self.start_left_time = time.time()
-            self.start_left = True
-
-
             twist.angular.z = 0.25  # 左转速度
         elif self.state == "right":
-            if not self.start_right:
-                self.start_right_time = time.time()
-            self.start_right = True
-            
             twist.angular.z = -0.25  # 右转速度
         else:
-            twist.linear.x = 0.0
-            twist.angular.z = 0.0
+            return
         self.publisher_.publish(twist)
 
     def process_serial_data(self, data_list):
@@ -134,25 +89,24 @@ class CommandSubscriber(Node):
         str1 = str1.replace("', b'","")
         str1 = str1.replace('"{',"{")
         str1 = str1.replace('}"',"}")
-        #str1 = str1.replace("{",'"{')
-        #str1 = str1.replace("}",'}"')
 
-        #print(str1)
-        json_str = json.loads(str1)
+
+        try:
+            json_str = json.loads(str1)
+        except json.JSONDecodeError as e:
+            print(f"JSON decoding failed: {e}")
+            return
+        
         print("-**-"*20)
-        #print(json_str)
-        #print(type(json_str))
+        
         if 'code' in json_str and self.first == 0:
             sss = json_str['content']
             print(json_str['content'])   
             self.first = 1
         else:
-            angle =str(json_str['content']['info']['ivw']['angle'])
             command = json_str['content']['result']
             self.listener_callback(command)
-            print("你说的话是："+json_str['content']['result']) #获取语音唤醒的结果
-            print("唤醒的角度为：",angle) 
-            # deal_file()
+            print("你说的话是："+ command) #获取语音唤醒的结果
 
 
     def cancel_current_timer(self):
@@ -163,6 +117,12 @@ class CommandSubscriber(Node):
     def reset_state(self):
         self.state = None
         self.cancel_current_timer()
+        twist = Twist()
+        twist.linear.x = 0.0
+        twist.angular.z = 0.0
+        for i in range(3):
+            self.publisher_.publish(twist)
+
 
 def main(args=None):
     rclpy.init(args=args)
