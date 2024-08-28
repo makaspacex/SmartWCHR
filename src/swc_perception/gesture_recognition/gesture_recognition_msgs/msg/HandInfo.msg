@@ -4,3 +4,4 @@ geometry_msgs/Point center
 float64 bbox_width
 float64 bbox_height
 int32 gesture
+string handtype

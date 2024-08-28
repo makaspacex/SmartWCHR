@@ -43,7 +43,7 @@ def generate_launch_description():
     fastlio_mid360_params_dict = yaml.safe_load(open(fastlio_mid360_params))
     fastlio_rviz_cfg_dir = os.path.join(package_share_dir, 'rviz', 'fastlio.rviz')
     fastlio_pub_tf_en = fastlio_mid360_params_dict['/**']['ros__parameters']['publish']['tf_en']
-    lio_remappings = [("/Odometry", "/odom")]  if fastlio_pub_tf_en else None
+    lio_remappings = [("/Odometry", "/fastlio_odomtry")]  if fastlio_pub_tf_en else None
     ##################################### FAST_LIO parameters end #####################################
     
     ################################### POINT_LIO parameters start ####################################

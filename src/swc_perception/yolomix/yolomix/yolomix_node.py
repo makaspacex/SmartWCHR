@@ -123,7 +123,7 @@ class YolomixNode(Node):
 
         # Load pose estimation model
         package_share_dir = get_package_share_directory('yolomix')
-        model_path = os.path.join(package_share_dir,"weights/yolov8n-pose.pt")
+        model_path = os.path.join(package_share_dir,"weights/yolov8s-pose.pt")
         # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")
@@ -132,8 +132,8 @@ class YolomixNode(Node):
         
         # Load reID model
         model_name = "osnet_x0_75"
-        model_name = "osnet_x0_5"
-        model_name = "osnet_x0_25"
+        # model_name = "osnet_x0_5"
+        # model_name = "osnet_x0_25"
         self.reid_fe_extractor = FeatureExtractor(model_name=model_name,device=self.device)
         
         # 注册跟踪器以及reid的encoder

@@ -4,6 +4,7 @@ from sensor_msgs.msg import Image
 from gesture_recognition_msgs.msg import HandsInfo
 from cv_bridge import CvBridge
 import cv2
+import mediapipe as mp
 
 class HandsInfoVisualizerNode(Node):
 
@@ -20,6 +21,7 @@ class HandsInfoVisualizerNode(Node):
         self.bridge = CvBridge()
         self.current_image = None
         self.current_hands_info = None
+        self.mpDraw = mp.solutions.drawing_utils
         self.get_logger().info('HandsInfo visualizer node has been started.')
 
 
@@ -37,7 +39,7 @@ class HandsInfoVisualizerNode(Node):
                 cv2.rectangle(image, (bbox[0], bbox[1]), 
                               (bbox[0] + bbox[2], bbox[1] + bbox[3]), 
                               (0, 255, 0), 2)
-                cv2.putText(image, f'ID: {hand_info.id} Gesture: {hand_info.gesture}', 
+                cv2.putText(image, f'Gesture: {hand_info.gesture}', 
                             (bbox[0], bbox[1] - 10), 
                             cv2.FONT_HERSHEY_SIMPLEX, 
                             0.5, (0, 255, 0), 2)

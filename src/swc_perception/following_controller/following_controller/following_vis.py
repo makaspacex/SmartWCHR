@@ -29,9 +29,9 @@ class DetectionNode(Node):
 
 
 
-        self.max_vx = 1.3
+        self.max_vx = 0.8
         self.min_vx = 0.2
-        self.max_va = 0.3
+        self.max_va = 0.2
         self.gain_vx = 0.8
         self.gain_va = 0.5
         self.distance = 2                          # 跟随过程中保持的距离

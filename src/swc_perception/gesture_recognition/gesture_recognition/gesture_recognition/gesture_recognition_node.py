@@ -7,6 +7,8 @@ import mediapipe as mp
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point
 from gesture_recognition_msgs.msg import HandInfo, HandsInfo
+from geometry_msgs.msg import Twist
+
 
 
 
@@ -30,12 +32,15 @@ class HandDetector:
 
 		# 初始化手部识别模型
         self.mpHands = mp.solutions.hands
+        
         self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.modelComplex,
                                         self.detectionCon, self.minTrackCon)
         # self.mpDraw = mp.solutions.drawing_utils	# 初始化绘图器
         self.tipIds = [4, 8, 12, 16, 20]			# 指尖列表
         self.fingers = []
         self.lmList = []
+
+        # self.visual_image = None
 
 
     def findHands(self, img):
@@ -47,13 +52,15 @@ class HandDetector:
         """
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # 将传入的图像由BGR模式转标准的Opencv模式——RGB模式，
         self.results = self.hands.process(imgRGB)
+        return self.results
         
 
+        # 不做可视化的话，删除这段
+        # self.visual_image = img
         # if self.results.multi_hand_landmarks:
         #     for handLms in self.results.multi_hand_landmarks:
-        #         if draw:
-        #             self.mpDraw.draw_landmarks(img, handLms,
-        #                                        self.mpHands.HAND_CONNECTIONS)
+        #         self.mpDraw.draw_landmarks(self.visual_image, handLms,
+        #                                     self.mpHands.HAND_CONNECTIONS)
         # return img
 
     def findPosition(self, img, handNo=0):
@@ -121,7 +128,7 @@ class HandDetector:
                     fingers.append(1)
                 else:
                     fingers.append(0)
-        return fingers
+        return fingers, myHandType
 
     def handType(self):
         """
@@ -163,23 +170,24 @@ class HandDetector:
     
     def detect_gestures(self, img):
         hands_info_list = []
-        self.findHands(img)
+        results = self.findHands(img)
         # img = self.findHands(img)
         if self.results.multi_hand_landmarks:
             for hand_no, hand_landmarks in enumerate(self.results.multi_hand_landmarks):
                 lmList, bboxInfo = self.findPosition(img, hand_no)
                 if lmList:
-                    fingers = self.fingersUp()
+                    fingers, handtype = self.fingersUp()
                     gesture = self.recognize_gesture(fingers)
                     hand_info = HandInfo(
                         id=hand_no,
                         center=Point(x=float(bboxInfo["center"][0]), y=float(bboxInfo["center"][1]), z=0.0),
                         bbox_width=float(bboxInfo["bbox"][2]),
                         bbox_height=float(bboxInfo["bbox"][3]),
-                        gesture=int(gesture)
+                        gesture=int(gesture),
+                        handtype=handtype
                     )
                     hands_info_list.append(hand_info)
-        return hands_info_list
+        return hands_info_list, results
     
 
 
@@ -193,26 +201,73 @@ class GestureRecognitionNode(Node):
             self.listener_callback,
             10)
         # self.publisher = self.create_publisher(Image, '/gesture_image', 10)
+        self.mpDraw = mp.solutions.drawing_utils	# 初始化绘图器
+        self.mpHands = mp.solutions.hands
+
 
         self.hands_info_publisher = self.create_publisher(HandsInfo, '/hands_info', 10)
 
 
         self.bridge = CvBridge()
         self.detector = HandDetector()
+
+        self.state = None  # 根据self.state判断当前应该发布的速度指令
+        self.vel_publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
+        
+
         self.get_logger().info('Gesture recognition node has been started.')
 
+    def publish_vel(self, linear_x, angular_z):
+        twist = Twist()
+        twist.linear.x = linear_x
+        twist.angular.z = angular_z
+        self.vel_publisher_.publish(twist)
+        # pass
 
 
     def listener_callback(self, msg):
         # Convert ROS Image message to OpenCV image
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-        hands_info_list = self.detector.detect_gestures(cv_image)
+        hands_info_list, results = self.detector.detect_gestures(cv_image)
+
+        self.state = None
+        for handinfo in hands_info_list:
+            if handinfo.gesture == 1 and handinfo.handtype == "Right":
+                self.state = "go"
+                break
+            elif handinfo.gesture == 2 and handinfo.handtype == "Right":
+                self.state = "back"
+                break
+            elif handinfo.gesture == 5 and handinfo.handtype == "Right":
+                self.state = "stop"
+                break
+        if self.state == "go":
+            self.publish_vel(0.2, 0.0)
+            self.get_logger().info('go!')
+        elif self.state == "back":
+            self.publish_vel(-0.2, 0.0)
+            self.get_logger().info('back!')
+        elif self.state == "stop":
+            self.publish_vel(0.0, 0.0)
+            self.get_logger().info('stop!')
+
 
         # Create HandsInfo message
         hands_info_msg = HandsInfo()
         # hands_info_msg.header = msg.header
         hands_info_msg.hands = hands_info_list
+
+        if results.multi_hand_landmarks:
+            for handLms in results.multi_hand_landmarks:
+                self.mpDraw.draw_landmarks(cv_image, handLms,
+                                            self.mpHands.HAND_CONNECTIONS)
+        msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')
+            
+        # 用来做中间过程可视化
+        # msg = self.bridge.cv2_to_imgmsg(self.visual_image, encoding='bgr8')
+
+
         hands_info_msg.image = msg
 
         # Publish the hands info
