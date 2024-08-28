@@ -1,5 +1,5 @@
 
-# A smart wheelchair based on ROS2.
+# A smart wheelchair based on ROS2-Humble.
 
 ## Install Docker on Ubuntu by `apt`
 
@@ -7,31 +7,11 @@ Please refer to the [official link](https://docs.docker.com/engine/install/ubunt
 For Ubuntu 20.04, you need to add `/usr/libexec/docker/cli-plugins` to `PATH`, otherwise `docker-compose` cannot be found.
 
 ## Setup Devices
-
-### oradar_lidar
-
-to be finished
-
-### wit_ros2_imu
-to be finished
-
-## Build and Run
-###  Livox SDK2
+```bash
+sudo bash scripts/udev_init.sh
 ```
-git clone https://github.com/Livox-SDK/Livox-SDK2.git
-cd ./Livox-SDK2/
-mkdir build
-cd build
-cmake .. && make -j
-sudo make install
-```
+** You may need to install a serial chip driver, such as CH340 and CH341. **
 
-```
-sudo apt install libeigen3-dev libpcl-dev  ros-humble-rmw-cyclonedds-cpp
-cd swc_simulation
-
-rosdepc install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-```
 
 We utilize the Make system to build, run, and debug this project. Please first clone the repository:
 ```bash

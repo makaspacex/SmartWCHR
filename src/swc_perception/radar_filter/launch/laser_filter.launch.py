@@ -33,8 +33,8 @@ def generate_launch_description():
             # 创建节点配置
             Node(
                 package="radar_filter",
-                executable="laser_filter",
-                name="laser_filter",
+                executable="radar_filter",
+                name="radar_filter",
                 parameters=[{
                     "start_angle": LaunchConfiguration("start_angle"),
                     "end_angle": LaunchConfiguration("end_angle"),

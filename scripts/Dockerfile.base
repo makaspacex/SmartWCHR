@@ -49,6 +49,31 @@ RUN curl -sSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ros/r
     && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# install livox sdk2
+RUN git clone https://mirror.ghproxy.com/https://github.com/Livox-SDK/Livox-SDK2.git && \
+    cd ./Livox-SDK2/ && mkdir build && cd build && \
+    cmake .. && make -j && make install
+
+# slam and wheel describesion
+RUN apt update &&  \
+    apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-robot-state-publisher \
+    ros-$ROS_DISTRO-joint-state-publisher-gui \
+    ros-$ROS_DISTRO-cartographer ros-$ROS_DISTRO-cartographer-ros ros-$ROS_DISTRO-slam-toolbox \
+    python3-argcomplete ros-$ROS_DISTRO-tf-transformations ros-$ROS_DISTRO-robot-localization && \
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN apt update &&  \
+    apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-desktop-full && \
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+RUN apt update &&  \
+    apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-rmw-cyclonedds-cpp && \
+    apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 # lsleida
 RUN apt update &&  \
@@ -69,6 +94,12 @@ RUN apt update && \
     apt install -y --no-install-recommends \
     ros-$ROS_DISTRO-rtabmap-ros && \
     apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# torch
+RUN pip3 config set global.index-url https://mirrors.bfsu.edu.cn/pypi/web/simple && \
+    pip3 install h5py==3.10 && \
+    pip3 install pyserial numpy rich minimalmodbus transforms3d apscheduler cv_bridge scikit-learn && \
+    pip3 install torch torchvision torchaudio
 
 # install oh-my-zsh and tools
 RUN sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \

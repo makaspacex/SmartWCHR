@@ -17,7 +17,8 @@ LAUNCH_CC = ros2 launch
 # WHEEL_PACKAGES =  lslidar_driver lslidar_msgs oradar_lidar system_controller wcmodel wit_ros2_imu 
 WHEEL_PACKAGES =  driver encoder gen_camera imu imu_complementary_filter pcl_filter joy_ctrl  lidar_ms200  sllidar radar_filter livox_ros_driver2 linefit_ground_segmentation linefit_ground_segmentation_ros pointcloud_to_laserscan
 
-DC_PACKAGES = fast_lio point_lio ros_local swc_cartographer swc_slam_tooolbox swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner following_controller gesture_recognition_msgs gesture_recognition   lidars_sync_fusion   person_tracking_msgs person_detector video_pub yolomix_msgs yolomix  
+DC_PACKAGES = fast_lio point_lio ros_local swc_cartographer swc_slam_tooolbox swc_nav_bringup costmap_converter_msgs costmap_converter fake_vel_transform nav2_sample swc_navigation teb_msgs teb_local_planner following_controller gesture_recognition_msgs gesture_recognition   lidars_sync_fusion   person_tracking_msgs person_detector video_pub voice_ctrl yolomix_msgs yolomix  
+
 SIM_PACKAGES = ros2_livox_simulation pb_swc_simulation
 WC_NAME = wc
 DC_NAME = dc
@@ -29,7 +30,7 @@ ifeq ($(strip $(OPTS)),)
     BUILD_PACKAGES = 
 	RUN_ARGS =
 	LAUNCH_ARGS = 
-	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
+	DOCKER_ARGS =  -f scripts/docker-compose.dc.yml $(DOCKER_RUN_ARGS)
 	UP_ARGS =  -f docker-compose.yml up -d
 # 处理特殊选项名字
 else ifeq ($(OPTS),$(WC_NAME))
@@ -43,15 +44,15 @@ else ifeq ($(OPTS),$(DC_NAME))
 	BUILD_PACKAGES = --packages-select $(DC_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS =
-	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
-	UP_ARGS =  -f docker-compose.dc.yml up -d
+	DOCKER_ARGS =  -f scripts/docker-compose.dc.yml $(DOCKER_RUN_ARGS)
+	UP_ARGS =  -f scripts/docker-compose.dc.yml up -d
 
 else ifeq ($(OPTS),$(SIM_NAME))
 	BUILD_PACKAGES = --packages-select $(SIM_PACKAGES)
 	RUN_ARGS =
 	LAUNCH_ARGS =
-	DOCKER_ARGS =  -f docker-compose.dc.yml $(DOCKER_RUN_ARGS)
-	UP_ARGS =  -f docker-compose.dc.yml up -d
+	DOCKER_ARGS =  -f scripts/docker-compose.dc.yml $(DOCKER_RUN_ARGS)
+	UP_ARGS =  -f scripts/docker-compose.dc.yml up -d
 
 # 否则等于指定选项名字
 else

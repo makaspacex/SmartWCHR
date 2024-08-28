@@ -1,6 +1,6 @@
 {
     "name": "humble",
-    "dockerComposeFile": "../docker-compose.wc.yml",
+    "dockerComposeFile": "../docker-compose.dc.yml",
     "service": "smartwchr",
     "customizations": {
         "vscode": {

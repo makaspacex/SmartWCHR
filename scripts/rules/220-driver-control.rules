@@ -1,0 +1,2 @@
+KERNEL=="ttyCH341*", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE:="0660", SYMLINK+="driver"
+KERNEL=="ttyCH343*", ATTRS{serial}=="56D1053152", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d3", MODE:="0660", SYMLINK+="driver"
