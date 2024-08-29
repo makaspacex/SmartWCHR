@@ -1,6 +1,6 @@
 FROM makaspacex/smartwchr:base
 
-ARG USERNAME=rosdev
+ARG USERNAME=user
 ARG UID=1000
 ARG GID=$UID
 

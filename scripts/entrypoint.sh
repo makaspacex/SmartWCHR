@@ -1,8 +1,11 @@
 #!/bin/bash
-
+set -e
 # 获取设置的用户id，默认为1000
 USER_ID=${CUID:-1000}
 UNAME=user
+
+# 保存当前目录，一般是工作目录
+PWDD=$(pwd)
 
 # 授予用户免密码root权限
 echo "$UNAME ALL=(ALL) NOPASSWD: NOPASSWD: ALL"  > /etc/sudoers.d/sudonopasswd
@@ -17,10 +20,10 @@ export HOME=/home/$UNAME
 export SHELL=/bin/zsh
 
 # 初始化home目录
-rm -rf $HOME && cp -r /root $HOME && chown -R $UNAME:$UNAME $HOME
+cd /root && cp -rf $(ls -A1 --color=never) $HOME && chown -R $UNAME:$UNAME $HOME
 
 # 将工作目录的权限改为当前用户
-chown $UNAME:$UNAME $(pwd)
+cd $PWDD && chown $UNAME:$UNAME $PWDD
 
 # 执行用户自定义程序
-exec /usr/local/bin/gosu user "$@"
+exec /usr/local/bin/gosu $UNAME "$@"
