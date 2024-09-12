@@ -353,6 +353,16 @@ def generate_launch_description():
             'params_file': nav2_params_file,
             'nav_rviz': use_nav_rviz}.items()
     )
+    
+    # fastlio里程计转换
+    fastlio_convert_node = Node(
+        package='fastlio_odomcovert',
+        executable='covert_node',
+        name="fastlio_odomcovert",
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[("/covert_odomtry", "/odom")],
+        output='screen'
+    )
 
     ld = LaunchDescription()
 
@@ -376,6 +386,7 @@ def generate_launch_description():
     # ld.add_action(bringup_fake_vel_transform_node)
     
     ld.add_action(bringup_LIO_group)
+    ld.add_action(fastlio_convert_node) # 处理fastlio的定位tf变换以及里程消息
     ld.add_action(bringup_robot_localization_node) # 使用lio原生的tf定位的话，就可以关掉
     ld.add_action(start_localization_group)
     ld.add_action(start_mapping)
