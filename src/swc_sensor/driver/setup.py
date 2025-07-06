@@ -22,6 +22,7 @@ setup(
         "console_scripts": [
             "controller = driver.controller:main",
             "gk_controller = driver.guokang_controller:main",
+            "new_controller = driver.new_controller:main",
         ],
     },
 )
